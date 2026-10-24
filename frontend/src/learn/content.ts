@@ -1,3 +1,5 @@
+import { MORE_LESSONS } from './lessons'
+
 export type VisualId = 'branches'
 
 export interface TextBlock {
@@ -67,7 +69,7 @@ export interface Category {
   lessons: Lesson[]
 }
 
-export const CATEGORIES: Category[] = [
+const BASE_CATEGORIES: Category[] = [
   {
     id: 'apis-networking',
     title: 'APIs & Networking',
@@ -596,3 +598,9 @@ export const CATEGORIES: Category[] = [
     ],
   },
 ]
+
+// Each category has 10 lessons: the two above plus eight more from ./lessons
+export const CATEGORIES: Category[] = BASE_CATEGORIES.map((category) => ({
+  ...category,
+  lessons: [...category.lessons, ...(MORE_LESSONS[category.id] ?? [])],
+}))

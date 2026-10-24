@@ -19,12 +19,14 @@ This document is the source of truth for the frontend visual style. Every new co
 | `--color-text-muted` | `#7893a8` | Secondary text, labels, placeholders |
 | `--color-accent` | `#22d3ee` | Learning: primary actions, active states, focus |
 | `--color-duel` | `#f472b6` | Duel: actions, timer, active states inside duel |
+| `--color-topic` | `#f5b83d` | Learn: category icons and topic headers that group lessons |
 | `--color-success` | `#4ade80` | Correct answer, progress |
 | `--color-danger` | `#f87171` | Wrong answer, errors |
 | `--color-warning` | `#facc15` | Warnings, approaching deadlines |
 
 Color rules:
 - Cyan belongs to learning, magenta to duel. Do not mix them within the same action.
+- Gold (`--color-topic`) only marks Learn categories and topics: the category tile icons and the topic headers in lesson lists, so sections read apart from the lessons. It is never used for actions.
 - Use the accent sparingly: at most one accent action per screen.
 - Text always uses `--color-text` or `--color-text-muted`, never pure white or a gray from another palette.
 

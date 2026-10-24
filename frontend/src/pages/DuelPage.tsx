@@ -43,13 +43,10 @@ function DuelPage({ onBack }: DuelPageProps) {
   const categoryName = useCategoryNames()
   const [review, setReview] = useState<DuelDetails | null>(null)
 
-  // Leaving is only offered outside a running duel, where the clock would keep going without you
-  const canLeave = ['connecting', 'connectionFailed', 'lobby', 'queue', 'results', 'aborted'].includes(view.phase)
-
-  function handleBack() {
-    if (view.phase === 'queue') leaveQueue()
-    onBack()
-  }
+  // Leaving is only offered outside a running duel, where the clock would keep going without you.
+  // The queue has its own Cancel button, so it shows no Back.
+  const canLeave = ['connecting', 'connectionFailed', 'lobby', 'results', 'aborted'].includes(view.phase)
+  const inDuel = view.phase === 'countdown' || view.phase === 'round' || view.phase === 'reveal'
 
   function playAgain() {
     setReview(null)
@@ -59,17 +56,20 @@ function DuelPage({ onBack }: DuelPageProps) {
   return (
     <main className="duel">
       <header className="duel-header">
-        {canLeave ? (
-          <button type="button" className="duel-back" onClick={handleBack}>
+        {canLeave && (
+          <button type="button" className="duel-back" onClick={onBack}>
             <i className="ti ti-arrow-left" aria-hidden="true" />
             Back
           </button>
-        ) : (
+        )}
+        {inDuel && (
           <span className="duel-live">
             <span className="duel-live-dot" aria-hidden="true" />
             Duel in progress
           </span>
         )}
+        {/* Keeps the logo on the right when the left side is empty */}
+        {!canLeave && !inDuel && <span aria-hidden="true" />}
         <span className="duel-logo">DevBrawl</span>
       </header>
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CATEGORIES, type Category, type Lesson } from '../learn/content'
 import { LessonBlockView } from '../learn/LessonBlocks'
+import { groupLessons, lessonSummary } from '../learn/topics'
 import './LearnPage.css'
 
 interface LearnPageProps {
@@ -57,11 +58,12 @@ function LearnPage({ onBack }: LearnPageProps) {
                 className="learn-tile"
                 onClick={() => setCategoryId(item.id)}
               >
-                <span className="learn-tile-icon" aria-hidden="true">
-                  <i className={`ti ${item.icon}`} />
+                <span className="learn-tile-main">
+                  <span className="learn-tile-icon" aria-hidden="true">
+                    <i className={`ti ${item.icon}`} />
+                  </span>
+                  <span className="learn-tile-title">{item.title}</span>
                 </span>
-                <span className="learn-tile-title">{item.title}</span>
-                <span className="learn-tile-desc">{item.description}</span>
                 <span className="learn-tile-meta">
                   {item.lessons.length} lessons
                   <i className="ti ti-arrow-right learn-tile-arrow" aria-hidden="true" />
@@ -94,27 +96,44 @@ function LessonListView({ category, onSelectLesson, onBack }: LessonListViewProp
 
       <section className="learn-content" aria-labelledby="learn-title">
         <div className="learn-heading">
-          <p className="learn-eyebrow">{category.description}</p>
           <h1 id="learn-title" className="learn-title">
             {category.title}
           </h1>
         </div>
 
-        <ol className="learn-lessons">
-          {category.lessons.map((lesson, index) => (
-            <li key={lesson.id}>
-              <button
-                type="button"
-                className="learn-lesson-row"
-                onClick={() => onSelectLesson(lesson.id)}
-              >
-                <span className="learn-lesson-index">{String(index + 1).padStart(2, '0')}</span>
-                <span className="learn-lesson-row-title">{lesson.title}</span>
-                <i className="ti ti-arrow-right learn-lesson-row-arrow" aria-hidden="true" />
-              </button>
-            </li>
-          ))}
-        </ol>
+        {/* Lessons are independent, so they're grouped by topic instead of numbered */}
+        {groupLessons(category).map(({ topic, lessons }) => (
+          <section key={topic.name} className="learn-topic" aria-labelledby={`topic-${topic.name}`}>
+            <header className="learn-topic-header">
+              <span className="learn-topic-icon" aria-hidden="true">
+                <i className={`ti ${topic.icon}`} />
+              </span>
+              <div className="learn-topic-text">
+                <h2 id={`topic-${topic.name}`} className="learn-topic-name">
+                  {topic.name}
+                </h2>
+                {topic.description && <p className="learn-topic-desc">{topic.description}</p>}
+              </div>
+              <span className="learn-topic-count">{lessons.length} lessons</span>
+            </header>
+
+            <ul className="learn-lesson-grid">
+              {lessons.map((lesson) => (
+                <li key={lesson.id}>
+                  <button
+                    type="button"
+                    className="learn-lesson-card"
+                    onClick={() => onSelectLesson(lesson.id)}
+                  >
+                    <span className="learn-lesson-card-title">{lesson.title}</span>
+                    <span className="learn-lesson-card-summary">{lessonSummary(lesson)}</span>
+                    <i className="ti ti-arrow-right learn-lesson-card-arrow" aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </section>
     </main>
   )

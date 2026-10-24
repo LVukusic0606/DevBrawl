@@ -13,6 +13,10 @@
   --color-grid: rgba(34, 211, 238, 0.07);
   --color-grid-duel: rgba(244, 114, 182, 0.06);
   --color-duel: #f472b6;
+  --color-topic: #f5b83d;
+  --color-topic-soft: rgba(245, 184, 61, 0.12);
+  --color-topic-surface: #2c2818;
+  --color-topic-border: rgba(245, 184, 61, 0.4);
   --color-duel-soft: rgba(244, 114, 182, 0.12);
   --color-success: #4ade80;
   --color-danger: #f87171;

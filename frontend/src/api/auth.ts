@@ -41,6 +41,14 @@ export function getMe() {
   return authFetch<User>('/api/auth/me')
 }
 
+// Valid access token for SignalR: getMe() refreshes the tokens first if they expired
+export async function getFreshAccessToken(): Promise<string> {
+  await getMe()
+  const session = loadSession()
+  if (!session) throw new ApiError(401, 'Log in to continue.')
+  return session.accessToken
+}
+
 // fetch for endpoints that need a logged-in user. On a 401 it refreshes the tokens once and retries.
 export async function authFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const session = loadSession()

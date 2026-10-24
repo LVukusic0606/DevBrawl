@@ -3,6 +3,7 @@ import { getMe, login, logout, signup, type User } from './api/auth'
 import { clearSession, loadSession, startSession } from './api/session'
 import AuthPage, { type LoginValues, type SignupValues } from './pages/AuthPage'
 import InterviewPage from './pages/InterviewPage'
+import DuelPage from './pages/DuelPage'
 import LearnPage from './pages/LearnPage'
 import MainPage, { type MainSection } from './pages/MainPage'
 
@@ -11,7 +12,7 @@ type AuthState =
   | { status: 'signedOut' }
   | { status: 'signedIn'; user: User }
 
-type Screen = 'main' | 'learn' | 'interview'
+type Screen = 'main' | 'learn' | 'interview' | 'duel'
 
 function App() {
   const [auth, setAuth] = useState<AuthState>(() =>
@@ -77,6 +78,10 @@ function App() {
 
   if (auth.status === 'signedOut') {
     return <AuthPage onLogin={handleLogin} onSignup={handleSignup} onGoogle={handleGoogle} />
+  }
+
+  if (screen === 'duel') {
+    return <DuelPage onBack={() => setScreen('main')} />
   }
 
   if (screen === 'learn') {

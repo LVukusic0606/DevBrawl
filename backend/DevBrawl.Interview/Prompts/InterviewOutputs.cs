@@ -5,6 +5,8 @@ namespace DevBrawl.Interview.Prompts;
 // The JSON the interviewer asks the model for, and its conversion into the interviewer's results
 internal sealed record QuestionOutput(string Question, List<string> KeyPoints, string ModelAnswer);
 
+internal sealed record TranscriptOutput(string Transcript);
+
 internal sealed record ReviewOutput(string Verdict, int Score, string Feedback, List<string> Strengths, List<string> Improvements);
 
 internal static class InterviewOutputs

@@ -38,7 +38,20 @@ public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> o
         return InterviewOutputs.ToReview(output, Provider);
     }
 
-    private async Task<T> AskAsync<T>(string system, string request, JsonObject schema, CancellationToken cancellationToken)
+    public async Task<string> TranscribeAsync(string question, byte[] audio, string mimeType, CancellationToken cancellationToken = default)
+    {
+        var output = await AskAsync<TranscriptOutput>(
+            InterviewPrompts.TranscribeSystem,
+            InterviewPrompts.TranscribeRequest(question),
+            TranscriptSchema,
+            cancellationToken,
+            // The recording goes inline with the request; a 2-minute 16 kHz WAV is about 4 MB, well under Gemini's limit
+            new JsonObject { ["inlineData"] = new JsonObject { ["mimeType"] = mimeType, ["data"] = Convert.ToBase64String(audio) } });
+        return output.Transcript?.Trim() ?? string.Empty;
+    }
+
+    private async Task<T> AskAsync<T>(string system, string request, JsonObject schema, CancellationToken cancellationToken,
+        JsonObject? attachment = null)
     {
         var apiKey = _options.ResolveApiKey();
         if (apiKey is null)
@@ -53,7 +66,9 @@ public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> o
             ["contents"] = new JsonArray(new JsonObject
             {
                 ["role"] = "user",
-                ["parts"] = new JsonArray(new JsonObject { ["text"] = request })
+                ["parts"] = attachment is null
+                    ? new JsonArray(new JsonObject { ["text"] = request })
+                    : new JsonArray(new JsonObject { ["text"] = request }, attachment)
             }),
             ["generationConfig"] = new JsonObject
             {
@@ -170,6 +185,16 @@ public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> o
           },
           "required": ["question", "keyPoints", "modelAnswer"],
           "propertyOrdering": ["question", "keyPoints", "modelAnswer"]
+        }
+        """);
+
+    internal static readonly JsonObject TranscriptSchema = Schema("""
+        {
+          "type": "OBJECT",
+          "properties": {
+            "transcript": { "type": "STRING", "description": "What the learner said; empty if there is no speech" }
+          },
+          "required": ["transcript"]
         }
         """);
 

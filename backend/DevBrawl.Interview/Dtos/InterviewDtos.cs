@@ -34,6 +34,9 @@ public sealed record SubmitAnswerRequest
     public string Answer { get; init; } = string.Empty;
 }
 
+// Empty Text means no speech was heard in the recording
+public sealed record TranscriptResponse(Guid QuestionId, string Text);
+
 public sealed record AnswerReviewResponse(
     Guid QuestionId,
     // "correct", "partiallyCorrect" or "incorrect"

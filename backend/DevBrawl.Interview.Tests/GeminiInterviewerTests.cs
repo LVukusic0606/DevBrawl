@@ -38,6 +38,21 @@ public class GeminiInterviewerTests
     }
 
     [Fact]
+    public async Task Sends_the_recording_inline_and_returns_the_transcript()
+    {
+        var handler = new FakeHandler(HttpStatusCode.OK, Reply("""{"transcript":"  It stores the user id.  "}"""));
+        byte[] audio = [1, 2, 3, 4];
+
+        var text = await Interviewer(handler).TranscribeAsync("Why ids?", audio, "audio/wav");
+
+        Assert.Equal("It stores the user id.", text);
+        var parts = JsonNode.Parse(handler.Body!)!["contents"]![0]!["parts"]!.AsArray();
+        Assert.Contains("<question>Why ids?</question>", (string)parts[0]!["text"]!);
+        Assert.Equal("audio/wav", (string)parts[1]!["inlineData"]!["mimeType"]!);
+        Assert.Equal(Convert.ToBase64String(audio), (string)parts[1]!["inlineData"]!["data"]!);
+    }
+
+    [Fact]
     public async Task Parses_a_review_and_skips_thought_parts()
     {
         var reply = JsonSerializer.Serialize(new

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { getMe, login, logout, signup, type User } from './api/auth'
 import { clearSession, loadSession, startSession } from './api/session'
 import AuthPage, { type LoginValues, type SignupValues } from './pages/AuthPage'
+import InterviewPage from './pages/InterviewPage'
 import DuelPage from './pages/DuelPage'
 import LearnPage from './pages/LearnPage'
 import MainPage, { type MainSection } from './pages/MainPage'
@@ -12,7 +13,7 @@ type AuthState =
   | { status: 'signedOut' }
   | { status: 'signedIn'; user: User }
 
-type Screen = 'main' | 'learn' | 'duel' | 'profile'
+type Screen = 'main' | 'learn' | 'interview' | 'duel' | 'profile'
 
 function App() {
   const [auth, setAuth] = useState<AuthState>(() =>
@@ -74,11 +75,7 @@ function App() {
   }
 
   function handleSelect(section: MainSection) {
-    if (section === 'learn' || section === 'duel') {
-      setScreen(section)
-      return
-    }
-    console.info('Section selected (not connected yet)', section)
+    setScreen(section)
   }
 
   if (auth.status === 'checking') return null
@@ -93,6 +90,10 @@ function App() {
 
   if (screen === 'learn') {
     return <LearnPage onBack={() => setScreen('main')} />
+  }
+
+  if (screen === 'interview') {
+    return <InterviewPage onBack={() => setScreen('main')} />
   }
 
   if (screen === 'profile') {

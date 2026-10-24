@@ -11,26 +11,43 @@ export interface InterviewCategory {
   lessons: InterviewLesson[]
 }
 
-export interface InterviewQuestion {
+export interface InterviewMessage {
   id: string
-  categoryId: string
-  categoryTitle: string
-  lessonId: string
-  lessonTitle: string
-  question: string
+  role: 'interviewer' | 'candidate'
+  content: string
   createdAt: string
 }
 
-export type Verdict = 'correct' | 'partiallyCorrect' | 'incorrect'
-
-export interface AnswerReview {
-  questionId: string
-  verdict: Verdict
+export interface InterviewEvaluation {
   score: number
-  feedback: string
+  summary: string
   strengths: string[]
   improvements: string[]
-  modelAnswer: string
+}
+
+export type InterviewStatus = 'active' | 'finished'
+
+export interface InterviewSession {
+  id: string
+  title: string
+  categoryId: string
+  lessonId: string | null
+  status: InterviewStatus
+  answersGiven: number
+  maxAnswers: number
+  createdAt: string
+  finishedAt: string | null
+  messages: InterviewMessage[]
+  // Null while active, and when an interview ended without answers
+  evaluation: InterviewEvaluation | null
+}
+
+export interface InterviewSummary {
+  id: string
+  title: string
+  status: InterviewStatus
+  score: number | null
+  createdAt: string
 }
 
 export async function getInterviewTopics() {
@@ -38,28 +55,42 @@ export async function getInterviewTopics() {
   return response.categories
 }
 
-// No lesson picks a random one, from the category if one is given
-export function createInterviewQuestion(choice: { lessonId?: string; categoryId?: string }) {
-  return authFetch<InterviewQuestion>('/api/interview/questions', {
+export function listInterviews() {
+  return authFetch<InterviewSummary[]>('/api/interview/sessions')
+}
+
+// A lesson interviews about that lesson, a category about all its lessons, neither picks a random category
+export function startInterview(choice: { lessonId?: string; categoryId?: string }) {
+  return authFetch<InterviewSession>('/api/interview/sessions', {
     method: 'POST',
     body: JSON.stringify(choice),
   })
 }
 
+export function getInterview(id: string) {
+  return authFetch<InterviewSession>(`/api/interview/sessions/${id}`)
+}
+
+// Returns the whole session with the answer and the interviewer's reply added
+export function sendInterviewMessage(id: string, content: string) {
+  return authFetch<InterviewSession>(`/api/interview/sessions/${id}/messages`, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  })
+}
+
+// Ends the interview early, or retries feedback that failed to generate
+export function finishInterview(id: string) {
+  return authFetch<InterviewSession>(`/api/interview/sessions/${id}/finish`, { method: 'POST' })
+}
+
 // Returns an empty string when no speech was heard
-export async function transcribeAnswer(questionId: string, recording: Blob) {
+export async function transcribeAnswer(sessionId: string, recording: Blob) {
   const form = new FormData()
   form.append('audio', recording, 'answer.wav')
-  const response = await authFetch<{ text: string }>(`/api/interview/questions/${questionId}/transcribe`, {
+  const response = await authFetch<{ text: string }>(`/api/interview/sessions/${sessionId}/transcribe`, {
     method: 'POST',
     body: form,
   })
   return response.text
-}
-
-export function submitInterviewAnswer(questionId: string, answer: string) {
-  return authFetch<AnswerReview>(`/api/interview/questions/${questionId}/answer`, {
-    method: 'POST',
-    body: JSON.stringify({ answer }),
-  })
 }

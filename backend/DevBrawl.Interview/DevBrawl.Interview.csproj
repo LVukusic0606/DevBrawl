@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- For options and logging -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The Learn lessons, copied to the output of every project that references this one -->
+    <None Include="Knowledge\learn-content.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DevBrawl.Interview.Tests" />
+  </ItemGroup>
+
+  <!-- Keeps learn-content.json in step with frontend/src/learn/content.ts. Runs only when content.ts is newer;
+       without Node 22.18+ it warns and the committed JSON is used as is. -->
+  <Target Name="ExportLearnContent" BeforeTargets="BeforeBuild"
+          Inputs="..\..\frontend\src\learn\content.ts" Outputs="Knowledge\learn-content.json"
+          Condition="Exists('..\..\frontend\src\learn\content.ts')">
+    <Exec Command="node Knowledge/export-learn-content.mjs" ContinueOnError="true" />
+  </Target>
+
+</Project>

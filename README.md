@@ -55,10 +55,12 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Po
 Migrations (needs `dotnet tool install -g dotnet-ef`):
 
 ```bash
-cd backend/DevBrawl.Api
-dotnet ef migrations add <Name>
-dotnet ef database update
+cd backend
+dotnet ef migrations add <Name> --project DevBrawl.Infrastructure --startup-project DevBrawl.Api --output-dir Data/Migrations
+dotnet ef database update --project DevBrawl.Infrastructure --startup-project DevBrawl.Api
 ```
+
+Backend projects: `DevBrawl.Api` (controllers, Program.cs) → `DevBrawl.Infrastructure` (DbContext, migrations, repositories, services) → `DevBrawl.Auth` (domain entities, DTOs).
 
 Check the connection at http://localhost:5287/api/health/db.
 

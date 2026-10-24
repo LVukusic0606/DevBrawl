@@ -1,5 +1,71 @@
+import { useEffect, useState } from 'react'
+import { getMe, login, logout, signup, type User } from './api/auth'
+import { clearSession, loadSession, startSession } from './api/session'
+import AuthPage, { type LoginValues, type SignupValues } from './pages/AuthPage'
+import HomePage from './pages/HomePage'
+
+type AuthState =
+  | { status: 'checking' }
+  | { status: 'signedOut' }
+  | { status: 'signedIn'; user: User }
+
 function App() {
-  return <h1>DevBrawl</h1>
+  const [auth, setAuth] = useState<AuthState>(() =>
+    loadSession() ? { status: 'checking' } : { status: 'signedOut' },
+  )
+
+  // A stored session may have expired or been revoked, so confirm it with the backend
+  useEffect(() => {
+    if (auth.status !== 'checking') return
+    let cancelled = false
+
+    getMe()
+      .then((user) => {
+        if (!cancelled) setAuth({ status: 'signedIn', user })
+      })
+      .catch(() => {
+        if (cancelled) return
+        // A rejected session is cleared by getMe; if it's still here the backend was just unreachable
+        const session = loadSession()
+        setAuth(session ? { status: 'signedIn', user: session.user } : { status: 'signedOut' })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [auth.status])
+
+  async function handleLogin(values: LoginValues) {
+    const response = await login(values.email, values.password)
+    startSession(response, values.rememberMe)
+    setAuth({ status: 'signedIn', user: response.user })
+  }
+
+  async function handleSignup(values: SignupValues) {
+    const response = await signup(values)
+    startSession(response, false)
+    setAuth({ status: 'signedIn', user: response.user })
+  }
+
+  function handleLogout() {
+    const session = loadSession()
+    clearSession()
+    setAuth({ status: 'signedOut' })
+    // Best effort: the tokens are already gone locally
+    if (session) logout(session.refreshToken).catch(() => {})
+  }
+
+  function handleGoogle() {
+    console.info('Google sign-in (not connected yet)')
+  }
+
+  if (auth.status === 'checking') return null
+
+  if (auth.status === 'signedIn') {
+    return <HomePage user={auth.user} onLogout={handleLogout} />
+  }
+
+  return <AuthPage onLogin={handleLogin} onSignup={handleSignup} onGoogle={handleGoogle} />
 }
 
 export default App

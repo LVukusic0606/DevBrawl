@@ -93,6 +93,87 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("DevBrawl.Common.Domain.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Description = "How clients and servers talk: HTTP, REST, status codes, headers, caching and network failures.",
+                            Name = "APIs & Networking",
+                            Slug = "apis-networking",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Description = "Storing and querying data: relational models, joins, indexes, transactions and query performance.",
+                            Name = "Databases",
+                            Slug = "databases",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Description = "Protecting systems and users: authentication, authorization, tokens and common vulnerabilities.",
+                            Name = "Security",
+                            Slug = "security",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "Finding out why things break: reading logs, tracing requests and separating symptoms from root causes.",
+                            Name = "Debugging",
+                            Slug = "debugging",
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Description = "Designing systems that scale: trade-offs, caching, queues, load balancing and reliability.",
+                            Name = "System Design",
+                            Slug = "system-design",
+                            SortOrder = 5
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Description = "Where software runs: servers, containers, deployments, configuration and monitoring.",
+                            Name = "Infrastructure",
+                            Slug = "infrastructure",
+                            SortOrder = 6
+                        });
+                });
+
             modelBuilder.Entity("DevBrawl.Auth.Domain.RefreshToken", b =>
                 {
                     b.HasOne("DevBrawl.Auth.Domain.User", "User")

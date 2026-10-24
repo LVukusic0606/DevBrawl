@@ -109,7 +109,7 @@ Users must register and log in to use DevBrawl.
 
 A user registers with:
 
-- Username (unique, shown on leaderboards and to opponents)
+- Nickname (unique, shown on leaderboards and to opponents)
 - Email (unique)
 - Password
 
@@ -320,7 +320,7 @@ A duel is therefore both a competition and an opportunity to test knowledge acro
 
 1. The player enters Brawl and joins the matchmaking queue.
 2. The server matches them with another waiting player.
-3. Both players see who their opponent is (username and relevant ratings) and the match begins.
+3. Both players see who their opponent is (nickname and relevant ratings) and the match begins.
 4. Both players receive the same challenge at the same time.
 5. Each player submits an answer. A player cannot change an answer after submitting it.
 6. The round ends when both players have submitted or the round timer runs out. No answer counts as incorrect. The time limit depends on the challenge type (see "Round time limits" below).

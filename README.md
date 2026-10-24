@@ -60,7 +60,7 @@ dotnet ef migrations add <Name> --project DevBrawl.Infrastructure --startup-proj
 dotnet ef database update --project DevBrawl.Infrastructure --startup-project DevBrawl.Api
 ```
 
-Backend projects: `DevBrawl.Api` (controllers, Program.cs) → `DevBrawl.Infrastructure` (DbContext, migrations, repositories, services) → `DevBrawl.Auth` (domain entities, DTOs).
+Backend projects: `DevBrawl.Api` (controllers, Program.cs) → `DevBrawl.Infrastructure` (DbContext, migrations, repositories, services) → feature projects with domain entities and DTOs: `DevBrawl.Auth` (users, tokens), `DevBrawl.Common` (categories, shared by Learn and Duel).
 
 Check the connection at http://localhost:5287/api/health/db.
 

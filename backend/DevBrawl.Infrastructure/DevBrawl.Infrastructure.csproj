@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DevBrawl.Auth\DevBrawl.Auth.csproj" />
+    <ProjectReference Include="..\DevBrawl.Common\DevBrawl.Common.csproj" />
   </ItemGroup>
 
 </Project>

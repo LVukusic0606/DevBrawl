@@ -24,7 +24,7 @@ public class GeminiInterviewerTests
         var question = await Interviewer(handler).GenerateQuestionAsync(Lesson, ["Earlier?"]);
 
         Assert.Equal("Why ids?", question.Question);
-        Assert.Equal("https://gemini.test/v1beta/models/gemini-3.8-flash:generateContent", handler.Request!.RequestUri!.ToString());
+        Assert.Equal("https://gemini.test/v1beta/models/gemini-3.5-flash-lite:generateContent", handler.Request!.RequestUri!.ToString());
         Assert.Equal(DummyKey, handler.Request.Headers.GetValues("x-goog-api-key").Single());
         // The key never goes into the URL, where request logs would show it
         Assert.DoesNotContain(DummyKey, handler.Request.RequestUri.ToString());

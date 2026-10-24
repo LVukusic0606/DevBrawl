@@ -6,7 +6,7 @@ public class GeminiOptions
 
     // Put it in user secrets (Gemini:ApiKey), never in appsettings.json; GEMINI_API_KEY in the environment also works
     public string? ApiKey { get; set; }
-    public string Model { get; set; } = "gemini-3.8-flash";
+    public string Model { get; set; } = "gemini-3.5-flash-lite";
     // How long Gemini reasons before answering. "low" keeps replies to seconds; questions and grading don't need more.
     // Leave empty to use the model's default (much slower).
     public string? ThinkingLevel { get; set; } = "low";

@@ -1,123 +1,7 @@
 import { useState } from 'react'
+import { CATEGORIES, type Category, type Lesson } from '../learn/content'
+import { LessonBlockView } from '../learn/LessonBlocks'
 import './LearnPage.css'
-
-interface Lesson {
-  id: string
-  title: string
-  paragraphs: string[]
-}
-
-interface Category {
-  id: string
-  title: string
-  description: string
-  icon: string
-  lessons: Lesson[]
-}
-
-const CATEGORIES: Category[] = [
-  {
-    id: 'frontend-web',
-    title: 'Frontend web development',
-    description: 'How pages are built and shown in the browser.',
-    icon: 'ti-brand-html5',
-    lessons: [
-      {
-        id: 'browser-page',
-        title: 'How a browser shows a page',
-        paragraphs: [
-          'When you open a website, the browser downloads a document written in HTML. That document describes what is on the page: headings, text, images and buttons.',
-          'Styles then decide how those elements look. Colors, spacing and layout come from CSS, which the browser applies on top of the structure.',
-          'Scripts make the page react to the user. A click, a typed letter or a timer can change the page without loading a new one.',
-        ],
-      },
-      {
-        id: 'html-structure',
-        title: 'Structuring content with HTML',
-        paragraphs: [
-          'HTML is a tree of elements. Each element has a tag that says what it is, such as a heading, a paragraph or a list.',
-          'Choosing the right tag matters. A button is a button, not a styled div, because the browser and screen readers know how to handle it.',
-        ],
-      },
-      {
-        id: 'layout-flexbox',
-        title: 'Arranging elements with flexbox',
-        paragraphs: [
-          'Flexbox lays out a row or a column of elements. You set the direction on the parent and the browser spaces the children for you.',
-          'Gap, alignment and wrapping cover most layouts without manual pixel positions.',
-        ],
-      },
-    ],
-  },
-  {
-    id: 'backend',
-    title: 'Backend development',
-    description: 'How servers receive requests and send back data.',
-    icon: 'ti-server',
-    lessons: [
-      {
-        id: 'server-role',
-        title: 'What a server does',
-        paragraphs: [
-          'A server waits for requests from clients. Each request asks for something, such as a list of lessons or a login.',
-          'The server checks the request, does the work and sends back a response. The response is usually data the frontend can display.',
-        ],
-      },
-      {
-        id: 'http-methods',
-        title: 'Reading and writing with HTTP methods',
-        paragraphs: [
-          'GET asks for data without changing anything. POST creates something new, and PUT or PATCH changes something that already exists.',
-        ],
-      },
-    ],
-  },
-  {
-    id: 'databases',
-    title: 'Databases',
-    description: 'How data is stored, found and kept consistent.',
-    icon: 'ti-database',
-    lessons: [
-      {
-        id: 'tables',
-        title: 'Why we store data in tables',
-        paragraphs: [
-          'A database keeps data in tables, where each row is one record and each column is one property of that record.',
-          'Tables let us find, sort and update records quickly, and rules on the columns keep the data valid.',
-        ],
-      },
-      {
-        id: 'keys',
-        title: 'Linking tables with keys',
-        paragraphs: [
-          'A primary key uniquely identifies each row. A foreign key points to a primary key in another table, which links the two.',
-        ],
-      },
-    ],
-  },
-  {
-    id: 'version-control',
-    title: 'Version control',
-    description: 'How teams track and combine changes to code.',
-    icon: 'ti-git-branch',
-    lessons: [
-      {
-        id: 'commits',
-        title: 'Saving history with commits',
-        paragraphs: [
-          'Version control records every change to a project as a commit. A commit stores what changed, who changed it and a short message about why.',
-        ],
-      },
-      {
-        id: 'branches',
-        title: 'Working apart with branches',
-        paragraphs: [
-          'Branches let you work on a change apart from the main code until it is ready to join it.',
-        ],
-      },
-    ],
-  },
-]
 
 interface LearnPageProps {
   onBack: () => void
@@ -254,10 +138,8 @@ function LessonView({ category, lesson, onBack }: LessonViewProps) {
         <h1 id="lesson-title" className="learn-lesson-title">
           {lesson.title}
         </h1>
-        {lesson.paragraphs.map((paragraph) => (
-          <p key={paragraph} className="learn-lesson-text">
-            {paragraph}
-          </p>
+        {lesson.blocks.map((block, index) => (
+          <LessonBlockView key={index} block={block} />
         ))}
       </article>
     </main>

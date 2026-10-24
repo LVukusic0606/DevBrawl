@@ -1,3 +1,6 @@
+import bugDuel from '../assets/bug-duel.webp'
+import bugInterview from '../assets/bug-interview.webp'
+import bugLearn from '../assets/bug-learn.webp'
 import './MainPage.css'
 
 export type MainSection = 'learn' | 'duel' | 'interview'
@@ -6,24 +9,24 @@ interface MainPageProps {
   onSelect: (section: MainSection) => void
 }
 
-const SECTIONS: { id: MainSection; label: string; description: string; icon: string }[] = [
+const SECTIONS: { id: MainSection; label: string; description: string; bug: string }[] = [
   {
     id: 'learn',
     label: 'Learn',
     description: 'Work through programming concepts step by step.',
-    icon: 'ti-book-2',
+    bug: bugLearn,
   },
   {
     id: 'duel',
     label: 'Duel',
     description: 'Prove your understanding in a quiz against someone else.',
-    icon: 'ti-swords',
+    bug: bugDuel,
   },
   {
     id: 'interview',
     label: 'Interview',
     description: 'Answer questions the way you would in a real interview.',
-    icon: 'ti-message-2',
+    bug: bugInterview,
   },
 ]
 
@@ -47,13 +50,11 @@ function MainPage({ onSelect }: MainPageProps) {
               className={`home-action is-${section.id}`}
               onClick={() => onSelect(section.id)}
             >
-              <span className="home-action-icon" aria-hidden="true">
-                <i className={`ti ${section.icon}`} />
-              </span>
               <span className="home-action-text">
                 <span className="home-action-label">{section.label}</span>
                 <span className="home-action-desc">{section.description}</span>
               </span>
+              <img className="home-action-bug" src={section.bug} alt="" />
               <i className="ti ti-arrow-right home-action-arrow" aria-hidden="true" />
             </button>
           ))}

@@ -1,0 +1,362 @@
+@keyframes lesson-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes lesson-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes branches-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Code */
+
+.lesson-code {
+  margin: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-field);
+  overflow: hidden;
+}
+
+.lesson-code-file {
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-text);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.lesson-code-body {
+  margin: 0;
+  padding: var(--space-4);
+  overflow-x: auto;
+}
+
+.lesson-code-body code {
+  font-family: var(--font-code);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text);
+  white-space: pre;
+}
+
+.lesson-code-line {
+  display: block;
+  animation: lesson-fade-in 300ms ease-out both;
+}
+
+/* Steps */
+
+.lesson-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.lesson-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  animation: lesson-fade-in 300ms ease-out both;
+}
+
+.lesson-step-index {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius);
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.lesson-step-text {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text);
+}
+
+/* Table */
+
+.lesson-table-wrap {
+  overflow-x: auto;
+}
+
+.lesson-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+.lesson-table th,
+.lesson-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.lesson-table th {
+  font-family: var(--font-text);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.lesson-table td {
+  color: var(--color-text);
+}
+
+.lesson-table tbody tr {
+  animation: lesson-fade-in 300ms ease-out both;
+}
+
+/* Timeline */
+
+.lesson-timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lesson-timeline-item {
+  position: relative;
+  padding: 0 0 var(--space-6) var(--space-8);
+  animation: lesson-fade-in 300ms ease-out both;
+}
+
+.lesson-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 14px;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border-strong);
+}
+
+.lesson-timeline-item:last-child::before {
+  display: none;
+}
+
+.lesson-timeline-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--color-accent);
+  border-radius: 2px;
+  background: var(--color-bg);
+}
+
+.lesson-timeline-title {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.lesson-timeline-detail {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+/* Visual wrapper and shared controls */
+
+.lesson-visual {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.lesson-visual-caption {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.flex-demo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.flex-demo-button {
+  appearance: none;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 200ms ease-out, background-color 200ms ease-out, color 200ms ease-out;
+}
+
+.flex-demo-button:hover {
+  border-color: var(--color-accent);
+}
+
+.flex-demo-button[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.flex-demo-button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Flexbox demo */
+
+.flex-demo-stage {
+  display: flex;
+  gap: var(--space-3);
+  min-height: 180px;
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.flex-demo-stage.is-row {
+  flex-direction: row;
+  align-items: center;
+}
+
+.flex-demo-stage.is-column {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.flex-demo-stage.justify-start {
+  justify-content: flex-start;
+}
+
+.flex-demo-stage.justify-between {
+  justify-content: space-between;
+}
+
+.flex-demo-box {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius);
+  background: var(--color-field);
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  animation: lesson-fade-in 300ms ease-out both;
+}
+
+/* Branches demo */
+
+.branches-svg {
+  width: 100%;
+  height: auto;
+}
+
+.branches-main,
+.branches-feature {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: branches-draw 900ms ease-out forwards;
+}
+
+.branches-main {
+  stroke: var(--color-text-muted);
+}
+
+.branches-feature {
+  stroke: var(--color-accent);
+  animation-duration: 1000ms;
+}
+
+.branches-dot {
+  fill: var(--color-bg);
+  stroke-width: 3;
+  opacity: 0;
+  animation: lesson-fade 300ms ease-out forwards;
+}
+
+.branches-dot.is-main {
+  stroke: var(--color-text-muted);
+}
+
+.branches-dot.is-feature {
+  stroke: var(--color-accent);
+}
+
+.branches-label {
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  fill: var(--color-text-muted);
+}
+
+.branches-label.is-feature {
+  fill: var(--color-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lesson-code-line,
+  .lesson-step,
+  .lesson-table tbody tr,
+  .lesson-timeline-item,
+  .flex-demo-box {
+    animation: none;
+  }
+
+  .branches-main,
+  .branches-feature {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .branches-dot {
+    animation: none;
+    opacity: 1;
+  }
+}

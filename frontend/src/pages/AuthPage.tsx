@@ -28,7 +28,7 @@ type Errors = Partial<Record<'email' | 'username' | 'password' | 'confirmPasswor
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,20}$/
 const MIN_PASSWORD_LENGTH = 8
-const HEADLINE_WORDS = ['Prove it.', 'Debug it.', 'Solve it.', 'Own it.']
+const HEADLINE_WORDS = ['Prove it.', 'Solve it.']
 
 function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
   const [mode, setMode] = useState<AuthMode>('login')
@@ -127,9 +127,9 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
                 devbrawl --start
               </p>
               <ul className="auth-output">
-                <li><span className="auth-output-ok" aria-hidden="true">✓</span>6 categories loaded</li>
-                <li><span className="auth-output-ok" aria-hidden="true">✓</span>5-round duels ready</li>
-                <li><span className="auth-output-ok" aria-hidden="true">✓</span>ELO tracked per category</li>
+                <li><span className="auth-output-ok" aria-hidden="true">✓</span>learn programming concepts</li>
+                <li><span className="auth-output-ok" aria-hidden="true">✓</span>5-question duels</li>
+                <li><span className="auth-output-ok" aria-hidden="true">✓</span>ELO ratings, personalization</li>
               </ul>
             </div>
 

@@ -174,6 +174,52 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DevBrawl.Common.Domain.PlayerProgress", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TotalXp")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("PlayerProgress", (string)null);
+                });
+
+            modelBuilder.Entity("DevBrawl.Common.Domain.XpEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("SourceId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Source", "SourceId")
+                        .IsUnique();
+
+                    b.ToTable("XpEvents");
+                });
+
             modelBuilder.Entity("DevBrawl.Duel.Engine.Domain.DuelMatch", b =>
                 {
                     b.Property<Guid>("Id")
@@ -288,6 +334,63 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                     b.ToTable("DuelRounds");
                 });
 
+            modelBuilder.Entity("DevBrawl.Duel.Scoring.Domain.CategoryRating", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "CategoryId");
+
+                    b.HasIndex("CategoryId", "Rating");
+
+                    b.ToTable("CategoryRatings");
+                });
+
+            modelBuilder.Entity("DevBrawl.Duel.Scoring.Domain.RatingHistoryEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("After")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Before")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DuelId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.HasIndex("DuelId", "UserId", "CategoryId")
+                        .IsUnique();
+
+                    b.ToTable("RatingChanges", (string)null);
+                });
+
             modelBuilder.Entity("DevBrawl.Auth.Domain.RefreshToken", b =>
                 {
                     b.HasOne("DevBrawl.Auth.Domain.User", "User")
@@ -297,6 +400,24 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DevBrawl.Common.Domain.PlayerProgress", b =>
+                {
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithOne()
+                        .HasForeignKey("DevBrawl.Common.Domain.PlayerProgress", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DevBrawl.Common.Domain.XpEvent", b =>
+                {
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("DevBrawl.Duel.Engine.Domain.DuelMatch", b =>
@@ -330,6 +451,42 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                     b.HasOne("DevBrawl.Duel.Engine.Domain.DuelMatch", null)
                         .WithMany("Rounds")
                         .HasForeignKey("DuelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DevBrawl.Duel.Scoring.Domain.CategoryRating", b =>
+                {
+                    b.HasOne("DevBrawl.Common.Domain.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DevBrawl.Duel.Scoring.Domain.RatingHistoryEntry", b =>
+                {
+                    b.HasOne("DevBrawl.Common.Domain.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DevBrawl.Duel.Engine.Domain.DuelMatch", null)
+                        .WithMany()
+                        .HasForeignKey("DuelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

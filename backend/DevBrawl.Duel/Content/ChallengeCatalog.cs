@@ -70,7 +70,9 @@ public sealed class ChallengeCatalog : IChallengeCatalog
                     throw Invalid($"{where} {id}", "duplicate id");
 
                 Validate(source, type, $"{where} {id}");
-                challenges.Add(new Challenge(id, type, typeName, categoryId, slug, categoryName, source));
+                // Parsed nodes materialize lazily, which isn't safe when duels read them concurrently;
+                // a deep clone is fully built up front and is only ever read afterwards
+                challenges.Add(new Challenge(id, type, typeName, categoryId, slug, categoryName, (JsonObject)source.DeepClone()));
             }
         }
 

@@ -1,6 +1,7 @@
 using DevBrawl.Auth.Domain;
 using DevBrawl.Common.Domain;
 using DevBrawl.Duel.Engine.Domain;
+using DevBrawl.Duel.Scoring.Domain;
 using DevBrawl.Infrastructure.Repositories.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<DuelMatch> Duels => Set<DuelMatch>();
     public DbSet<DuelRound> DuelRounds => Set<DuelRound>();
+    public DbSet<CategoryRating> CategoryRatings => Set<CategoryRating>();
+    public DbSet<RatingHistoryEntry> RatingChanges => Set<RatingHistoryEntry>();
+    public DbSet<XpEvent> XpEvents => Set<XpEvent>();
+    public DbSet<PlayerProgress> PlayerProgress => Set<PlayerProgress>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

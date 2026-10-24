@@ -11,7 +11,8 @@ public class AuthService(
     IRefreshTokenRepository refreshTokens,
     IUnitOfWork unitOfWork,
     IPasswordHasher passwordHasher,
-    ITokenService tokenService) : IAuthService
+    ITokenService tokenService,
+    IPlayerStatsRepository playerStats) : IAuthService
 {
     public async Task<AuthResult> SignupAsync(SignupRequest request, CancellationToken cancellationToken = default)
     {
@@ -32,6 +33,8 @@ public class AuthService(
             CreatedAt = DateTime.UtcNow
         };
         users.Add(user);
+        // 1000 in every category and 0 XP, saved together with the user
+        await playerStats.AddStartingStatsAsync(user.Id, cancellationToken);
 
         var (response, _) = IssueTokens(user);
         await unitOfWork.SaveChangesAsync(cancellationToken);

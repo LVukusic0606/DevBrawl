@@ -67,13 +67,16 @@ Color rules:
 
 ### Auth screen
 
-- The whole page is the dark grid (`--color-bg` with a 36px `--color-grid` grid). A slim top bar holds the `> DevBrawl` logo.
-- Below it, one horizontal stage (max 1600px), three columns vertically centered on a shared axis, read left to right:
-  1. **Mascot:** a large Dev_Bug (fills its column, up to 660px or 72vh tall) waving toward the text, aligned to the right edge of its column so it sits close to the intro. No platform or ellipse under it, just a soft drop shadow.
-  2. **Intro:** a cyan `// learn → duel → rank` eyebrow, a large headline "Learn it." with a second line that types, holds, deletes and cycles ("Prove it.", "Debug it.", "Ship it.", "Own it.") followed by a blinking cyan block caret, a short muted lede, and three small pill facts from the spec.
-  3. **Form card:** a terminal-window card (`--color-surface`, 1px `--color-border-strong`, 12px radius) with a title bar showing `~/devbrawl/login` (or `signup`) and a green "secure" dot. The form sits inside.
+Concept: **terminal session**. The whole screen reads as one big terminal window.
+
+- The page is the dark grid (`--color-bg` with a 36px `--color-grid` grid). One terminal window sits centered on it: max 1280px wide, at least `min(760px, 100vh - 144px)` tall, growing when sign up needs more room. It has a translucent `--color-surface-glass` background with no blur, a 1px `--color-border-strong` border with a cyan-tinted top edge, and a 12px radius.
+- **Title bar** (52px): the `> DevBrawl` logo on the left, `~/devbrawl/login` (or `signup`) centered, and nothing on the right.
+- **Body:** two panes split by a 1px `--color-border` line.
+  - **Session pane (left):** vertically centered, and reads like terminal output. First a `$ devbrawl --start` command with three green `✓` output lines (6 categories loaded, 5-round duels ready, ELO tracked per category). Then a large headline "Learn it." with a second line that types, holds, deletes and cycles ("Prove it.", "Debug it.", "Solve it.", "Own it.") followed by a blinking cyan block caret. Then a muted `// comment` instead of a plain paragraph.
+  - **Form pane (right, 460px):** the form, vertically centered, with 28px between its groups.
+- **Mascot:** a small Dev_Bug (132px tall, 92px on mobile) perched on the window's top edge near the right corner, waving. It's a noticeable but quiet detail, never a hero element. It never covers text or form controls.
 - The typed headline is decorative: screen readers get the static text "Prove it.", and with reduced motion it shows "Prove it." without typing or blinking.
-- Below 1180px the mascot column hides. Below 860px everything stacks: logo, eyebrow and headline, then the form card. The lede and facts hide.
+- Below 1180px the panes tighten. Below 900px the window stacks: title bar (without the path), the command and headline, then the form. The output lines and comment hide, and the mascot stays perched at a smaller size.
 
 ### Mascot
 

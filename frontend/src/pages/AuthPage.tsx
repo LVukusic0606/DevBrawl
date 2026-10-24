@@ -28,7 +28,7 @@ type Errors = Partial<Record<'email' | 'username' | 'password' | 'confirmPasswor
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,20}$/
 const MIN_PASSWORD_LENGTH = 8
-const HEADLINE_WORDS = ['Prove it.', 'Debug it.', 'Ship it.', 'Own it.']
+const HEADLINE_WORDS = ['Prove it.', 'Debug it.', 'Solve it.', 'Own it.']
 
 function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
   const [mode, setMode] = useState<AuthMode>('login')
@@ -102,54 +102,52 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
 
   return (
     <main className="auth">
-      <header className="auth-topbar">
-        <span className="auth-logo">
-          <span className="auth-logo-prompt" aria-hidden="true">&gt;</span>
-          DevBrawl
-        </span>
-      </header>
+      <div className="auth-window">
+        <img
+          className="auth-mascot"
+          src={mascotUrl}
+          alt="Dev_Bug, the DevBrawl mascot, waving hello"
+          width={790}
+          height={917}
+        />
 
-      <div className="auth-stage">
-        <div className="auth-mascot-stage">
-          <img
-            className="auth-mascot"
-            src={mascotUrl}
-            alt="Dev_Bug, the DevBrawl mascot, waving hello"
-            width={790}
-            height={917}
-          />
+        <div className="auth-window-bar">
+          <span className="auth-logo">
+            <span className="auth-logo-prompt" aria-hidden="true">&gt;</span>
+            DevBrawl
+          </span>
+          <span className="auth-window-path">~/devbrawl/{isSignup ? 'signup' : 'login'}</span>
         </div>
 
-        <section className="auth-intro" aria-label="About DevBrawl">
-          <p className="auth-eyebrow">// learn → duel → rank</p>
-          <p className="auth-headline">
-            <span>Learn it.</span>
-            <span className="auth-sr-only">Prove it.</span>
-            <span className="auth-headline-typed" aria-hidden="true">
-              {typedWord}
-              <span className="auth-caret" />
-            </span>
-          </p>
-          <p className="auth-lede">
-            Short lessons on how software really works, then 1v1 duels that test whether you actually understand it.
-          </p>
-          <ul className="auth-facts">
-            <li>6 categories</li>
-            <li>5-round duels</li>
-            <li>ELO per category</li>
-          </ul>
-        </section>
+        <div className="auth-window-body">
+          <section className="auth-session" aria-label="About DevBrawl">
+            <div className="auth-terminal">
+              <p className="auth-command">
+                <span className="auth-command-prompt" aria-hidden="true">$</span>
+                devbrawl --start
+              </p>
+              <ul className="auth-output">
+                <li><span className="auth-output-ok" aria-hidden="true">✓</span>6 categories loaded</li>
+                <li><span className="auth-output-ok" aria-hidden="true">✓</span>5-round duels ready</li>
+                <li><span className="auth-output-ok" aria-hidden="true">✓</span>ELO tracked per category</li>
+              </ul>
+            </div>
 
-        <section className="auth-card" aria-labelledby="auth-title">
-          <div className="auth-card-bar">
-            <span>~/devbrawl/{isSignup ? 'signup' : 'login'}</span>
-            <span className="auth-card-status">
-              <span className="auth-card-dot" aria-hidden="true" />
-              secure
-            </span>
-          </div>
+            <p className="auth-headline">
+              <span>Learn it.</span>
+              <span className="auth-sr-only">Prove it.</span>
+              <span className="auth-headline-typed" aria-hidden="true">
+                {typedWord}
+                <span className="auth-caret" />
+              </span>
+            </p>
 
-          <div className="auth-card-body">
+            <p className="auth-comment">
+              // Short lessons on how software really works, then 1v1 duels that test whether you actually understand it.
+            </p>
+          </section>
+
+          <section className="auth-form-pane" aria-labelledby="auth-title">
             <header className="auth-header">
               <h1 id="auth-title" className="auth-title">
                 {isSignup ? 'Create an account' : 'Log in'}
@@ -241,8 +239,8 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
               <GoogleLogo />
               Google
             </button>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
     </main>
   )

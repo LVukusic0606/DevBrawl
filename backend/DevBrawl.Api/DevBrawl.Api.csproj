@@ -19,6 +19,7 @@
     <ProjectReference Include="..\DevBrawl.Auth\DevBrawl.Auth.csproj" />
     <ProjectReference Include="..\DevBrawl.Infrastructure\DevBrawl.Infrastructure.csproj" />
     <ProjectReference Include="..\DevBrawl.Common\DevBrawl.Common.csproj" />
+    <ProjectReference Include="..\DevBrawl.Duel\DevBrawl.Duel.csproj" />
   </ItemGroup>
 
 </Project>

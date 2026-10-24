@@ -3,6 +3,7 @@
     <Project Path="backend/DevBrawl.Api/DevBrawl.Api.csproj" />
     <Project Path="backend/DevBrawl.Auth/DevBrawl.Auth.csproj" />
     <Project Path="backend/DevBrawl.Common/DevBrawl.Common.csproj" />
+    <Project Path="backend/DevBrawl.Duel/DevBrawl.Duel.csproj" />
     <Project Path="backend/DevBrawl.Infrastructure/DevBrawl.Infrastructure.csproj" />
   </Folder>
 </Solution>

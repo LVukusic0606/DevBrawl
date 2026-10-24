@@ -5,8 +5,10 @@ public enum InterviewError
     CategoryNotFound,
     LessonNotFound,
     LessonNotInCategory,
-    QuestionNotFound,
-    AlreadyAnswered,
+    SessionNotFound,
+    SessionFinished,
+    // Another request (e.g. a second tab) added a message at the same time
+    SessionChanged,
     // The AI couldn't be reached, declined, or returned something unusable
     InterviewerUnavailable
 }

@@ -10,24 +10,34 @@ interface MainPageProps {
   onLogout: () => void
 }
 
-const SECTIONS: { id: MainSection; label: string; description: string; bug: string }[] = [
+// bugHead is the horizontal position of the bug's head in its image, from 0 (left) to 1 (right)
+const SECTIONS: {
+  id: MainSection
+  label: string
+  description: string
+  bug: string
+  bugHead: number
+}[] = [
   {
     id: 'learn',
     label: 'Learn',
     description: 'Work through programming concepts step by step.',
     bug: bugLearn,
+    bugHead: 0.444,
   },
   {
     id: 'duel',
     label: 'Duel',
     description: 'Prove your understanding in a quiz against someone else.',
     bug: bugDuel,
+    bugHead: 0.642,
   },
   {
     id: 'interview',
     label: 'Interview',
     description: 'Answer questions the way you would in a real interview.',
     bug: bugInterview,
+    bugHead: 0.467,
   },
 ]
 
@@ -59,7 +69,15 @@ function MainPage({ onSelect, onLogout }: MainPageProps) {
                 <span className="home-action-label">{section.label}</span>
                 <span className="home-action-desc">{section.description}</span>
               </span>
-              <img className="home-action-bug" src={section.bug} alt="" />
+              <span className="home-action-bug-slot">
+                {/* Shift each image so the bug's head sits in the middle of the slot. */}
+                <img
+                  className="home-action-bug"
+                  src={section.bug}
+                  alt=""
+                  style={{ transform: `translateX(${(0.5 - section.bugHead) * 100}%)` }}
+                />
+              </span>
               <i className="ti ti-arrow-right home-action-arrow" aria-hidden="true" />
             </button>
           ))}

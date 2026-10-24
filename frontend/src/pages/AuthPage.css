@@ -232,8 +232,13 @@
   transition: filter 200ms ease-out;
 }
 
-.auth-submit:hover {
+.auth-submit:hover:not(:disabled) {
   filter: brightness(1.1);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .auth-submit:focus-visible {

@@ -40,6 +40,29 @@ To check that both are wired up, open http://localhost:5173/api/health — it sh
 
 - Put all backend routes under `/api`, e.g. `[Route("api/[controller]")]` on controllers.
 - OpenAPI spec (development only): http://localhost:5287/openapi/v1.json
+- Swagger UI (development only): http://localhost:5287/swagger
+
+## Database
+
+The backend uses a locally installed PostgreSQL (no Docker) through EF Core + Npgsql. The development connection string in `backend/DevBrawl.Api/appsettings.Development.json` expects `postgres`/`postgres` on `localhost:5432`, database `devbrawl`. If your local password differs, override it without editing the file:
+
+```bash
+cd backend/DevBrawl.Api
+dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=devbrawl;Username=postgres;Password=<yours>"
+```
+
+Migrations (needs `dotnet tool install -g dotnet-ef`):
+
+```bash
+cd backend/DevBrawl.Api
+dotnet ef migrations add <Name>
+dotnet ef database update
+```
+
+Check the connection at http://localhost:5287/api/health/db.
+
+To browse the database in pgAdmin 4, import `backend/pgadmin-servers.json` via **Tools → Import/Export Servers** (password: `postgres`).
 
 ## Other commands
 

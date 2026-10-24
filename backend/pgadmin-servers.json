@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "DevBrawl (local)",
+      "Group": "Servers",
+      "Host": "localhost",
+      "Port": 5432,
+      "MaintenanceDB": "devbrawl",
+      "Username": "postgres",
+      "SSLMode": "prefer"
+    }
+  }
+}

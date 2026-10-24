@@ -1,0 +1,271 @@
+{
+  "$schema": "./challenge.schema.json",
+  "category": {
+    "id": "databases",
+    "name": "Databases"
+  },
+  "challenges": [
+    {
+      "id": "db-concept-01",
+      "type": "conceptQuiz",
+      "title": "Indexing a filtered, sorted query",
+      "prompt": "This query is slow on an orders table with 50 million rows:\n\nSELECT * FROM orders WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 20;\n\nWhich index helps it most?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Two separate indexes: one on customer_id and one on created_at."
+        },
+        {
+          "id": "b",
+          "text": "A composite index on (customer_id, created_at)."
+        },
+        {
+          "id": "c",
+          "text": "A composite index on (created_at, customer_id)."
+        },
+        {
+          "id": "d",
+          "text": "An index on created_at."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "With (customer_id, created_at), all of one customer's rows sit together in the index, already ordered by created_at. PostgreSQL can jump to the customer, read the newest 20 entries by scanning that part of the index backwards, and stop. With created_at first, one customer's rows are scattered across the whole index.",
+      "commonMistake": {
+        "optionId": "a",
+        "explanation": "The planner would typically use only the customer_id index and then still has to sort all of that customer's orders to find the newest 20. Two single-column indexes can't hand back one customer's rows already ordered by created_at."
+      }
+    },
+    {
+      "id": "db-concept-02",
+      "type": "conceptQuiz",
+      "title": "Selling the last item twice",
+      "prompt": "Two requests buy the last item at the same time. Each reads stock = 1, checks that it's above 0, and saves stock = 0. Both orders succeed. Which fix prevents overselling?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Add an index on the stock column."
+        },
+        {
+          "id": "b",
+          "text": "Cache the stock value in Redis so reads are faster."
+        },
+        {
+          "id": "c",
+          "text": "Use one atomic statement, UPDATE products SET stock = stock - 1 WHERE id = $1 AND stock > 0, and reject the order if no row was updated."
+        },
+        {
+          "id": "d",
+          "text": "Wrap the read and the write in a transaction at PostgreSQL's default READ COMMITTED isolation level."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "The atomic UPDATE checks and decrements in one step. The second request waits for the first one's row lock, then re-checks stock > 0 against the committed value, finds 0, and updates no rows. The application sees 0 affected rows and rejects the order.",
+      "commonMistake": {
+        "optionId": "d",
+        "explanation": "Under READ COMMITTED, both transactions can still read stock = 1 before either one writes, and both then save 0. A transaction alone doesn't lock rows you only read; you'd need SELECT ... FOR UPDATE or a stricter isolation level."
+      }
+    },
+    {
+      "id": "db-investigate-01",
+      "type": "codeInvestigation",
+      "title": "A slow leaderboard",
+      "prompt": "GET /api/leaderboard takes about 4 seconds. The database log shows 101 queries for every request to it. Find the file where the problem originates.",
+      "files": [
+        {
+          "path": "Controllers/LeaderboardController.cs",
+          "language": "csharp",
+          "content": "[ApiController]\n[Route(\"api/leaderboard\")]\npublic class LeaderboardController(LeaderboardService service) : ControllerBase\n{\n    [HttpGet]\n    public Task<List<LeaderboardRow>> Get() => service.GetTopAsync(100);\n}"
+        },
+        {
+          "path": "Services/LeaderboardService.cs",
+          "language": "csharp",
+          "content": "public class LeaderboardService(AppDbContext db)\n{\n    public async Task<List<LeaderboardRow>> GetTopAsync(int count)\n    {\n        var players = await db.Players\n            .OrderByDescending(p => p.Elo)\n            .Take(count)\n            .ToListAsync();\n\n        var rows = new List<LeaderboardRow>();\n        foreach (var player in players)\n        {\n            var wins = await db.Duels.CountAsync(d => d.WinnerId == player.Id);\n            rows.Add(new LeaderboardRow(player.Nickname, player.Elo, wins));\n        }\n        return rows;\n    }\n}"
+        },
+        {
+          "path": "Data/AppDbContext.cs",
+          "language": "csharp",
+          "content": "public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)\n{\n    public DbSet<Player> Players => Set<Player>();\n    public DbSet<Duel> Duels => Set<Duel>();\n\n    protected override void OnModelCreating(ModelBuilder model)\n    {\n        model.Entity<Player>().HasIndex(p => p.Elo);\n        model.Entity<Duel>().HasIndex(d => d.WinnerId);\n    }\n}"
+        }
+      ],
+      "answer": {
+        "path": "Services/LeaderboardService.cs",
+        "lines": [
+          11,
+          15
+        ]
+      },
+      "explanation": "The service loads 100 players with one query, then runs a separate COUNT query for each player inside the loop: 1 + 100 queries. This is the N+1 problem. The indexes in AppDbContext are fine; the number of round trips is the issue. Counting wins for all 100 players in one grouped query brings it down to two queries."
+    },
+    {
+      "id": "db-investigate-02",
+      "type": "codeInvestigation",
+      "title": "The pool runs dry",
+      "prompt": "A few minutes after a search engine started crawling old report links, the API began failing every database request with \"timeout exceeded when trying to connect\". Restarting the server fixes it for a few minutes. Find the file where the problem originates.",
+      "files": [
+        {
+          "path": "src/db.ts",
+          "language": "typescript",
+          "content": "import { Pool } from 'pg'\n\nexport const pool = new Pool({\n  connectionString: process.env.DATABASE_URL,\n  max: 10,\n  idleTimeoutMillis: 30000,\n  connectionTimeoutMillis: 5000,\n})"
+        },
+        {
+          "path": "src/routes/reports.ts",
+          "language": "typescript",
+          "content": "import { pool } from '../db'\n\nexport async function getReport(req, res) {\n  const client = await pool.connect()\n  const { rows } = await client.query('SELECT * FROM reports WHERE id = $1', [req.params.id])\n\n  if (rows.length === 0) {\n    return res.status(404).json({ error: 'Report not found' })\n  }\n\n  client.release()\n  res.json(rows[0])\n}"
+        },
+        {
+          "path": "src/routes/users.ts",
+          "language": "typescript",
+          "content": "import { pool } from '../db'\n\nexport async function getUser(req, res) {\n  const { rows } = await pool.query('SELECT id, nickname FROM users WHERE id = $1', [req.params.id])\n  if (rows.length === 0) return res.status(404).json({ error: 'User not found' })\n  res.json(rows[0])\n}"
+        }
+      ],
+      "answer": {
+        "path": "src/routes/reports.ts",
+        "lines": [
+          7,
+          9
+        ]
+      },
+      "explanation": "When a report doesn't exist, the handler returns early without calling client.release(). Every old link the crawler visits leaks one connection, and after 10 leaks the pool (max: 10) is empty, so every request waits 5 seconds and fails. Releasing the client in a finally block, or using pool.query for single queries as users.ts does, returns the connection on every path, including errors."
+    },
+    {
+      "id": "db-fix-01",
+      "type": "fixTheBug",
+      "title": "Too many queries for one page",
+      "prompt": "The orders page shows 50 orders with each customer's name. Rendering it runs 51 database queries. Which change fixes it?",
+      "code": {
+        "language": "csharp",
+        "content": "var orders = await db.Orders\n    .OrderByDescending(o => o.CreatedAt)\n    .Take(50)\n    .ToListAsync();\n\nforeach (var order in orders)\n{\n    order.Customer = await db.Customers.FindAsync(order.CustomerId);\n}"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Add an index on Customers.Id.",
+          "code": "modelBuilder.Entity<Customer>().HasIndex(c => c.Id);",
+          "outcome": "Nothing improves: Id is the primary key and already indexed. Each lookup was already fast; the problem is making 50 of them."
+        },
+        {
+          "id": "b",
+          "summary": "Cache every customer in memory for 24 hours.",
+          "code": "order.Customer = await cache.GetOrCreateAsync($\"customer:{order.CustomerId}\", entry =>\n{\n    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24);\n    return db.Customers.FindAsync(order.CustomerId).AsTask();\n});",
+          "outcome": "Repeat visits get faster, but the first load still runs 51 queries, and renamed customers show their old name for up to a day."
+        },
+        {
+          "id": "c",
+          "summary": "Run the 50 customer lookups in parallel with Task.WhenAll.",
+          "code": "var lookups = orders.Select(o => db.Customers.FindAsync(o.CustomerId).AsTask());\nvar customers = await Task.WhenAll(lookups);",
+          "outcome": "EF Core throws InvalidOperationException: a second operation was started on this context instance before a previous operation completed. A DbContext can't run queries in parallel, and it would still be 51 queries."
+        },
+        {
+          "id": "d",
+          "summary": "Load the customers in the same query with Include.",
+          "code": "var orders = await db.Orders\n    .Include(o => o.Customer)\n    .OrderByDescending(o => o.CreatedAt)\n    .Take(50)\n    .ToListAsync();",
+          "outcome": "The page runs a single query that joins orders and customers. Load time drops from about 800 ms to about 40 ms."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Include tells EF Core to fetch the related customers together with the orders, so one round trip replaces 50. The page was slow because of the number of queries, not the speed of each one."
+    },
+    {
+      "id": "db-fix-02",
+      "type": "fixTheBug",
+      "title": "Money that vanished",
+      "prompt": "During a deploy, the API process was stopped between these two statements. 40 EUR left one account and never arrived in the other. Which change fixes it?",
+      "code": {
+        "language": "csharp",
+        "content": "await connection.ExecuteAsync(\n    \"UPDATE accounts SET balance = balance - @Amount WHERE id = @From\",\n    new { Amount = amount, From = fromId });\n\nawait connection.ExecuteAsync(\n    \"UPDATE accounts SET balance = balance + @Amount WHERE id = @To\",\n    new { Amount = amount, To = toId });"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Run both statements in one database transaction and commit after the second one.",
+          "code": "await using var tx = await connection.BeginTransactionAsync();\n\nawait connection.ExecuteAsync(\n    \"UPDATE accounts SET balance = balance - @Amount WHERE id = @From\",\n    new { Amount = amount, From = fromId }, tx);\n\nawait connection.ExecuteAsync(\n    \"UPDATE accounts SET balance = balance + @Amount WHERE id = @To\",\n    new { Amount = amount, To = toId }, tx);\n\nawait tx.CommitAsync();",
+          "outcome": "If the process stops before the commit, PostgreSQL rolls back both updates. Either both balances change or neither does."
+        },
+        {
+          "id": "b",
+          "summary": "Keep the code and add a nightly job that finds and fixes mismatched balances.",
+          "code": "// Transfer code unchanged\nservices.AddHostedService<NightlyBalanceReconciliationJob>();",
+          "outcome": "Balances stay wrong for up to a day, and the job has to guess which half of each transfer actually happened."
+        },
+        {
+          "id": "c",
+          "summary": "Swap the statements so the money is added before it is subtracted.",
+          "code": "await connection.ExecuteAsync(\n    \"UPDATE accounts SET balance = balance + @Amount WHERE id = @To\",\n    new { Amount = amount, To = toId });\n\nawait connection.ExecuteAsync(\n    \"UPDATE accounts SET balance = balance - @Amount WHERE id = @From\",\n    new { Amount = amount, From = fromId });",
+          "outcome": "If the process stops between them now, money is created out of nothing instead of lost. The accounts are still inconsistent."
+        },
+        {
+          "id": "d",
+          "summary": "Retry the second statement up to 3 times if it fails.",
+          "code": "for (var attempt = 1; attempt <= 3; attempt++)\n{\n    try\n    {\n        await connection.ExecuteAsync(\n            \"UPDATE accounts SET balance = balance + @Amount WHERE id = @To\",\n            new { Amount = amount, To = toId });\n        break;\n    }\n    catch (NpgsqlException) when (attempt < 3) { }\n}",
+          "outcome": "Retries help with temporary errors, but a stopped process can't retry anything. The money is still lost when the process stops at the wrong moment."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "A transaction makes both updates atomic: PostgreSQL applies them together at COMMIT, and an interrupted transaction is rolled back automatically. Reordering or retrying only moves the window in which a crash leaves the data inconsistent."
+    },
+    {
+      "id": "db-flow-01",
+      "type": "followTheRequest",
+      "title": "How a commit becomes durable",
+      "prompt": "A client runs BEGIN; INSERT ...; COMMIT; against PostgreSQL. Arrange how the new row becomes durable, in order.",
+      "steps": [
+        "The client sends BEGIN and the INSERT statement.",
+        "PostgreSQL changes the table page in memory (shared buffers) and records the change in the write-ahead log (WAL) buffer.",
+        "The client sends COMMIT.",
+        "PostgreSQL flushes the WAL, up to and including the commit record, to disk.",
+        "PostgreSQL reports to the client that the COMMIT succeeded.",
+        "Later, a checkpoint writes the changed table page from memory to the data file on disk."
+      ],
+      "explanation": "PostgreSQL makes changes in memory first and records them in the write-ahead log. At COMMIT, only the WAL has to reach disk before success is reported; that is enough to replay the change after a crash. The table page itself is written to disk later, during a checkpoint, which keeps commits fast."
+    },
+    {
+      "id": "db-flow-02",
+      "type": "followTheRequest",
+      "title": "A query through a connection pool",
+      "prompt": "An API handler runs a query using a connection pool that already has open connections. Arrange what happens, in order.",
+      "steps": [
+        "The handler asks the pool for a connection.",
+        "The pool hands over an idle connection that is already open and authenticated.",
+        "The handler sends the SQL query over that connection.",
+        "PostgreSQL parses, plans and executes the query.",
+        "The result rows are sent back to the handler.",
+        "The handler releases the connection, and the pool keeps it open for the next request."
+      ],
+      "explanation": "Opening a PostgreSQL connection costs a TCP handshake, authentication and a new server process, so pools keep connections open and lend them out. Releasing a connection returns it to the pool instead of closing it. A connection that is never released is lost to the pool until the process restarts."
+    },
+    {
+      "id": "db-logs-01",
+      "type": "logAnalysis",
+      "title": "Slow orders after a migration",
+      "prompt": "Since this morning, the orders page is slow and sometimes times out. Nothing was deployed since a database migration ran at 02:00. Which log line reveals the root cause?",
+      "logs": [
+        "02:00:03 INFO  migrator  Applying migration 20261020_RenameOrderColumns",
+        "02:00:04 INFO  migrator  ALTER TABLE orders RENAME COLUMN cust_id TO customer_id",
+        "02:00:04 INFO  migrator  DROP INDEX ix_orders_cust_id",
+        "02:00:05 INFO  migrator  Migration applied successfully",
+        "08:15:22 LOG   postgres  duration: 4210.552 ms  statement: SELECT * FROM orders WHERE customer_id = 8812 ORDER BY created_at DESC LIMIT 20",
+        "08:15:22 WARN  api       GET /api/orders took 4.3 s",
+        "08:15:40 WARN  api       Connection pool usage at 92%",
+        "08:16:01 ERROR api       GET /api/orders timed out after 5 s"
+      ],
+      "rootCauseLine": 3,
+      "explanation": "In PostgreSQL, renaming a column keeps its indexes, so the migration didn't need to drop ix_orders_cust_id. Without it, every lookup of a customer's orders scans the whole table (the 4.2 second query). Slow queries hold connections longer, which is why pool usage climbs. Recreating the index on customer_id fixes it."
+    },
+    {
+      "id": "db-logs-02",
+      "type": "logAnalysis",
+      "title": "A database disk that filled up",
+      "prompt": "At 05:12 the database crashed and the API lost its connection. Disk usage had been climbing all night, although the amount of data barely changed. Which log line reveals the root cause?",
+      "logs": [
+        "01:00:00 LOG   postgres  checkpoint complete: wrote 1532 buffers (9.4%)",
+        "01:00:02 ERROR backup    archive_command failed for WAL file 000000010000000A0000003F: AccessDenied (s3:PutObject)",
+        "02:30:00 WARN  monitor   /var/lib/postgresql disk usage 75%",
+        "04:10:00 WARN  monitor   /var/lib/postgresql disk usage 91%",
+        "05:12:45 PANIC postgres  could not write to file \"pg_wal/xlogtemp.812\": No space left on device",
+        "05:12:46 ERROR api       Failed to connect to the database: Connection refused"
+      ],
+      "rootCauseLine": 2,
+      "explanation": "With WAL archiving enabled, PostgreSQL keeps every WAL file until archive_command succeeds for it. The upload to S3 started failing with AccessDenied, so WAL files piled up in pg_wal until the disk was full and PostgreSQL stopped. The disk warnings, the PANIC and the API errors are all consequences. Fixing the S3 permissions lets the backlog be archived and frees the space."
+    }
+  ]
+}

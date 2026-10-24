@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://devbrawl.io/schemas/challenge-pack.json",
+  "title": "DevBrawl challenge pack",
+  "description": "Brawl challenges for one category. See README.md in this folder.",
+  "type": "object",
+  "required": ["category", "challenges"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "category": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "enum": ["apis-networking", "databases", "security", "debugging", "system-design", "infrastructure"]
+        },
+        "name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "challenges": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "enum": ["conceptQuiz", "codeInvestigation", "fixTheBug", "followTheRequest", "logAnalysis"]
+          }
+        },
+        "allOf": [
+          { "if": { "properties": { "type": { "const": "conceptQuiz" } } }, "then": { "$ref": "#/$defs/conceptQuiz" } },
+          { "if": { "properties": { "type": { "const": "codeInvestigation" } } }, "then": { "$ref": "#/$defs/codeInvestigation" } },
+          { "if": { "properties": { "type": { "const": "fixTheBug" } } }, "then": { "$ref": "#/$defs/fixTheBug" } },
+          { "if": { "properties": { "type": { "const": "followTheRequest" } } }, "then": { "$ref": "#/$defs/followTheRequest" } },
+          { "if": { "properties": { "type": { "const": "logAnalysis" } } }, "then": { "$ref": "#/$defs/logAnalysis" } }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z]+-(concept|investigate|fix|flow|logs)-[0-9]{2}$",
+      "description": "Stable id, e.g. db-fix-01. Never reuse or change an id once duels reference it."
+    },
+    "text": { "type": "string", "minLength": 1 },
+    "option": {
+      "type": "object",
+      "required": ["id", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z]$" },
+        "text": { "$ref": "#/$defs/text" }
+      }
+    },
+    "conceptQuiz": {
+      "type": "object",
+      "required": ["id", "type", "title", "prompt", "options", "correctOptionId", "explanation", "commonMistake"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "const": "conceptQuiz" },
+        "title": { "$ref": "#/$defs/text" },
+        "prompt": { "$ref": "#/$defs/text" },
+        "options": { "type": "array", "minItems": 4, "maxItems": 4, "items": { "$ref": "#/$defs/option" } },
+        "correctOptionId": { "type": "string" },
+        "explanation": { "$ref": "#/$defs/text" },
+        "commonMistake": {
+          "description": "The most plausible wrong option and why it's wrong.",
+          "type": "object",
+          "required": ["optionId", "explanation"],
+          "additionalProperties": false,
+          "properties": {
+            "optionId": { "type": "string" },
+            "explanation": { "$ref": "#/$defs/text" }
+          }
+        }
+      }
+    },
+    "codeInvestigation": {
+      "type": "object",
+      "required": ["id", "type", "title", "prompt", "files", "answer", "explanation"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "const": "codeInvestigation" },
+        "title": { "$ref": "#/$defs/text" },
+        "prompt": { "$ref": "#/$defs/text" },
+        "files": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["path", "language", "content"],
+            "additionalProperties": false,
+            "properties": {
+              "path": { "$ref": "#/$defs/text" },
+              "language": { "$ref": "#/$defs/text" },
+              "content": { "$ref": "#/$defs/text" }
+            }
+          }
+        },
+        "answer": {
+          "description": "The player picks a file; only the file is graded. lines (1-based, inclusive) are highlighted after the round.",
+          "type": "object",
+          "required": ["path", "lines"],
+          "additionalProperties": false,
+          "properties": {
+            "path": { "$ref": "#/$defs/text" },
+            "lines": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": { "type": "integer", "minimum": 1 }
+            }
+          }
+        },
+        "explanation": { "$ref": "#/$defs/text" }
+      }
+    },
+    "fixTheBug": {
+      "type": "object",
+      "required": ["id", "type", "title", "prompt", "code", "options", "correctOptionId", "explanation"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "const": "fixTheBug" },
+        "title": { "$ref": "#/$defs/text" },
+        "prompt": { "$ref": "#/$defs/text" },
+        "code": {
+          "type": "object",
+          "required": ["language", "content"],
+          "additionalProperties": false,
+          "properties": {
+            "language": { "$ref": "#/$defs/text" },
+            "content": { "$ref": "#/$defs/text" }
+          }
+        },
+        "options": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "required": ["id", "summary", "code", "outcome"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z]$" },
+              "summary": { "$ref": "#/$defs/text" },
+              "code": { "$ref": "#/$defs/text", "description": "Same language as the challenge code." },
+              "outcome": { "$ref": "#/$defs/text", "description": "Simulated result shown after the round." }
+            }
+          }
+        },
+        "correctOptionId": { "type": "string" },
+        "explanation": { "$ref": "#/$defs/text" }
+      }
+    },
+    "followTheRequest": {
+      "type": "object",
+      "required": ["id", "type", "title", "prompt", "steps", "explanation"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "const": "followTheRequest" },
+        "title": { "$ref": "#/$defs/text" },
+        "prompt": { "$ref": "#/$defs/text" },
+        "steps": {
+          "description": "In the correct order. The server shuffles them and assigns its own ids before sending.",
+          "type": "array",
+          "minItems": 4,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "explanation": { "$ref": "#/$defs/text" }
+      }
+    },
+    "logAnalysis": {
+      "type": "object",
+      "required": ["id", "type", "title", "prompt", "logs", "rootCauseLine", "explanation"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "const": "logAnalysis" },
+        "title": { "$ref": "#/$defs/text" },
+        "prompt": { "$ref": "#/$defs/text" },
+        "logs": { "type": "array", "minItems": 4, "items": { "$ref": "#/$defs/text" } },
+        "rootCauseLine": { "type": "integer", "minimum": 1, "description": "1-based index into logs." },
+        "explanation": { "$ref": "#/$defs/text" }
+      }
+    }
+  }
+}

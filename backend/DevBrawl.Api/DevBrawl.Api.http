@@ -1,0 +1,6 @@
+@DevBrawl.Api_HostAddress = http://localhost:5287
+
+GET {{DevBrawl.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

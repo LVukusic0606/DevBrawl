@@ -3,7 +3,7 @@
 .duel-challenge {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-6);
   min-width: 0;
 }
 
@@ -104,6 +104,66 @@
 
 .duel-code-text {
   white-space: pre;
+  color: var(--code-plain);
+}
+
+/* highlight.js token classes, colored like VS Code Dark+ */
+.duel-code .hljs-keyword,
+.duel-code .hljs-literal,
+.duel-code .hljs-tag,
+.duel-code .hljs-name,
+.duel-code .hljs-selector-tag {
+  color: var(--code-keyword);
+}
+
+.duel-code .hljs-meta,
+.duel-code .hljs-section {
+  color: var(--code-control);
+}
+
+.duel-code .hljs-string,
+.duel-code .hljs-symbol,
+.duel-code .hljs-char {
+  color: var(--code-string);
+}
+
+.duel-code .hljs-number {
+  color: var(--code-number);
+}
+
+.duel-code .hljs-comment,
+.duel-code .hljs-quote {
+  color: var(--code-comment);
+}
+
+.duel-code .hljs-title,
+.duel-code .hljs-title.function_ {
+  color: var(--code-function);
+}
+
+.duel-code .hljs-title.class_,
+.duel-code .hljs-type,
+.duel-code .hljs-built_in {
+  color: var(--code-type);
+}
+
+.duel-code .hljs-attr,
+.duel-code .hljs-attribute,
+.duel-code .hljs-variable,
+.duel-code .hljs-template-variable,
+.duel-code .hljs-property,
+.duel-code .hljs-params {
+  color: var(--code-variable);
+}
+
+.duel-code .hljs-regexp {
+  color: var(--code-regexp);
+}
+
+.duel-code .hljs-subst,
+.duel-code .hljs-operator,
+.duel-code .hljs-punctuation {
+  color: var(--code-plain);
 }
 
 .duel-code.is-compact {
@@ -149,8 +209,7 @@
 }
 
 .duel-primary:focus-visible,
-.duel-secondary:focus-visible,
-.duel-icon-button:focus-visible {
+.duel-secondary:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-duel);
 }
@@ -184,29 +243,8 @@
   color: var(--color-duel);
 }
 
-.duel-icon-button {
-  appearance: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-bg);
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
 
-.duel-icon-button:hover:not(:disabled) {
-  border-color: var(--color-duel);
-  color: var(--color-text);
-}
 
-.duel-icon-button:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
 
 /* Lock bar: the one primary action of a round */
 
@@ -214,22 +252,14 @@
   position: sticky;
   bottom: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
+  justify-content: flex-end;
   padding: var(--space-4) 0;
-  border-top: 1px solid var(--color-border);
-  background: var(--color-bg);
 }
 
-.duel-lockbar-hint {
-  margin: 0;
-  min-width: 0;
-  font-family: var(--font-body);
-  font-size: 15px;
-  color: var(--color-text-muted);
-  overflow-wrap: anywhere;
+.duel-lockbar .duel-primary {
+  min-width: 220px;
 }
+
 
 /* Choice cards shared by the concept quiz and fix the bug */
 
@@ -243,6 +273,7 @@
 .fix-option {
   appearance: none;
   display: flex;
+  align-items: center;
   gap: var(--space-4);
   padding: var(--space-6);
   border: 1px solid var(--color-border);
@@ -271,16 +302,15 @@
   background: var(--color-duel-soft);
 }
 
+/* In the reveal a colored border marks right and wrong; tinted fills made the screen too colorful */
 .quiz-option.is-correct,
 .fix-option.is-correct {
   border-color: var(--color-success);
-  background: var(--color-success-soft);
 }
 
 .quiz-option.is-wrong,
 .fix-option.is-wrong {
   border-color: var(--color-danger);
-  background: var(--color-danger-soft);
 }
 
 .quiz-option.is-muted,
@@ -313,7 +343,7 @@
 
 .quiz-option-text {
   font-family: var(--font-body);
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.5;
 }
 
@@ -323,16 +353,6 @@
   gap: var(--space-2);
 }
 
-.quiz-option-mistake {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
-  font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--color-text-muted);
-}
 
 /* Code investigation: file tree and viewer */
 
@@ -471,17 +491,35 @@
   gap: var(--space-2);
 }
 
+/* The code with the bug gets a duel-pink frame, so it reads apart from the candidate fixes below */
+.fix-current .duel-code {
+  border-color: var(--color-duel);
+  background: var(--color-surface);
+}
+
+.fix-current.is-revealed .duel-code {
+  border-color: var(--color-border);
+}
+
 .fix-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
+  /* Every card as tall as the tallest, so all code boxes are the same size */
+  grid-auto-rows: 1fr;
+  gap: var(--space-4);
 }
 
 .fix-option {
   flex-direction: column;
+  align-items: stretch;
+  height: 100%;
   padding: var(--space-4);
   gap: var(--space-3);
   min-width: 0;
+}
+
+.fix-option .duel-code {
+  flex: 1;
 }
 
 .fix-option-head {
@@ -556,6 +594,11 @@
   border-color: var(--color-duel);
 }
 
+.flow-step:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-duel);
+}
+
 .flow-step.is-dragging {
   border-style: dashed;
   border-color: var(--color-duel);
@@ -604,10 +647,6 @@
   line-height: 1.5;
 }
 
-.flow-step-moves {
-  display: flex;
-  gap: var(--space-1);
-}
 
 /* Log analysis */
 

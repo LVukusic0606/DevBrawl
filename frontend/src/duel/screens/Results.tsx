@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { getDuel } from '../../api/duels'
-import { StatusTag } from '../challenges/shared'
-import { roundTypeName } from '../rounds'
+import { ROUND_RESULT_LABELS, roundTypeIcon, roundTypeName } from '../rounds'
 import { formatClock } from '../useCountdown'
 import type { Match } from '../useDuel'
 import type { DuelDetails, DuelEndedEvent, DuelResult, DuelRoundReview } from '../types'
@@ -78,14 +77,7 @@ export function Results({ match, ended, categoryName, onReview, onPlayAgain }: R
         </div>
         <div className="duel-stat">
           <dt>XP earned</dt>
-          <dd>+{ended.xpGained}</dd>
-        </div>
-        <div className="duel-stat">
-          <dt>Level</dt>
-          <dd>
-            {ended.level}
-            <span className="duel-stat-sub">{ended.totalXp} XP total</span>
-          </dd>
+          <dd className="is-reward">+{ended.xpGained}</dd>
         </div>
       </dl>
 
@@ -93,64 +85,64 @@ export function Results({ match, ended, categoryName, onReview, onPlayAgain }: R
         <h2 id="ratings-title" className="duel-section-title">
           Rating by category
         </h2>
-        <p className="duel-muted">
-          Every category keeps its own rating, so one duel can raise one and lower another.
-        </p>
         <table className="duel-table">
           <thead>
             <tr>
               <th scope="col">Category</th>
-              <th scope="col">Your rounds</th>
+              <th scope="col">Challenge</th>
+              <th scope="col">You</th>
+              <th scope="col">{opponentName}</th>
+              <th scope="col">Round</th>
               <th scope="col">Rating</th>
               <th scope="col">Change</th>
             </tr>
           </thead>
           <tbody>
-            {ended.ratingChanges.map((change) => (
-              <tr key={change.categoryId}>
-                <td>{categoryName(change.categoryId)}</td>
-                <td>{categoryRecord(rounds, change.categoryId)}</td>
-                <td className="duel-table-number">
-                  {change.before} → {change.after}
-                </td>
-                <td className={`duel-table-number duel-delta ${deltaTone(change.delta)}`}>
-                  {change.delta > 0 ? `+${change.delta}` : change.delta}
-                </td>
-              </tr>
-            ))}
+            {ended.ratingChanges.map((change) => {
+              // A category can come up in more than one round; each round gets its own line in the cell
+              const inCategory = rounds.filter((round) => round.categoryId === change.categoryId)
+              return (
+                <tr key={change.categoryId}>
+                  <td>{categoryName(change.categoryId)}</td>
+                  <td>
+                    <RoundLines rounds={inCategory}>
+                      {(round) => (
+                        <span className="duel-table-challenge">
+                          <i className={`ti ${roundTypeIcon(round.type)}`} aria-hidden="true" />
+                          <span className="duel-sr-only">{roundTypeName(round.type)}:</span>
+                          {round.challenge.title}
+                        </span>
+                      )}
+                    </RoundLines>
+                  </td>
+                  <td>
+                    <RoundLines rounds={inCategory}>{(round) => <Mark correct={round.youCorrect} />}</RoundLines>
+                  </td>
+                  <td>
+                    <RoundLines rounds={inCategory}>{(round) => <Mark correct={round.opponentCorrect} />}</RoundLines>
+                  </td>
+                  <td>
+                    <RoundLines rounds={inCategory}>
+                      {(round) => (
+                        <span className={`duel-table-outcome is-${round.result}`}>
+                          {ROUND_RESULT_LABELS[round.result]}
+                        </span>
+                      )}
+                    </RoundLines>
+                  </td>
+                  <td className="duel-table-number">
+                    {change.before} → <span className="duel-rating-after">{change.after}</span>
+                  </td>
+                  <td className={`duel-table-number duel-delta ${deltaTone(change.delta)}`}>
+                    {change.delta > 0 ? `+${change.delta}` : change.delta}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
-      </section>
-
-      <section className="duel-panel" aria-labelledby="rounds-title">
-        <h2 id="rounds-title" className="duel-section-title">
-          Challenges
-        </h2>
-        {failed && <p className="duel-error">Couldn't load the rounds. The result above is saved.</p>}
+        {failed && <p className="duel-error">Couldn't load the rounds. The ratings above are saved.</p>}
         {!failed && !details && <p className="duel-muted">Loading the rounds…</p>}
-        {details && (
-          <ol className="duel-round-results">
-            {rounds.map((round) => (
-              <li key={round.roundNumber} className="duel-round-result">
-                <span className="duel-round-number">{round.roundNumber}</span>
-                <span className="duel-round-result-main">
-                  <span className="duel-round-result-title">{round.challenge.title}</span>
-                  <span className="duel-muted">
-                    {roundTypeName(round.type)} · {categoryName(round.categoryId)}
-                  </span>
-                </span>
-                <span className="duel-round-result-tags">
-                  <StatusTag tone={round.youCorrect ? 'correct' : 'wrong'}>
-                    You {round.youCorrect ? 'right' : 'wrong'}
-                  </StatusTag>
-                  <StatusTag tone={round.opponentCorrect ? 'correct' : 'wrong'}>
-                    {opponentName} {round.opponentCorrect ? 'right' : 'wrong'}
-                  </StatusTag>
-                </span>
-              </li>
-            ))}
-          </ol>
-        )}
       </section>
 
       <div className="duel-results-actions">
@@ -167,16 +159,28 @@ export function Results({ match, ended, categoryName, onReview, onPlayAgain }: R
   )
 }
 
-// How the player did in one category, e.g. "1 won, 1 lost"
-function categoryRecord(rounds: DuelRoundReview[], categoryId: number) {
-  const inCategory = rounds.filter((round) => round.categoryId === categoryId)
-  if (inCategory.length === 0) return '–'
-  const won = inCategory.filter((round) => round.result === 'won').length
-  const lost = inCategory.filter((round) => round.result === 'lost').length
-  const even = inCategory.length - won - lost
-  return [won && `${won} won`, lost && `${lost} lost`, even && `${even} even`].filter(Boolean).join(', ')
-}
-
 function deltaTone(delta: number) {
   return delta > 0 ? 'is-up' : delta < 0 ? 'is-down' : 'is-flat'
+}
+
+// One line per round of the category, or a dash while the rounds are still loading
+function RoundLines({ rounds, children }: { rounds: DuelRoundReview[]; children: (round: DuelRoundReview) => ReactNode }) {
+  if (rounds.length === 0) return <span className="duel-muted">–</span>
+  return (
+    <span className="duel-table-lines">
+      {rounds.map((round) => (
+        <span key={round.roundNumber}>{children(round)}</span>
+      ))}
+    </span>
+  )
+}
+
+// A check or a cross; the words "right" and "wrong" are there for screen readers
+function Mark({ correct }: { correct: boolean }) {
+  return (
+    <span className={`duel-table-mark ${correct ? 'is-right' : 'is-wrong'}`}>
+      <i className={`ti ${correct ? 'ti-check' : 'ti-x'}`} aria-hidden="true" />
+      <span className="duel-sr-only">{correct ? 'right' : 'wrong'}</span>
+    </span>
+  )
 }

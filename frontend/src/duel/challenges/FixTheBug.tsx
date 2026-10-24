@@ -15,18 +15,10 @@ export function FixTheBug({
 
   return (
     <div className="duel-challenge">
-      <section className="fix-current" aria-label="Current code">
-        <p className="duel-panel-label">
-          <i className="ti ti-bug" aria-hidden="true" />
-          Current code · {challenge.code.language}
-        </p>
-        <CodeView content={challenge.code.content} />
+      <section className={`fix-current${reveal ? ' is-revealed' : ''}`} aria-label="Current code">
+        <CodeView content={challenge.code.content} language={challenge.code.language} />
       </section>
 
-      <p className="duel-panel-label">
-        <i className="ti ti-git-pull-request" aria-hidden="true" />
-        Candidate fixes
-      </p>
       <div className="fix-options" role="radiogroup" aria-label="Candidate fixes">
         {challenge.options.map((option) => {
           const isPicked = picked === option.id
@@ -48,7 +40,7 @@ export function FixTheBug({
                 <span className="quiz-option-key">{option.id.toUpperCase()}</span>
                 <span className="fix-option-summary">{option.summary}</span>
               </span>
-              <CodeView content={option.code} className="is-compact" />
+              <CodeView content={option.code} language={challenge.code.language} className="is-compact" />
               {reveal && (
                 <span className="fix-option-outcome">
                   <span className="quiz-option-tags">
@@ -66,7 +58,6 @@ export function FixTheBug({
 
       {!locked && (
         <LockBar
-          hint={selected ? `You picked fix ${selected.toUpperCase()}.` : 'Pick the change that fixes the bug.'}
           disabled={!selected}
           submitting={submitting}
           onLock={() => selected && onSubmit({ optionId: selected })}

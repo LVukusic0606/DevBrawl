@@ -20,6 +20,7 @@ This document is the source of truth for the frontend visual style. Every new co
 | `--color-accent` | `#22d3ee` | Learning: primary actions, active states, focus |
 | `--color-duel` | `#f472b6` | Duel: actions, timer, active states inside duel |
 | `--color-topic` | `#f5b83d` | Learn: category icons and topic headers that group lessons |
+| `--color-elo` | `#f5b83d` | Rewards: the overall ELO, new ratings, XP and level on the results screen |
 | `--color-success` | `#4ade80` | Correct answer, progress |
 | `--color-danger` | `#f87171` | Wrong answer, errors |
 | `--color-warning` | `#facc15` | Warnings, approaching deadlines |
@@ -29,6 +30,10 @@ Color rules:
 - Gold (`--color-topic`) only marks Learn categories and topics: the category tile icons and the topic headers in lesson lists, so sections read apart from the lessons. It is never used for actions.
 - Use the accent sparingly: at most one accent action per screen.
 - Text always uses `--color-text` or `--color-text-muted`, never pure white or a gray from another palette.
+
+### Code colors
+
+Code shown in duels is colored like VS Code's Dark+ theme, through `--code-*` tokens in `index.css`: keywords `--code-keyword`, strings `--code-string`, numbers `--code-number`, comments `--code-comment`, functions `--code-function`, types `--code-type`, variables and properties `--code-variable`, everything else `--code-plain`. These colors are only for code, never for UI.
 
 ## Typography
 

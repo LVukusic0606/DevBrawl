@@ -63,7 +63,6 @@ export function LogAnalysis({
 
       {!locked && (
         <LockBar
-          hint={selected ? `Line ${selected} is your root cause.` : 'Click the line that explains why it failed, not just a symptom.'}
           disabled={selected === null}
           submitting={submitting}
           onLock={() => selected !== null && onSubmit({ line: selected })}

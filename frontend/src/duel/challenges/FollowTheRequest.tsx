@@ -1,4 +1,4 @@
-import { useState, type PointerEvent } from 'react'
+import { useState, type KeyboardEvent, type PointerEvent } from 'react'
 import type { FollowTheRequestChallenge, FollowTheRequestReveal, OrderAnswer } from '../types'
 import { LockBar, StatusTag, type ChallengeProps } from './shared'
 
@@ -12,7 +12,6 @@ export function FollowTheRequest({
 }: ChallengeProps<FollowTheRequestChallenge, FollowTheRequestReveal, OrderAnswer>) {
   const [order, setOrder] = useState<string[]>(answer?.stepIds ?? challenge.steps.map((step) => step.id))
   const [dragging, setDragging] = useState<string | null>(null)
-  const [moved, setMoved] = useState(false)
   const shown = answer?.stepIds ?? order
   const textOf = new Map(challenge.steps.map((step) => [step.id, step.text]))
 
@@ -22,7 +21,6 @@ export function FollowTheRequest({
     const [item] = next.splice(from, 1)
     next.splice(to, 0, item)
     setOrder(next)
-    setMoved(true)
   }
 
   // Pointer events instead of HTML5 drag and drop, so dragging works with mouse, touch and pen alike
@@ -35,6 +33,16 @@ export function FollowTheRequest({
     event.preventDefault()
     event.currentTarget.setPointerCapture(event.pointerId)
     setDragging(id)
+  }
+
+  // Without a mouse: focus a step with Tab and move it with the up and down arrow keys
+  function moveWithKeys(event: KeyboardEvent<HTMLLIElement>, id: string) {
+    if (locked || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return
+    event.preventDefault()
+    const from = order.indexOf(id)
+    move(from, event.key === 'ArrowUp' ? from - 1 : from + 1)
+    // Keep focus on the moved step after it re-renders in its new place
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-step-id="${id}"]`)?.focus())
   }
 
   // Reorders live while dragging, so the list shows where the step will land
@@ -68,6 +76,9 @@ export function FollowTheRequest({
                   onPointerMove={dragOver}
                   onPointerUp={() => setDragging(null)}
                   onPointerCancel={() => setDragging(null)}
+                  tabIndex={locked ? undefined : 0}
+                  aria-label={locked ? undefined : `Step ${index + 1}: ${textOf.get(id)}. Drag, or use the arrow keys, to move it.`}
+                  onKeyDown={(event) => moveWithKeys(event, id)}
                 >
                   <span className="flow-step-index">{index + 1}</span>
                   {!locked && <i className="ti ti-grip-vertical flow-step-grip" aria-hidden="true" />}
@@ -76,28 +87,6 @@ export function FollowTheRequest({
                     <StatusTag tone={inPlace ? 'correct' : 'wrong'}>
                       {inPlace ? 'Right place' : `Step ${correctIndex + 1}`}
                     </StatusTag>
-                  )}
-                  {!locked && (
-                    <span className="flow-step-moves">
-                      <button
-                        type="button"
-                        className="duel-icon-button"
-                        aria-label="Move step up"
-                        disabled={index === 0}
-                        onClick={() => move(index, index - 1)}
-                      >
-                        <i className="ti ti-chevron-up" aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        className="duel-icon-button"
-                        aria-label="Move step down"
-                        disabled={index === shown.length - 1}
-                        onClick={() => move(index, index + 1)}
-                      >
-                        <i className="ti ti-chevron-down" aria-hidden="true" />
-                      </button>
-                    </span>
                   )}
                 </li>
               )
@@ -122,11 +111,6 @@ export function FollowTheRequest({
 
       {!locked && (
         <LockBar
-          hint={
-            moved
-              ? 'Only the full order counts. Check it once more.'
-              : 'Drag the steps, or use the arrows, to put them in order.'
-          }
           disabled={false}
           submitting={submitting}
           onLock={() => onSubmit({ stepIds: order })}

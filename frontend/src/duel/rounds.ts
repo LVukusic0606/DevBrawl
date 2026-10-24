@@ -15,6 +15,10 @@ export function roundTypeName(type: ChallengeType) {
   return ROUND_TYPES.find((round) => round.type === type)?.name ?? type
 }
 
+export function roundTypeIcon(type: ChallengeType) {
+  return ROUND_TYPES.find((round) => round.type === type)?.icon ?? 'ti-puzzle'
+}
+
 export const ROUND_RESULT_LABELS: Record<RoundResult, string> = {
   won: 'Round won',
   lost: 'Round lost',
@@ -27,4 +31,20 @@ export function roundSpeedNote(result: RoundResult, youCorrect: boolean, opponen
   if (result === 'won' && opponentCorrect) return 'Both right. You answered first.'
   if (result === 'lost' && youCorrect) return `Both right. ${opponentName} answered first.`
   return null
+}
+
+// One sentence that says why the round ended the way it did
+export function roundSummary(
+  result: RoundResult,
+  you: { answered: boolean; correct: boolean },
+  opponent: { answered: boolean; correct: boolean },
+  opponentName: string,
+) {
+  const speed = roundSpeedNote(result, you.correct, opponent.correct, opponentName)
+  if (speed) return speed
+  if (result === 'won') return 'Only you got it right.'
+  if (result === 'lost') return `Only ${opponentName} got it right.`
+  if (result === 'draw') return 'Both right at the same moment.'
+  if (!you.answered && !opponent.answered) return 'Nobody answered in time.'
+  return 'Neither of you got it right.'
 }

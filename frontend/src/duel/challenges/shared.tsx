@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
+import { highlightLines } from './highlight'
 
 export type Tone = 'correct' | 'wrong' | 'picked' | 'warning'
 
@@ -21,13 +22,15 @@ export function StatusTag({ tone, children }: { tone: Tone; children: ReactNode 
 
 interface CodeViewProps {
   content: string
+  // Language name from the challenge, used for syntax colors
+  language?: string
   // 1-based, inclusive
   highlight?: [number, number] | null
   className?: string
 }
 
-export function CodeView({ content, highlight, className }: CodeViewProps) {
-  const lines = content.split('\n')
+export function CodeView({ content, language, highlight, className }: CodeViewProps) {
+  const lines = useMemo(() => highlightLines(content, language), [content, language])
   const [from, to] = highlight ?? [0, -1]
 
   return (
@@ -41,7 +44,7 @@ export function CodeView({ content, highlight, className }: CodeViewProps) {
               <span className="duel-code-number" aria-hidden="true">
                 {number}
               </span>
-              <span className="duel-code-text">{line || ' '}</span>
+              <span className="duel-code-text" dangerouslySetInnerHTML={{ __html: line || ' ' }} />
             </span>
           )
         })}
@@ -51,17 +54,15 @@ export function CodeView({ content, highlight, className }: CodeViewProps) {
 }
 
 interface LockBarProps {
-  hint: string
   disabled: boolean
   submitting: boolean
   onLock: () => void
 }
 
 // The one primary action of a round: answers can't be changed once locked
-export function LockBar({ hint, disabled, submitting, onLock }: LockBarProps) {
+export function LockBar({ disabled, submitting, onLock }: LockBarProps) {
   return (
     <div className="duel-lockbar">
-      <p className="duel-lockbar-hint">{hint}</p>
       <button type="button" className="duel-primary" disabled={disabled || submitting} onClick={onLock}>
         {submitting ? 'Sending' : 'Lock answer'}
         <i className="ti ti-lock" aria-hidden="true" />

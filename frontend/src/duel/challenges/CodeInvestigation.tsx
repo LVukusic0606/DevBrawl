@@ -112,6 +112,7 @@ export function CodeInvestigation({
             </header>
             <CodeView
               content={openFile.content}
+              language={openFile.language}
               highlight={reveal && openFile.path === answerPath ? reveal.answer.lines : null}
             />
           </section>
@@ -120,7 +121,6 @@ export function CodeInvestigation({
 
       {!locked && (
         <LockBar
-          hint={selected ? `Suspect: ${selected}` : 'Open the files and mark the one where the problem starts.'}
           disabled={!selected}
           submitting={submitting}
           onLock={() => selected && onSubmit({ path: selected })}

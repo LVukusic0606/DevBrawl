@@ -19,7 +19,6 @@ export function ConceptQuiz({
         {challenge.options.map((option) => {
           const isPicked = picked === option.id
           const isCorrect = reveal?.correctOptionId === option.id
-          const mistake = reveal?.commonMistake?.optionId === option.id ? reveal.commonMistake : null
           const state = reveal
             ? isCorrect
               ? 'is-correct'
@@ -43,17 +42,11 @@ export function ConceptQuiz({
               <span className="quiz-option-key">{option.id.toUpperCase()}</span>
               <span className="quiz-option-body">
                 <span className="quiz-option-text">{option.text}</span>
-                {reveal && (isCorrect || isPicked) && (
+                {/* The green border marks the correct answer; screen readers get it as text */}
+                {reveal && isCorrect && <span className="duel-sr-only">Correct answer</span>}
+                {reveal && isPicked && (
                   <span className="quiz-option-tags">
-                    {isCorrect && <StatusTag tone="correct">Correct answer</StatusTag>}
-                    {isPicked && !isCorrect && <StatusTag tone="wrong">Your answer</StatusTag>}
-                    {isPicked && isCorrect && <StatusTag tone="picked">Your answer</StatusTag>}
-                  </span>
-                )}
-                {mistake && (
-                  <span className="quiz-option-mistake">
-                    <StatusTag tone="warning">Common mistake</StatusTag>
-                    {mistake.explanation}
+                    <StatusTag tone={isCorrect ? 'picked' : 'wrong'}>Your answer</StatusTag>
                   </span>
                 )}
               </span>
@@ -64,7 +57,6 @@ export function ConceptQuiz({
 
       {!locked && (
         <LockBar
-          hint={selected ? `You picked ${selected.toUpperCase()}.` : 'Pick the best answer.'}
           disabled={!selected}
           submitting={submitting}
           onLock={() => selected && onSubmit({ optionId: selected })}

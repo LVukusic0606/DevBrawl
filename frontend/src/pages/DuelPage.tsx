@@ -1,14 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getCategories, type CategoryInfo } from '../api/categories'
-import { Lobby } from '../duel/screens/Lobby'
-import { MatchIntro } from '../duel/screens/MatchIntro'
-import { Queue } from '../duel/screens/Queue'
-import { Results } from '../duel/screens/Results'
-import { Review } from '../duel/screens/Review'
-import { RoundScreen } from '../duel/screens/RoundScreen'
-import type { DuelDetails } from '../duel/types'
+import { DuelScreen } from '../duel/DuelScreen'
 import { useDuel } from '../duel/useDuel'
-import './DuelPage.css'
 
 interface DuelPageProps {
   onBack: () => void
@@ -41,116 +34,19 @@ function DuelPage({ onBack }: DuelPageProps) {
   // One connection for the whole Brawl page; it stops when the page unmounts
   const { view, reconnecting, joinQueue, leaveQueue, submitAnswer, backToLobby, retry } = useDuel()
   const categoryName = useCategoryNames()
-  const [review, setReview] = useState<DuelDetails | null>(null)
-
-  // Leaving is only offered outside a running duel, where the clock would keep going without you.
-  // The queue has its own Cancel button, so it shows no Back.
-  const canLeave = ['connecting', 'connectionFailed', 'lobby', 'results', 'aborted'].includes(view.phase)
-  const inDuel = view.phase === 'countdown' || view.phase === 'round' || view.phase === 'reveal'
-
-  function playAgain() {
-    setReview(null)
-    backToLobby()
-  }
 
   return (
-    <main className="duel">
-      <header className="duel-header">
-        {canLeave && (
-          <button type="button" className="duel-back" onClick={onBack}>
-            <i className="ti ti-arrow-left" aria-hidden="true" />
-            Back
-          </button>
-        )}
-        {inDuel && (
-          <span className="duel-live">
-            <span className="duel-live-dot" aria-hidden="true" />
-            Duel in progress
-          </span>
-        )}
-        {/* Keeps the logo on the right when the left side is empty */}
-        {!canLeave && !inDuel && <span aria-hidden="true" />}
-        <span className="duel-logo">DevBrawl</span>
-      </header>
-
-      {reconnecting && (
-        <p className="duel-notice is-floating" role="status">
-          <i className="ti ti-refresh" aria-hidden="true" />
-          Connection lost. Reconnecting…
-        </p>
-      )}
-
-      <div className="duel-body">
-        {view.phase === 'connecting' && <p className="duel-loading">Connecting to the arena…</p>}
-
-        {view.phase === 'connectionFailed' && (
-          <section className="duel-center">
-            <p className="duel-error">Couldn't connect to the arena. Try again.</p>
-            <button type="button" className="duel-primary" onClick={retry}>
-              Try again
-              <i className="ti ti-refresh" aria-hidden="true" />
-            </button>
-          </section>
-        )}
-
-        {view.phase === 'lobby' && <Lobby error={view.error} onFindDuel={joinQueue} />}
-
-        {view.phase === 'queue' && <Queue since={view.since} onCancel={leaveQueue} />}
-
-        {view.phase === 'countdown' && (
-          <MatchIntro match={view.match} startsAt={view.startsAt} categoryName={categoryName} />
-        )}
-
-        {view.phase === 'round' && (
-          <RoundScreen
-            match={view.match}
-            current={view.current}
-            ended={null}
-            nextRoundAt={null}
-            categoryName={categoryName}
-            onSubmit={(answer) => submitAnswer(view.match.duelId, view.current.round.roundNumber, answer)}
-          />
-        )}
-
-        {view.phase === 'reveal' && (
-          <RoundScreen
-            match={view.match}
-            current={view.current}
-            ended={view.ended}
-            nextRoundAt={view.nextRoundAt}
-            categoryName={categoryName}
-            onSubmit={() => {}}
-          />
-        )}
-
-        {view.phase === 'results' &&
-          (review ? (
-            <Review details={review} categoryName={categoryName} onBack={() => setReview(null)} />
-          ) : (
-            <Results
-              match={view.match}
-              ended={view.ended}
-              categoryName={categoryName}
-              onReview={setReview}
-              onPlayAgain={playAgain}
-            />
-          ))}
-
-        {view.phase === 'aborted' && (
-          <section className="duel-center">
-            <p className="duel-eyebrow">Duel stopped</p>
-            <h1 className="duel-hero-title">This duel was cancelled.</h1>
-            <p className="duel-lead">
-              Something went wrong on the server, so the duel doesn't count. {view.reason}
-            </p>
-            <button type="button" className="duel-primary" onClick={playAgain}>
-              Find a new duel
-              <i className="ti ti-swords" aria-hidden="true" />
-            </button>
-          </section>
-        )}
-      </div>
-    </main>
+    <DuelScreen
+      view={view}
+      reconnecting={reconnecting}
+      categoryName={categoryName}
+      onBack={onBack}
+      onFindDuel={joinQueue}
+      onCancelQueue={leaveQueue}
+      onSubmit={submitAnswer}
+      onPlayAgain={backToLobby}
+      onRetry={retry}
+    />
   )
 }
 

@@ -14,6 +14,19 @@
   --color-grid-duel: rgba(244, 114, 182, 0.06);
   --color-duel: #f472b6;
   --color-topic: #f5b83d;
+  --color-elo: #f5b83d;
+
+  /* Syntax colors for code in duels, after VS Code's Dark+ theme */
+  --code-plain: #d4d4d4;
+  --code-keyword: #569cd6;
+  --code-control: #c586c0;
+  --code-string: #ce9178;
+  --code-number: #b5cea8;
+  --code-comment: #6a9955;
+  --code-function: #dcdcaa;
+  --code-type: #4ec9b0;
+  --code-variable: #9cdcfe;
+  --code-regexp: #d16969;
   --color-topic-soft: rgba(245, 184, 61, 0.12);
   --color-topic-surface: #2c2818;
   --color-topic-border: rgba(245, 184, 61, 0.4);

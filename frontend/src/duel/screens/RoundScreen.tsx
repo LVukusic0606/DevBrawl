@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { ChallengeView } from '../challenges/ChallengeView'
 import { StatusTag } from '../challenges/shared'
-import { ROUND_RESULT_LABELS, TOTAL_ROUNDS, roundSpeedNote, roundTypeName } from '../rounds'
+import { ROUND_RESULT_LABELS, TOTAL_ROUNDS, roundSummary } from '../rounds'
 import { formatClock, useCountdown } from '../useCountdown'
 import type { Match, RoundState } from '../useDuel'
 import type { Answer, RoundEndedEvent } from '../types'
@@ -11,12 +11,10 @@ interface RoundScreenProps {
   current: RoundState | null
   // Set during the reveal
   ended: RoundEndedEvent | null
-  nextRoundAt: string | null
-  categoryName: (id: number) => string
   onSubmit: (answer: Answer) => void
 }
 
-export function RoundScreen({ match, current, ended, nextRoundAt, categoryName, onSubmit }: RoundScreenProps) {
+export function RoundScreen({ match, current, ended, onSubmit }: RoundScreenProps) {
   const round = current?.round ?? null
   const roundNumber = ended?.roundNumber ?? round?.roundNumber ?? 1
   const locked = Boolean(ended) || Boolean(current?.youAnswered) || Boolean(current?.submitting)
@@ -39,46 +37,43 @@ export function RoundScreen({ match, current, ended, nextRoundAt, categoryName, 
         </p>
       )}
 
-      {round && (
-        <header className="duel-round-header">
-          <div className="duel-round-heading">
-            <p className="duel-eyebrow">
-              Round {round.roundNumber} of {TOTAL_ROUNDS} · {roundTypeName(round.type)}
-            </p>
-            <span className="duel-category">{categoryName(round.categoryId)}</span>
-            <h1 className="duel-round-title">{round.challenge.title}</h1>
-            <p className="duel-prompt">{round.challenge.prompt}</p>
+      <div className="duel-round-main">
+        {round && (
+          <header className="duel-round-header">
+            <div className="duel-round-heading">
+              <h1 className="duel-prompt">{round.challenge.prompt}</h1>
+            </div>
+            {!ended && <RoundTimer endsAt={round.endsAt} limitSeconds={round.timeLimitSeconds} />}
+          </header>
+        )}
+
+        {!ended && current && (
+          <div className="duel-round-status" aria-live="polite">
+            {current.youAnswered && (
+              <StatusTag tone="picked">Answer locked. Waiting for the round to end.</StatusTag>
+            )}
+            {current.opponentAnswered && (
+              <StatusTag tone="warning">{match.opponent.nickname} answered</StatusTag>
+            )}
+            {current.error && <p className="duel-error">{current.error}</p>}
           </div>
-          {!ended && <RoundTimer endsAt={round.endsAt} limitSeconds={round.timeLimitSeconds} />}
-        </header>
-      )}
+        )}
 
-      {!ended && current && (
-        <div className="duel-round-status" aria-live="polite">
-          {current.youAnswered && (
-            <StatusTag tone="picked">Answer locked. Waiting for the round to end.</StatusTag>
-          )}
-          {current.opponentAnswered && (
-            <StatusTag tone="warning">{match.opponent.nickname} answered</StatusTag>
-          )}
-          {current.error && <p className="duel-error">{current.error}</p>}
-        </div>
-      )}
+        {ended && <RevealPanel ended={ended} match={match} />}
 
-      {ended && <RevealPanel ended={ended} match={match} nextRoundAt={nextRoundAt} />}
-
-      {round && current && (
-        <ChallengeView
-          // Remount at the reveal so each view starts from the locked answer and the solution
-          key={`${match.duelId}-${round.roundNumber}-${ended ? 'reveal' : 'play'}`}
-          challenge={round.challenge}
-          reveal={ended?.reveal ?? null}
-          answer={current.answer}
-          locked={locked}
-          submitting={current.submitting}
-          onSubmit={onSubmit}
-        />
-      )}
+        {round && current && (
+          <ChallengeView
+            // Remount at the reveal so each view starts from the locked answer and the solution
+            key={`${match.duelId}-${round.roundNumber}-${ended ? 'reveal' : 'play'}`}
+            challenge={round.challenge}
+            reveal={ended?.reveal ?? null}
+            answer={current.answer}
+            locked={locked}
+            submitting={current.submitting}
+            onSubmit={onSubmit}
+          />
+        )}
+      </div>
     </div>
   )
 }
@@ -124,58 +119,23 @@ function RoundTimer({ endsAt, limitSeconds }: { endsAt: string; limitSeconds: nu
   return (
     <div className={`duel-timer ${tone}`} role="timer" aria-label={`${seconds} seconds left`}>
       <span className="duel-timer-value">{formatClock(seconds)}</span>
-      <span className="duel-timer-bar" aria-hidden="true">
-        <span style={{ transform: `scaleX(${fraction})` }} />
-      </span>
     </div>
   )
 }
 
-function RevealPanel({
-  ended,
-  match,
-  nextRoundAt,
-}: {
-  ended: RoundEndedEvent
-  match: Match
-  nextRoundAt: string | null
-}) {
-  const left = useCountdown(nextRoundAt)
-  const isLast = ended.roundNumber >= TOTAL_ROUNDS
-  const speedNote = roundSpeedNote(ended.result, ended.youCorrect, ended.opponentCorrect, match.opponent.nickname)
-  const upNext = isLast ? 'Results are coming up.' : 'Next round is coming up.'
+function RevealPanel({ ended, match }: { ended: RoundEndedEvent; match: Match }) {
+  const summary = roundSummary(
+    ended.result,
+    { answered: ended.youAnswered, correct: ended.youCorrect },
+    { answered: ended.opponentAnswered, correct: ended.opponentCorrect },
+    match.opponent.nickname,
+  )
 
+  // The full explanation lives in "Review answers"; here only the outcome and why
   return (
     <section className={`duel-reveal is-${ended.result}`} aria-live="polite" aria-label="Round result">
-      <div className="duel-reveal-head">
-        <h2 className="duel-reveal-title">{ROUND_RESULT_LABELS[ended.result]}</h2>
-        <div className="duel-reveal-players">
-          <PlayerOutcome name="You" answered={ended.youAnswered} correct={ended.youCorrect} />
-          <PlayerOutcome
-            name={match.opponent.nickname}
-            answered={ended.opponentAnswered}
-            correct={ended.opponentCorrect}
-          />
-        </div>
-      </div>
-      {speedNote && <p className="duel-reveal-note">{speedNote}</p>}
-      <p className="duel-reveal-explanation">{ended.reveal.explanation}</p>
-      <p className="duel-muted">
-        {left !== null && left > 0 && !isLast ? `Next round in ${Math.ceil(left / 1000)} s.` : upNext}
-      </p>
+      <h2 className="duel-reveal-title">{ROUND_RESULT_LABELS[ended.result]}</h2>
+      <p className="duel-reveal-note">{summary}</p>
     </section>
-  )
-}
-
-function PlayerOutcome({ name, answered, correct }: { name: string; answered: boolean; correct: boolean }) {
-  return (
-    <span className="duel-reveal-player">
-      <span className="duel-reveal-player-name">{name}</span>
-      {correct ? (
-        <StatusTag tone="correct">Correct</StatusTag>
-      ) : (
-        <StatusTag tone="wrong">{answered ? 'Wrong' : 'No answer'}</StatusTag>
-      )}
-    </span>
   )
 }

@@ -17,14 +17,9 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-6) var(--space-8);
+  padding: var(--space-6) calc(var(--space-8) * 2);
 }
 
-.duel-logo {
-  font-family: var(--font-text);
-  font-size: 24px;
-  color: var(--color-text);
-}
 
 .duel-back {
   appearance: none;
@@ -52,45 +47,32 @@
   box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-duel);
 }
 
-.duel-live {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-family: var(--font-text);
-  font-size: 14px;
-  color: var(--color-duel);
-}
 
-.duel-live-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: var(--color-duel);
-}
 
 .duel-body {
   flex: 1;
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding: 0 var(--space-8) var(--space-8);
+  padding: var(--space-6) calc(var(--space-8) * 2) var(--space-8);
 }
 
 /* Shared text */
 
 .duel-eyebrow {
   margin: 0;
-  font-family: var(--font-text);
+  font-family: var(--font-code);
   font-size: 14px;
+  font-weight: 700;
   color: var(--color-duel);
 }
 
 .duel-hero-title {
   margin: 0;
-  font-family: var(--font-text);
-  font-size: 56px;
-  font-weight: 400;
-  line-height: 1.05;
+  font-family: var(--font-code);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.1;
   color: var(--color-text);
 }
 
@@ -105,9 +87,9 @@
 
 .duel-section-title {
   margin: 0;
-  font-family: var(--font-text);
-  font-size: 22px;
-  font-weight: 400;
+  font-family: var(--font-code);
+  font-size: 20px;
+  font-weight: 700;
   color: var(--color-text);
 }
 
@@ -182,7 +164,7 @@
 }
 
 .duel-notice.is-floating {
-  margin: 0 var(--space-8) var(--space-4);
+  margin: var(--space-4) calc(var(--space-8) * 2) 0;
 }
 
 .duel-category {
@@ -373,12 +355,6 @@
 
 
 
-.duel-round-number {
-  font-family: var(--font-code);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--color-text-muted);
-}
 
 
 
@@ -405,24 +381,43 @@
 .duel-intro {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /* A fixed-width middle keeps the countdown clear of both cards */
+  grid-template-columns: minmax(0, 1fr) 260px minmax(0, 1fr);
   align-items: center;
-  gap: var(--space-8);
+  column-gap: calc(var(--space-8) * 1.5);
+  row-gap: var(--space-8);
 }
 
 .duel-intro-center {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-6);
   text-align: center;
+}
+
+.duel-intro-label {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-duel);
 }
 
 .duel-intro-vs {
   margin: 0;
-  font-family: var(--font-text);
-  font-size: 28px;
+  font-family: var(--font-code);
+  font-size: 36px;
+  font-weight: 700;
   color: var(--color-text-muted);
+}
+
+.duel-intro-status {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 .duel-player {
@@ -433,6 +428,47 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
+}
+
+.duel-player-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+
+.duel-player-who {
+  min-width: 0;
+}
+
+.duel-player-label {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-text);
+  font-size: 20px;
+  color: var(--color-duel);
+}
+
+/* The overall ELO is the key number on the card */
+.duel-player-elo {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 0;
+}
+
+.duel-player-elo-label {
+  font-family: var(--font-text);
+  font-size: 15px;
+  color: var(--color-elo);
+}
+
+.duel-player-elo-value {
+  font-family: var(--font-code);
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-elo);
 }
 
 .duel-player-name {
@@ -470,10 +506,20 @@
 
 /* Round */
 
+/* The scoreboard stays at the top; the question and answers sit lower, centered in the space left */
 .duel-round {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
+}
+
+.duel-round-main {
+  margin-block: auto;
+  padding-top: calc(var(--space-8) * 1.5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
 }
 
 .duel-scoreboard {
@@ -567,19 +613,21 @@
 
 .duel-round-title {
   margin: 0;
-  font-family: var(--font-text);
-  font-size: 40px;
-  font-weight: 400;
+  /* Exo 2 Bold reads more clearly than Share Tech Mono at this size */
+  font-family: var(--font-body);
+  font-size: 24px;
+  font-weight: 700;
   line-height: 1.15;
   color: var(--color-text);
 }
 
 .duel-prompt {
   margin: 0;
-  max-width: 900px;
+  max-width: 1100px;
   font-family: var(--font-body);
-  font-size: 18px;
-  line-height: 1.6;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.5;
   color: var(--color-text);
 }
 
@@ -611,21 +659,7 @@
   transition: color 300ms ease-out;
 }
 
-.duel-timer-bar {
-  width: 100%;
-  height: 6px;
-  border-radius: 2px;
-  background: var(--color-border);
-  overflow: hidden;
-}
 
-.duel-timer-bar span {
-  display: block;
-  height: 100%;
-  background: var(--timer-color);
-  transform-origin: left;
-  transition: transform 250ms linear, background-color 300ms ease-out;
-}
 
 .duel-round-status {
   display: flex;
@@ -656,7 +690,8 @@
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-6);
-  border: 1px solid var(--reveal-color);
+  /* Only the title carries the result color; a colored frame here made the screen too busy */
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   animation: duel-reveal-in 250ms ease-out both;
@@ -670,13 +705,6 @@
   --reveal-color: var(--color-danger);
 }
 
-.duel-reveal-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
 
 .duel-reveal-title {
   margin: 0;
@@ -686,43 +714,23 @@
   color: var(--reveal-color);
 }
 
-.duel-reveal-players {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-}
 
-.duel-reveal-player {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-}
 
-.duel-reveal-player-name {
-  font-family: var(--font-text);
-  font-size: 15px;
-  color: var(--color-text);
-}
 
 .duel-reveal-note {
   margin: 0;
-  font-family: var(--font-text);
-  font-size: 15px;
+  font-family: var(--font-code);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.4;
   color: var(--color-text);
 }
 
-.duel-reveal-explanation {
-  margin: 0;
-  max-width: 900px;
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.6;
-  color: var(--color-text);
-}
 
 /* Results */
 
 .duel-results {
+  margin-block: auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
@@ -745,7 +753,7 @@
 }
 
 .duel-results-hero .duel-hero-title {
-  font-size: 72px;
+  font-size: 64px;
 }
 
 .duel-final-score {
@@ -756,8 +764,9 @@
 }
 
 .duel-final-name {
-  font-family: var(--font-text);
-  font-size: 18px;
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
   color: var(--color-text-muted);
 }
 
@@ -776,7 +785,7 @@
 
 .duel-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
   margin: 0;
 }
@@ -792,8 +801,8 @@
 }
 
 .duel-stat dt {
-  font-family: var(--font-text);
-  font-size: 14px;
+  font-family: var(--font-body);
+  font-size: 15px;
   color: var(--color-text-muted);
 }
 
@@ -809,14 +818,15 @@
   color: var(--color-text);
 }
 
-.duel-stat-sub {
-  font-family: var(--font-text);
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--color-text-muted);
+.duel-stat dd.is-reward,
+.duel-rating-after {
+  color: var(--color-elo);
 }
 
+
 .duel-panel {
+  /* The rating table scrolls sideways on narrow screens instead of squeezing */
+  overflow-x: auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -828,6 +838,7 @@
 
 .duel-table {
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
   font-family: var(--font-body);
   font-size: 15px;
@@ -841,8 +852,8 @@
 }
 
 .duel-table th {
-  font-family: var(--font-text);
-  font-size: 13px;
+  font-family: var(--font-body);
+  font-size: 14px;
   font-weight: 400;
   color: var(--color-text-muted);
 }
@@ -864,43 +875,57 @@
   color: var(--color-text-muted);
 }
 
-.duel-round-results {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
 
-.duel-round-result {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--color-border);
-}
 
-.duel-round-result:last-child {
-  border-bottom: 0;
-}
 
-.duel-round-result-main {
+
+
+
+/* Round details inside the rating table, one line per round */
+.duel-table-lines {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-
-.duel-round-result-title {
-  font-family: var(--font-body);
-  font-size: 16px;
-  color: var(--color-text);
-}
-
-.duel-round-result-tags {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
   gap: var(--space-2);
+}
+
+.duel-table-challenge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+.duel-table-challenge .ti {
+  font-size: 18px;
+  color: var(--color-duel);
+}
+
+.duel-table-mark .ti {
+  font-size: 18px;
+}
+
+.duel-table-mark.is-right .ti {
+  color: var(--color-success);
+}
+
+.duel-table-mark.is-wrong .ti {
+  color: var(--color-danger);
+}
+
+.duel-table-outcome {
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.duel-table-outcome.is-won {
+  color: var(--color-success);
+}
+
+.duel-table-outcome.is-lost {
+  color: var(--color-danger);
 }
 
 .duel-results-actions {
@@ -910,60 +935,72 @@
   gap: var(--space-3);
 }
 
-/* Review */
+/* Review: one tile per round */
 
+/* Title and tiles sit in the middle; the leave button stays at the bottom of the screen */
 .duel-review {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: calc(var(--space-8) * 2);
 }
 
-.duel-review-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-4);
+.duel-review > .duel-hero-title {
+  margin-top: auto;
 }
 
-.duel-review-controls {
-  display: flex;
-  gap: var(--space-2);
+.duel-review > .duel-results-actions {
+  margin-top: auto;
 }
 
-.duel-review-round {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding-top: var(--space-8);
-  border-top: 1px solid var(--color-border);
-}
-
-.duel-review-round-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.duel-explanation {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-4) var(--space-6);
-  border-left: 2px solid var(--color-duel);
-  background: var(--color-surface);
-}
-
-.duel-explanation p:last-child {
+.duel-review-tiles {
   margin: 0;
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.6;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+.duel-review-tile {
+  appearance: none;
+  width: 100%;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
   color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 28px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 200ms ease-out, background-color 200ms ease-out, color 200ms ease-out;
+}
+
+.duel-review-tile:hover {
+  border-color: var(--color-duel);
+  background: var(--color-duel-soft);
+  color: var(--color-duel);
+}
+
+.duel-review-tile:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-duel);
 }
 
 @media (max-width: 1100px) {
+  .duel-review-tiles {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .duel-review-tile {
+    min-height: 160px;
+  }
+
   .duel-lobby {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -1025,7 +1062,7 @@
   }
 
   .duel-body {
-    padding: 0 var(--space-4) var(--space-6);
+    padding: var(--space-4) var(--space-4) var(--space-6);
   }
 
   .duel-notice.is-floating {
@@ -1076,21 +1113,18 @@
   }
 
   .duel-round-title {
-    font-size: 28px;
+    font-size: 20px;
+  }
+
+  .duel-prompt {
+    font-size: 19px;
   }
 
   .duel-final-value {
     font-size: 44px;
   }
 
-  .duel-round-result {
-    grid-template-columns: 28px minmax(0, 1fr);
-  }
 
-  .duel-round-result-tags {
-    grid-column: 2;
-    justify-content: flex-start;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

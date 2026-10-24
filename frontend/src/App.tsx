@@ -13,6 +13,7 @@ type AuthState =
 
 type Screen = 'main' | 'learn' | 'duel'
 
+
 function App() {
   const [auth, setAuth] = useState<AuthState>(() =>
     loadSession() ? { status: 'checking' } : { status: 'signedOut' },

@@ -6,4 +6,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Challenge content, copied to the output of every project that references this one, so the catalog finds it in dev and in publish -->
+    <None Include="..\Questions\*.json" LinkBase="Questions" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="DevBrawl.Duel.Tests" />
+  </ItemGroup>
+
 </Project>

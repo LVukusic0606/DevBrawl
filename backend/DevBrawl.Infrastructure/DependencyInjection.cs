@@ -31,6 +31,8 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICategoryService, CategoryService>();
 
+        services.AddDuelContent(configuration);
+
         return services;
     }
 

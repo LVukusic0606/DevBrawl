@@ -2,13 +2,15 @@
   --color-bg: #07111a;
   --color-surface: #0d1b26;
   --color-border: #1b3345;
+  --color-border-strong: #2b4b62;
   --color-text: #e0f2fe;
   --color-text-muted: #7893a8;
   --color-accent: #22d3ee;
   --color-accent-soft: rgba(34, 211, 238, 0.12);
   --color-field: #12293a;
-  --color-grid: rgba(34, 211, 238, 0.06);
+  --color-grid: rgba(34, 211, 238, 0.07);
   --color-duel: #f472b6;
+  --color-duel-soft: rgba(244, 114, 182, 0.12);
   --color-success: #4ade80;
   --color-danger: #f87171;
   --color-warning: #facc15;

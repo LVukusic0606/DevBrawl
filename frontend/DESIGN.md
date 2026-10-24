@@ -61,14 +61,28 @@ Color rules:
 - Key screens use the full screen with a bold composition, not a small centered card.
 - Headings are large (40 to 48px on key screens). Hierarchy comes from scale.
 - Inputs are filled (`--color-field`), 52px tall, without leading icons. The focus state is a 1px accent ring.
-- Switching between related views (log in / sign up) uses an inline text link, not segmented tabs.
+- Switching between related views (log in / sign up) uses an inline text link, not segmented tabs. The link is bold accent text with a trailing arrow icon that nudges right on hover, never a plain underline.
+- Primary button labels use Martian Mono Bold so they read as solid and confident. Share Tech Mono is too thin for buttons.
+- Checkboxes are custom: a 22px filled box with a 1px `--color-border-strong` border that turns solid accent with a dark Tabler check when checked. Never the browser default.
 
 ### Auth screen
 
-- Split layout inside a large frame: a visual panel on the left, the form on the right.
-- The visual panel holds the logo, the mascot artwork (to be defined) and the tagline. Its background is `--color-bg` with a subtle 32px grid in `--color-grid`.
+- The whole page is the dark grid (`--color-bg` with a 36px `--color-grid` grid). A slim top bar holds the `> DevBrawl` logo.
+- Below it, one horizontal stage (max 1600px), three columns vertically centered on a shared axis, read left to right:
+  1. **Mascot:** a large Dev_Bug (fills its column, up to 660px or 72vh tall) waving toward the text, aligned to the right edge of its column so it sits close to the intro. No platform or ellipse under it, just a soft drop shadow.
+  2. **Intro:** a cyan `// learn → duel → rank` eyebrow, a large headline "Learn it." with a second line that types, holds, deletes and cycles ("Prove it.", "Debug it.", "Ship it.", "Own it.") followed by a blinking cyan block caret, a short muted lede, and three small pill facts from the spec.
+  3. **Form card:** a terminal-window card (`--color-surface`, 1px `--color-border-strong`, 12px radius) with a title bar showing `~/devbrawl/login` (or `signup`) and a green "secure" dot. The form sits inside.
+- The typed headline is decorative: screen readers get the static text "Prove it.", and with reduced motion it shows "Prove it." without typing or blinking.
+- Below 1180px the mascot column hides. Below 860px everything stacks: logo, eyebrow and headline, then the form card. The lede and facts hide.
+
+### Mascot
+
+- A cute, friendly beetle developer in a Pixar-like 3D style: a round orange head, segmented antennae, big eyes behind round tortoiseshell glasses, and a warm smile. On the auth screen it waves hello with one leg kicked up.
+- Outfit: a gray `DEV_BUG` hoodie with a terminal icon over a light blue shirt, khaki pants, a USB keychain and canvas sneakers. A coffee mug with a power icon stands at its feet.
+- The asset is `frontend/src/assets/mascot.webp`, cut out to a transparent background. It sits on the dark grid with a soft drop shadow to ground it.
+- The warm orange mascot is the one deliberate contrast to the cyan palette. Keep it as the only large warm element on a screen.
+- Controls that sit on the grid get an opaque fill (`--color-field` or `--color-bg`) so the grid never shows through them.
 - Form order: title, switch link, fields, remember me (log in only), primary button, "Or log in with" divider, Google button.
-- Below 900px the visual panel collapses into a header with only the logo.
 
 ## Icons
 

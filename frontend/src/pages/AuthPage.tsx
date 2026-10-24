@@ -1,4 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
+import mascotUrl from '../assets/mascot.webp'
+import { useTypewriter } from '../hooks/useTypewriter'
 import './AuthPage.css'
 
 export type AuthMode = 'login' | 'signup'
@@ -26,6 +28,7 @@ type Errors = Partial<Record<'email' | 'username' | 'password' | 'confirmPasswor
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,20}$/
 const MIN_PASSWORD_LENGTH = 8
+const HEADLINE_WORDS = ['Prove it.', 'Debug it.', 'Ship it.', 'Own it.']
 
 function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
   const [mode, setMode] = useState<AuthMode>('login')
@@ -36,6 +39,7 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
   const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
+  const typedWord = useTypewriter(HEADLINE_WORDS)
 
   const isSignup = mode === 'signup'
 
@@ -98,22 +102,54 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
 
   return (
     <main className="auth">
-      <div className="auth-frame">
-        <aside className="auth-visual">
-          <span className="auth-logo">DevBrawl</span>
-          {/* Mascot artwork goes here once it is defined */}
-          <div className="auth-visual-art" aria-hidden="true" />
-          <p className="auth-tagline">
-            Learn a concept.
-            <br />
-            Test your understanding.
-            <br />
-            <span className="auth-tagline-accent">Prove it in the arena.</span>
-          </p>
-        </aside>
+      <header className="auth-topbar">
+        <span className="auth-logo">
+          <span className="auth-logo-prompt" aria-hidden="true">&gt;</span>
+          DevBrawl
+        </span>
+      </header>
 
-        <section className="auth-panel" aria-labelledby="auth-title">
-          <div className="auth-content">
+      <div className="auth-stage">
+        <div className="auth-mascot-stage">
+          <img
+            className="auth-mascot"
+            src={mascotUrl}
+            alt="Dev_Bug, the DevBrawl mascot, waving hello"
+            width={790}
+            height={917}
+          />
+        </div>
+
+        <section className="auth-intro" aria-label="About DevBrawl">
+          <p className="auth-eyebrow">// learn → duel → rank</p>
+          <p className="auth-headline">
+            <span>Learn it.</span>
+            <span className="auth-sr-only">Prove it.</span>
+            <span className="auth-headline-typed" aria-hidden="true">
+              {typedWord}
+              <span className="auth-caret" />
+            </span>
+          </p>
+          <p className="auth-lede">
+            Short lessons on how software really works, then 1v1 duels that test whether you actually understand it.
+          </p>
+          <ul className="auth-facts">
+            <li>6 categories</li>
+            <li>5-round duels</li>
+            <li>ELO per category</li>
+          </ul>
+        </section>
+
+        <section className="auth-card" aria-labelledby="auth-title">
+          <div className="auth-card-bar">
+            <span>~/devbrawl/{isSignup ? 'signup' : 'login'}</span>
+            <span className="auth-card-status">
+              <span className="auth-card-dot" aria-hidden="true" />
+              secure
+            </span>
+          </div>
+
+          <div className="auth-card-body">
             <header className="auth-header">
               <h1 id="auth-title" className="auth-title">
                 {isSignup ? 'Create an account' : 'Log in'}
@@ -126,6 +162,7 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
                   onClick={() => switchMode(isSignup ? 'login' : 'signup')}
                 >
                   {isSignup ? 'Log in' : 'Create an account'}
+                  <i className="ti ti-arrow-right" aria-hidden="true" />
                 </button>
               </p>
             </header>
@@ -180,9 +217,13 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
                 <label className="auth-remember">
                   <input
                     type="checkbox"
+                    className="auth-remember-input"
                     checked={rememberMe}
                     onChange={(event) => setRememberMe(event.target.checked)}
                   />
+                  <span className="auth-remember-box" aria-hidden="true">
+                    <i className="ti ti-check" />
+                  </span>
                   <span>Remember me</span>
                 </label>
               )}

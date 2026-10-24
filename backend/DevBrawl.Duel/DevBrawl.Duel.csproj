@@ -15,4 +15,9 @@
     <InternalsVisibleTo Include="DevBrawl.Duel.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- For the engine's BackgroundService, logging and options -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
 </Project>

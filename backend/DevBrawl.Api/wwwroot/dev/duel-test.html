@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Duel test (dev)</title>
+  <!-- Dev-only page for testing the duel engine without the frontend. Served only in Development. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+  <style>
+    body { font: 14px system-ui, sans-serif; margin: 0; padding: 16px; background: #111; color: #ddd; }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    section { border: 1px solid #333; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+    input, button { font: inherit; padding: 6px 10px; margin: 2px; }
+    button { cursor: pointer; background: #234; color: #eef; border: 1px solid #456; border-radius: 4px; }
+    button:disabled { opacity: .4; cursor: default; }
+    pre { background: #1b1b1b; padding: 8px; overflow-x: auto; margin: 6px 0; white-space: pre-wrap; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .muted { color: #888; }
+    .big { font-size: 20px; font-weight: bold; }
+    .choice { display: block; width: 100%; text-align: left; margin: 6px 0; }
+    .log-line { display: block; width: 100%; text-align: left; font-family: monospace; margin: 2px 0; background: #1b1b1b; }
+    #events { max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; }
+    .ok { color: #6d6; } .bad { color: #e66; }
+  </style>
+</head>
+<body>
+  <h1>Duel test page <span class="muted">(dev only; each tab can log in as a different user)</span></h1>
+
+  <section id="login">
+    <div class="row">
+      <input id="email" placeholder="email" />
+      <input id="password" type="password" placeholder="password" />
+      <button id="loginBtn">Log in &amp; connect</button>
+      <span id="who" class="muted"></span>
+    </div>
+  </section>
+
+  <section>
+    <div class="row">
+      <button id="joinBtn" disabled>Join queue</button>
+      <button id="leaveBtn" disabled>Leave queue</button>
+      <span id="status" class="muted">Not connected</span>
+    </div>
+    <div class="row">
+      <span class="big" id="score"></span>
+      <span class="big" id="timer"></span>
+      <span id="opponent" class="muted"></span>
+    </div>
+  </section>
+
+  <section id="round" hidden>
+    <div id="roundHeader" class="muted"></div>
+    <h2 id="title"></h2>
+    <p id="prompt"></p>
+    <div id="body"></div>
+    <div id="answerStatus" class="muted"></div>
+  </section>
+
+  <section id="reveal" hidden>
+    <div class="big" id="revealResult"></div>
+    <pre id="revealJson"></pre>
+  </section>
+
+  <section>
+    <div class="muted">Events</div>
+    <div id="events"></div>
+  </section>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let connection = null;
+let token = null;
+let duelId = null;
+let round = null;
+let endsAt = null;
+let timerHandle = null;
+
+function log(name, payload) {
+  const line = document.createElement('div');
+  line.textContent = `${new Date().toLocaleTimeString()} ${name} ${payload === undefined ? '' : JSON.stringify(payload)}`;
+  $('events').prepend(line);
+}
+
+function el(tag, props = {}, children = []) {
+  const node = Object.assign(document.createElement(tag), props);
+  for (const child of children) node.append(child);
+  return node;
+}
+
+function startTimer(until) {
+  endsAt = new Date(until);
+  clearInterval(timerHandle);
+  const tick = () => {
+    const seconds = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    $('timer').textContent = `⏱ ${seconds}s`;
+  };
+  tick();
+  timerHandle = setInterval(tick, 250);
+}
+
+function setScore(you, opponent) { $('score').textContent = `You ${you} : ${opponent} Opponent`; }
+
+async function submit(answer) {
+  try {
+    const result = await connection.invoke('SubmitAnswer', duelId, round.roundNumber, answer);
+    if (!result.ok) { $('answerStatus').textContent = 'Refused: ' + result.error; return; }
+    $('answerStatus').textContent = 'Answer sent: ' + JSON.stringify(answer);
+    $('body').querySelectorAll('button').forEach((b) => (b.disabled = true));
+  } catch (err) {
+    $('answerStatus').textContent = 'Error: ' + err.message;
+  }
+}
+
+function renderRound(e) {
+  round = e;
+  duelId = e.duelId;
+  const c = e.challenge;
+  $('reveal').hidden = true;
+  $('round').hidden = false;
+  $('roundHeader').textContent = `Round ${e.roundNumber}/5 · ${e.type} · ${c.category.name} · ${c.challengeId}`;
+  $('title').textContent = c.title;
+  $('prompt').textContent = c.prompt;
+  $('answerStatus').textContent = '';
+  const body = $('body');
+  body.replaceChildren();
+  startTimer(e.endsAt);
+
+  if (e.type === 'conceptQuiz') {
+    for (const o of c.options)
+      body.append(el('button', { className: 'choice', textContent: `${o.id}) ${o.text}`, onclick: () => submit({ optionId: o.id }) }));
+  } else if (e.type === 'fixTheBug') {
+    body.append(el('pre', { textContent: c.code.content }));
+    for (const o of c.options)
+      body.append(el('div', {}, [
+        el('button', { className: 'choice', textContent: `${o.id}) ${o.summary}`, onclick: () => submit({ optionId: o.id }) }),
+        el('pre', { textContent: o.code }),
+      ]));
+  } else if (e.type === 'codeInvestigation') {
+    for (const f of c.files)
+      body.append(el('div', {}, [
+        el('button', { textContent: `The problem is in ${f.path}`, onclick: () => submit({ path: f.path }) }),
+        el('pre', { textContent: f.content }),
+      ]));
+  } else if (e.type === 'followTheRequest') {
+    const order = c.steps.map((s) => s.id);
+    const textById = Object.fromEntries(c.steps.map((s) => [s.id, s.text]));
+    const list = el('div');
+    const draw = () => {
+      list.replaceChildren(...order.map((id, i) => el('div', { className: 'row' }, [
+        el('button', { textContent: '↑', disabled: i === 0, onclick: () => { [order[i - 1], order[i]] = [order[i], order[i - 1]]; draw(); } }),
+        el('button', { textContent: '↓', disabled: i === order.length - 1, onclick: () => { [order[i + 1], order[i]] = [order[i], order[i + 1]]; draw(); } }),
+        el('span', { textContent: `${i + 1}. ${textById[id]}` }),
+      ])));
+    };
+    draw();
+    body.append(list, el('button', { textContent: 'Submit order', onclick: () => submit({ stepIds: [...order] }) }));
+  } else if (e.type === 'logAnalysis') {
+    c.logs.forEach((line, i) =>
+      body.append(el('button', { className: 'log-line', textContent: `${i + 1}  ${line}`, onclick: () => submit({ line: i + 1 }) })));
+  }
+}
+
+function renderRoundEnded(e) {
+  setScore(e.yourScore, e.opponentScore);
+  $('round').hidden = true;
+  $('reveal').hidden = false;
+  const you = !e.youAnswered ? 'no answer' : e.youCorrect ? 'correct' : 'wrong';
+  const them = !e.opponentAnswered ? 'no answer' : e.opponentCorrect ? 'correct' : 'wrong';
+  $('revealResult').textContent = `Round ${e.roundNumber}: ${e.result.toUpperCase()} (you ${you}, opponent ${them})`;
+  $('revealResult').className = 'big ' + (e.result === 'won' ? 'ok' : e.result === 'lost' ? 'bad' : '');
+  $('revealJson').textContent = JSON.stringify(e.reveal, null, 2);
+}
+
+async function connect() {
+  connection = new signalR.HubConnectionBuilder()
+    .withUrl('/hubs/duel', { accessTokenFactory: () => token })
+    .withAutomaticReconnect()
+    .build();
+
+  const on = (name, handler) => connection.on(name, (e) => { log(name, e); handler?.(e); });
+  on('QueueJoined', () => ($('status').textContent = 'In queue, waiting for an opponent…'));
+  on('QueueLeft', () => ($('status').textContent = 'Left the queue'));
+  on('MatchFound', (e) => {
+    duelId = e.duelId;
+    $('status').textContent = 'Match found, starting…';
+    $('opponent').textContent = `vs ${e.opponent.nickname}`;
+    setScore(0, 0);
+    startTimer(e.startsAt);
+  });
+  on('RoundStarted', (e) => { $('status').textContent = 'Playing'; renderRound(e); });
+  on('AnswerAccepted');
+  on('OpponentAnswered', () => ($('opponent').textContent += ' · answered'));
+  on('RoundEnded', (e) => {
+    renderRoundEnded(e);
+    $('opponent').textContent = $('opponent').textContent.replace(/ · answered/g, '');
+  });
+  on('DuelEnded', (e) => {
+    $('status').textContent = `Duel over: ${e.result.toUpperCase()} ${e.yourScore}:${e.opponentScore}, XP +${e.xpGained}`;
+    clearInterval(timerHandle);
+    $('timer').textContent = '';
+  });
+  on('DuelState', (e) => {
+    duelId = e.duelId;
+    $('opponent').textContent = `vs ${e.opponent.nickname}`;
+    setScore(e.yourScore, e.opponentScore);
+    if (e.phase === 'round') renderRound(e.currentRound);
+    else if (e.phase === 'reveal' && e.lastRoundEnded) renderRoundEnded(e.lastRoundEnded);
+    startTimer(e.phaseEndsAt);
+    $('status').textContent = `Resumed (${e.phase})`;
+  });
+  on('OpponentDisconnected', () => ($('status').textContent = 'Opponent disconnected (the clock keeps running)'));
+  on('OpponentReconnected', () => ($('status').textContent = 'Opponent is back'));
+  on('DuelAborted', (e) => ($('status').textContent = 'Duel aborted: ' + e.reason));
+  connection.onreconnecting(() => ($('status').textContent = 'Reconnecting…'));
+  connection.onclose(() => ($('status').textContent = 'Disconnected'));
+
+  await connection.start();
+  $('status').textContent = 'Connected';
+  $('joinBtn').disabled = false;
+  $('leaveBtn').disabled = false;
+}
+
+$('loginBtn').onclick = async () => {
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: $('email').value, password: $('password').value }),
+  });
+  if (!res.ok) { $('who').textContent = 'Login failed (' + res.status + ')'; return; }
+  const auth = await res.json();
+  token = auth.accessToken;
+  $('who').textContent = 'Logged in as ' + auth.user.nickname + ' (token valid 15 min)';
+  if (connection) await connection.stop();
+  await connect();
+};
+
+$('joinBtn').onclick = () => connection.invoke('JoinQueue').catch((e) => log('error', e.message));
+$('leaveBtn').onclick = () => connection.invoke('LeaveQueue').catch((e) => log('error', e.message));
+</script>
+</body>
+</html>

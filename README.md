@@ -41,6 +41,7 @@ To check that both are wired up, open http://localhost:5173/api/health — it sh
 - Put all backend routes under `/api`, e.g. `[Route("api/[controller]")]` on controllers.
 - OpenAPI spec (development only): http://localhost:5287/openapi/v1.json
 - Swagger UI (development only): http://localhost:5287/swagger
+- Duels run over SignalR at `/hubs/duel`; the protocol is in [docs/duel-protocol.md](docs/duel-protocol.md). To try a duel without the frontend, open http://localhost:5287/dev/duel-test.html (development only) in two tabs and log in as two different users.
 
 ## Database
 

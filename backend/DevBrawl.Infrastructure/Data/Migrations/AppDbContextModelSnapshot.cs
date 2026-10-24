@@ -174,6 +174,120 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DevBrawl.Duel.Engine.Domain.DuelMatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("Player1Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Player1Rewards")
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("Player1Score")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("Player2Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Player2Rewards")
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("Player2Score")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("WinnerId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WinnerId");
+
+                    b.HasIndex("Player1Id", "StartedAt");
+
+                    b.HasIndex("Player2Id", "StartedAt");
+
+                    b.ToTable("Duels", (string)null);
+                });
+
+            modelBuilder.Entity("DevBrawl.Duel.Engine.Domain.DuelRound", b =>
+                {
+                    b.Property<Guid>("DuelId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RoundNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AnswerKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ChallengeId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ClientView")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("EndedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("EndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Player1Answer")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("Player1AnsweredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Player1Correct")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Player2Answer")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime?>("Player2AnsweredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Player2Correct")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("Result")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reveal")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("DuelId", "RoundNumber");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("DuelRounds");
+                });
+
             modelBuilder.Entity("DevBrawl.Auth.Domain.RefreshToken", b =>
                 {
                     b.HasOne("DevBrawl.Auth.Domain.User", "User")
@@ -185,9 +299,49 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DevBrawl.Duel.Engine.Domain.DuelMatch", b =>
+                {
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("Player1Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("Player2Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("WinnerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("DevBrawl.Duel.Engine.Domain.DuelRound", b =>
+                {
+                    b.HasOne("DevBrawl.Common.Domain.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DevBrawl.Duel.Engine.Domain.DuelMatch", null)
+                        .WithMany("Rounds")
+                        .HasForeignKey("DuelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DevBrawl.Auth.Domain.User", b =>
                 {
                     b.Navigation("RefreshTokens");
+                });
+
+            modelBuilder.Entity("DevBrawl.Duel.Engine.Domain.DuelMatch", b =>
+                {
+                    b.Navigation("Rounds");
                 });
 #pragma warning restore 612, 618
         }

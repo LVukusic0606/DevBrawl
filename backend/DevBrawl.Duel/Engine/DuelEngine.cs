@@ -230,7 +230,7 @@ public sealed class DuelEngine(
 
         foreach (var player in duel.Players)
             await notifier.SendAsync(player.UserId, DuelEvents.MatchFound,
-                new MatchFoundEvent(duel.Id, player.Info, duel.Opponent(player.UserId).Info, duel.PhaseEndsAt));
+                new MatchFoundEvent(duel.Id, player.Info, duel.Opponent(player.UserId).Info, duel.PhaseEndsAt, DateTime.UtcNow));
     }
 
     private async Task StartRoundAsync(ActiveDuel duel, int roundNumber, DateTime now)
@@ -262,7 +262,7 @@ public sealed class DuelEngine(
         duel.Phase = DuelPhase.Round;
         duel.PhaseEndsAt = endsAt;
         duel.CurrentRound = new RoundStartedEvent(duel.Id, roundNumber, type, challenge.CategoryId,
-            challenge.ClientView, (int)timeLimit.TotalSeconds, endsAt);
+            challenge.ClientView, (int)timeLimit.TotalSeconds, endsAt, now);
 
         foreach (var player in duel.Players)
             await notifier.SendAsync(player.UserId, DuelEvents.RoundStarted, duel.CurrentRound);
@@ -367,7 +367,8 @@ public sealed class DuelEngine(
                 duel.Phase == DuelPhase.Countdown ? null : duel.CurrentRound,
                 player.AnsweredAt is not null, opponent.AnsweredAt is not null,
                 player.Score, opponent.Score,
-                duel.Phase == DuelPhase.Reveal ? duel.LastRoundEnded.GetValueOrDefault(userId) : null));
+                duel.Phase == DuelPhase.Reveal ? duel.LastRoundEnded.GetValueOrDefault(userId) : null,
+                DateTime.UtcNow));
         }
         finally
         {

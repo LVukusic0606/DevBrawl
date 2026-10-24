@@ -11,6 +11,8 @@ public sealed record ProfileResponse(
     // True when the requester is looking at their own profile
     bool IsYou,
     ProfileProgressResponse Progress,
+    // Average of the category ratings (OverallRating); a summary, not a rating of its own
+    ProfileOverallResponse Overall,
     // All categories, in display order
     IReadOnlyList<ProfileRatingResponse> Ratings,
     // null when every category has the same rating (e.g. a new player)
@@ -22,6 +24,8 @@ public sealed record ProfileResponse(
     IReadOnlyList<ProfileDuelResponse> RecentDuels,
     // Lesson and quiz stats; null until the Learn backend provides them
     object? Learning);
+
+public sealed record ProfileOverallResponse(int Rating, RankTier Tier);
 
 public sealed record ProfileUserResponse(Guid Id, string Nickname, DateTime MemberSince);
 

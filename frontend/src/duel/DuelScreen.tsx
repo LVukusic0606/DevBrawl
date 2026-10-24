@@ -105,7 +105,7 @@ export function DuelScreen({
 
         {view.phase === 'results' &&
           (review ? (
-            <Review details={review} onLeave={playAgain} />
+            <Review details={review} categoryName={categoryName} onLeave={playAgain} />
           ) : (
             <Results
               match={view.match}

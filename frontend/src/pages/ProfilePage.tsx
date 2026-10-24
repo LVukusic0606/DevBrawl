@@ -120,10 +120,19 @@ function ProfileView({ profile, onOpenProfile, onStartDuel, onReload }: ProfileV
             </div>
           )}
         </div>
-        <div className="profile-level">
-          <span className="profile-level-label">LEVEL</span>
-          <span className="profile-level-value">{progress.level}</span>
-          <XpMeter {...progress} />
+        <div className="profile-hero-stats">
+          <div className="profile-level is-overall">
+            <span className="profile-level-label">OVERALL RATING</span>
+            <span className="profile-level-value">{profile.overall.rating}</span>
+            <span className="profile-overall-note">
+              {TIER_LABELS[profile.overall.tier]} · average of all {profile.ratings.length} categories
+            </span>
+          </div>
+          <div className="profile-level">
+            <span className="profile-level-label">LEVEL</span>
+            <span className="profile-level-value">{progress.level}</span>
+            <XpMeter {...progress} />
+          </div>
         </div>
       </section>
 
@@ -266,25 +275,25 @@ const RESULT_ICONS = { won: 'ti-trophy', lost: 'ti-x', draw: 'ti-equal' } as con
 
 function DuelRow({ duel, onOpenProfile }: { duel: ProfileDuel; onOpenProfile: (userId: string) => void }) {
   return (
-    <li className="duel-row">
-      <span className={`duel-result is-${duel.result}`}>
+    <li className="profile-duel-row">
+      <span className={`profile-duel-result is-${duel.result}`}>
         <i className={`ti ${RESULT_ICONS[duel.result]}`} aria-hidden="true" />
         {RESULT_LABELS[duel.result]}
       </span>
-      <span className="duel-opponent">
+      <span className="profile-duel-opponent">
         vs{' '}
-        <button type="button" className="duel-opponent-link" onClick={() => onOpenProfile(duel.opponent.id)}>
+        <button type="button" className="profile-duel-opponent-link" onClick={() => onOpenProfile(duel.opponent.id)}>
           {duel.opponent.nickname}
         </button>
       </span>
-      <span className="duel-score">
+      <span className="profile-duel-score">
         {duel.yourScore}:{duel.opponentScore}
       </span>
-      <span className={`duel-delta${duel.ratingDelta > 0 ? ' is-up' : duel.ratingDelta < 0 ? ' is-down' : ''}`}>
+      <span className={`profile-duel-delta${duel.ratingDelta > 0 ? ' is-up' : duel.ratingDelta < 0 ? ' is-down' : ''}`}>
         {formatDelta(duel.ratingDelta)}
         <span className="profile-sr-only"> rating</span>
       </span>
-      <time className="duel-time" dateTime={duel.finishedAt}>
+      <time className="profile-duel-time" dateTime={duel.finishedAt}>
         {formatDateTime(duel.finishedAt)}
       </time>
     </li>

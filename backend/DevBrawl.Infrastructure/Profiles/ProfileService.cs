@@ -30,6 +30,7 @@ public class ProfileService(AppDbContext db) : IProfileService
             user,
             userId == requesterId,
             await ProgressAsync(userId, cancellationToken),
+            Overall(ratings),
             ratings,
             ExtremeCategory(ratings, strongest: true),
             ExtremeCategory(ratings, strongest: false),
@@ -67,6 +68,14 @@ public class ProfileService(AppDbContext db) : IProfileService
             return new ProfileRatingResponse(category.Id, category.Slug, category.Name, rating,
                 RankTiers.FromRating(rating), lastDeltas.TryGetValue(category.Id, out var delta) ? delta : null);
         }).ToList();
+    }
+
+    private static ProfileOverallResponse Overall(List<ProfileRatingResponse> ratings)
+    {
+        var rating = OverallRating.FromCategories(
+            ratings.Select(r => r.CategoryId),
+            ratings.ToDictionary(r => r.CategoryId, r => r.Rating));
+        return new ProfileOverallResponse(rating, RankTiers.FromRating(rating));
     }
 
     private static int? ExtremeCategory(List<ProfileRatingResponse> ratings, bool strongest)

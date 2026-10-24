@@ -105,4 +105,4 @@ When a user connects (or calls `JoinQueue`) while they are in a running duel, th
 Both need the usual `Authorization: Bearer` header.
 
 - `GET /api/duels?limit=20` — your recent duels, newest first: `[{ id, status, opponent: { id, nickname }, result, yourScore, opponentScore, startedAt, finishedAt }]`. `status`: `inProgress`, `finished`, `abandoned`. `result` is null unless finished.
-- `GET /api/duels/{id}` — `{ summary, rewards, rounds }` for the results review. Each round: `{ roundNumber, type, categoryId, challenge, yourAnswer, youCorrect, opponentCorrect, result, reveal }`. 404 if you didn't play in it.
+- `GET /api/duels/{id}` — `{ summary, rewards, rounds }` for the results review. Each round: `{ roundNumber, type, categoryId, challenge, yourAnswer, youCorrect, opponentAnswered, opponentCorrect, result, reveal }`. 404 if you didn't play in it.

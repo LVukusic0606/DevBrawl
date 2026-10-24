@@ -48,6 +48,8 @@ export interface Profile {
   user: { id: string; nickname: string; memberSince: string }
   isYou: boolean
   progress: { level: number; totalXp: number; levelStartXp: number; nextLevelXp: number }
+  // Average of the category ratings
+  overall: { rating: number; tier: RankTier }
   ratings: ProfileRating[]
   strongestCategoryId: number | null
   weakestCategoryId: number | null

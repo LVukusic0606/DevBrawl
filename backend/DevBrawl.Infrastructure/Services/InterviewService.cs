@@ -75,6 +75,29 @@ public class InterviewService(AppDbContext db, LearnKnowledgeBase knowledge, IIn
             question.Id, lesson.CategoryId, lesson.CategoryTitle, lesson.LessonId, lesson.LessonTitle, question.Question, question.CreatedAt));
     }
 
+    public async Task<InterviewResult<TranscriptResponse>> TranscribeAnswerAsync(Guid userId, Guid questionId, byte[] audio,
+        string mimeType, CancellationToken cancellationToken = default)
+    {
+        // Only for the user's own open questions, so the endpoint can't be used as a general transcription service
+        var question = await db.InterviewQuestions
+            .AsNoTracking()
+            .SingleOrDefaultAsync(q => q.Id == questionId && q.UserId == userId, cancellationToken);
+        if (question is null)
+            return InterviewResult<TranscriptResponse>.Fail(InterviewError.QuestionNotFound);
+        if (question.Answer is not null)
+            return InterviewResult<TranscriptResponse>.Fail(InterviewError.AlreadyAnswered);
+
+        try
+        {
+            var text = await interviewer.TranscribeAsync(question.Question, audio, mimeType, cancellationToken);
+            return InterviewResult<TranscriptResponse>.Ok(new TranscriptResponse(question.Id, text));
+        }
+        catch (InterviewerUnavailableException)
+        {
+            return InterviewResult<TranscriptResponse>.Fail(InterviewError.InterviewerUnavailable);
+        }
+    }
+
     public async Task<InterviewResult<AnswerReviewResponse>> SubmitAnswerAsync(Guid userId, Guid questionId, string answer,
         CancellationToken cancellationToken = default)
     {

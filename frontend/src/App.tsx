@@ -6,19 +6,22 @@ import InterviewPage from './pages/InterviewPage'
 import DuelPage from './pages/DuelPage'
 import LearnPage from './pages/LearnPage'
 import MainPage, { type MainSection } from './pages/MainPage'
+import ProfilePage from './pages/ProfilePage'
 
 type AuthState =
   | { status: 'checking' }
   | { status: 'signedOut' }
   | { status: 'signedIn'; user: User }
 
-type Screen = 'main' | 'learn' | 'interview' | 'duel'
+type Screen = 'main' | 'learn' | 'interview' | 'duel' | 'profile'
 
 function App() {
   const [auth, setAuth] = useState<AuthState>(() =>
     loadSession() ? { status: 'checking' } : { status: 'signedOut' },
   )
   const [screen, setScreen] = useState<Screen>('main')
+  // Whose profile is open; undefined is the logged-in player's own
+  const [profileUserId, setProfileUserId] = useState<string | undefined>(undefined)
 
   // A stored session may have expired or been revoked, so confirm it with the backend
   useEffect(() => {
@@ -62,16 +65,17 @@ function App() {
     if (session) logout(session.refreshToken).catch(() => {})
   }
 
+  function openProfile(userId?: string) {
+    setProfileUserId(userId)
+    setScreen('profile')
+  }
+
   function handleGoogle() {
     console.info('Google sign-in (not connected yet)')
   }
 
   function handleSelect(section: MainSection) {
-    if (section === 'learn' || section === 'interview') {
-      setScreen(section)
-      return
-    }
-    console.info('Section selected (not connected yet)', section)
+    setScreen(section)
   }
 
   if (auth.status === 'checking') return null
@@ -92,7 +96,20 @@ function App() {
     return <InterviewPage onBack={() => setScreen('main')} />
   }
 
-  return <MainPage onSelect={handleSelect} onLogout={handleLogout} />
+  if (screen === 'profile') {
+    return (
+      <ProfilePage
+        // A different player gets a fresh page, so state from the previous profile never shows
+        key={profileUserId ?? 'me'}
+        userId={profileUserId}
+        onBack={() => setScreen('main')}
+        onOpenProfile={openProfile}
+        onStartDuel={() => handleSelect('duel')}
+      />
+    )
+  }
+
+  return <MainPage onSelect={handleSelect} onLogout={handleLogout} onOpenProfile={() => openProfile()} />
 }
 
 export default App

@@ -50,6 +50,39 @@ public class InterviewController(IInterviewService interviewService) : Controlle
         return result.Error is null ? Ok(result.Value) : ToProblem(result.Error.Value);
     }
 
+    // Formats Gemini accepts for audio; the frontend sends 16 kHz mono WAV
+    private static readonly HashSet<string> AudioTypes =
+        ["audio/wav", "audio/x-wav", "audio/wave", "audio/mpeg", "audio/mp3", "audio/ogg", "audio/flac", "audio/aac"];
+
+    // About 2 minutes of 16 kHz mono WAV
+    private const long MaxAudioBytes = 5 * 1024 * 1024;
+
+    [HttpPost("questions/{questionId:guid}/transcribe")]
+    [EnableRateLimiting(InterviewRateLimit.PolicyName)]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(MaxAudioBytes + 64 * 1024)]
+    [ProducesResponseType<TranscriptResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> TranscribeAnswer(Guid questionId, IFormFile audio, CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+
+        var mimeType = audio.ContentType.Split(';')[0].Trim().ToLowerInvariant();
+        if (audio.Length == 0 || audio.Length > MaxAudioBytes)
+            return Problem("The recording must be between 1 second and 2 minutes long.", statusCode: StatusCodes.Status400BadRequest);
+        if (!AudioTypes.Contains(mimeType))
+            return Problem($"Unsupported audio format '{mimeType}'. Send WAV, MP3, OGG, FLAC or AAC.", statusCode: StatusCodes.Status400BadRequest);
+
+        using var buffer = new MemoryStream((int)audio.Length);
+        await audio.CopyToAsync(buffer, cancellationToken);
+        var result = await interviewService.TranscribeAnswerAsync(userId, questionId, buffer.ToArray(), mimeType, cancellationToken);
+        return result.Error is null ? Ok(result.Value) : ToProblem(result.Error.Value);
+    }
+
     private bool TryGetUserId(out Guid userId) =>
         Guid.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out userId);
 
@@ -59,7 +92,7 @@ public class InterviewController(IInterviewService interviewService) : Controlle
             "This category doesn't exist. Use a category id from GET /api/interview/topics, such as \"databases\".",
             statusCode: StatusCodes.Status404NotFound),
         InterviewError.LessonNotFound => Problem(
-            "This lesson doesn't exist. Use a lesson id from GET /api/interview/topics, such as \"keys\".",
+            "This lesson doesn't exist. Use a lesson id from GET /api/interview/topics, such as \"primary-foreign-keys\".",
             statusCode: StatusCodes.Status404NotFound),
         InterviewError.LessonNotInCategory => Problem(
             "This lesson belongs to a different category. Send only the lessonId; its category is found automatically.",

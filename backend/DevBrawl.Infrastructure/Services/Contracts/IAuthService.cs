@@ -11,4 +11,10 @@ public interface IAuthService
     Task<AuthResult> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default);
     Task LogoutAsync(string refreshToken, CancellationToken cancellationToken = default);
     Task<UserResponse?> GetUserAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    // Account changes return a new token pair, because the access token carries the nickname and email
+    Task<AuthResult> ChangeNicknameAsync(Guid userId, ChangeNicknameRequest request, CancellationToken cancellationToken = default);
+    Task<AuthResult> ChangeEmailAsync(Guid userId, ChangeEmailRequest request, CancellationToken cancellationToken = default);
+    // Also logs the user out on every other device
+    Task<AuthResult> ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken cancellationToken = default);
 }

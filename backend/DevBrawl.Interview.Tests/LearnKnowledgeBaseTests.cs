@@ -12,18 +12,23 @@ public class LearnKnowledgeBaseTests
     [Fact]
     public void Loads_every_category_and_lesson()
     {
-        Assert.Equal(["frontend-web", "backend", "databases", "version-control"], _knowledge.Categories.Select(c => c.Id));
-        Assert.Equal(9, _knowledge.Categories.Sum(c => c.Lessons.Count));
-        Assert.Equal("Databases", _knowledge.FindLesson("keys")!.CategoryTitle);
+        Assert.Equal(
+            ["apis-networking", "databases", "security", "debugging", "system-design", "infrastructure"],
+            _knowledge.Categories.Select(c => c.Id));
+        Assert.All(_knowledge.Categories, c => Assert.Equal(10, c.Lessons.Count));
+        Assert.Equal("Databases", _knowledge.FindLesson("primary-foreign-keys")!.CategoryTitle);
     }
 
     [Fact]
-    public void Json_matches_the_lessons_in_content_ts()
+    public void Json_matches_the_lessons_in_the_frontend()
     {
-        // Ids in content.ts are the only `id: '...'` entries, so a regex is enough to catch a stale export
-        var contentTs = File.ReadAllText(Path.Combine(RepoRoot(), "frontend", "src", "learn", "content.ts"));
-        var idsInTs = Regex.Matches(contentTs, @"\bid: '([^']+)'").Select(m => m.Groups[1].Value).ToList();
-        var idsInJson = _knowledge.Categories.SelectMany(c => c.Lessons.Select(l => l.Id).Prepend(c.Id)).ToList();
+        // Lessons live in content.ts and learn/lessons/*.ts; category and lesson ids are the only `id: '...'` entries there
+        var learn = Path.Combine(RepoRoot(), "frontend", "src", "learn");
+        var sources = Directory.GetFiles(Path.Combine(learn, "lessons"), "*.ts").Append(Path.Combine(learn, "content.ts"));
+        var idsInTs = sources
+            .SelectMany(file => Regex.Matches(File.ReadAllText(file), @"\bid: '([^']+)'").Select(m => m.Groups[1].Value))
+            .Order();
+        var idsInJson = _knowledge.Categories.SelectMany(c => c.Lessons.Select(l => l.Id).Prepend(c.Id)).Order();
 
         Assert.True(idsInTs.SequenceEqual(idsInJson),
             "learn-content.json is out of date: run node backend/DevBrawl.Interview/Knowledge/export-learn-content.mjs");
@@ -32,26 +37,28 @@ public class LearnKnowledgeBaseTests
     [Fact]
     public void Renders_every_block_type_as_readable_text()
     {
-        var keys = _knowledge.FindLesson("keys")!.Text;
-        var browser = _knowledge.FindLesson("browser-page")!.Text;
-        var commits = _knowledge.FindLesson("commits")!.Text;
-        var flexbox = _knowledge.FindLesson("layout-flexbox")!.Text;
+        var request = _knowledge.FindLesson("api-request")!.Text;
+        var methods = _knowledge.FindLesson("http-methods")!.Text;
+        var reproduce = _knowledge.FindLesson("reproduce-bugs")!.Text;
+        var ciCd = _knowledge.FindLesson("ci-cd")!.Text;
 
-        Assert.StartsWith("# Linking tables with keys\n", keys);
-        Assert.Contains("| duels.id | winner_id | loser_id |\n| --- | --- | --- |\n| 10 | 1 | 2 |", keys);
-        Assert.Contains("1. Download the HTML document\n2. Build the structure of the page", browser);
-        Assert.Contains("my-site/:\n```\nmy-site/\n├── index.html", browser);
-        Assert.Contains("- Add login screen: A new page and its styles.", commits);
-        Assert.Contains("[Interactive diagram: flexbox]", flexbox);
+        Assert.StartsWith("# What happens during an API request?\n", request);
+        Assert.Contains("1. Client sends a request\n2. Server checks who is asking", request);
+        Assert.Contains("api/:\n```\napi/\n├── controllers/", request);
+        Assert.Contains("Common mistakes:\n- Expecting the server to remember the previous request", request);
+        Assert.Contains("Key takeaway: A request travels through layers in order", request);
+        Assert.Contains("| Method | Intent | Changes data? |\n| --- | --- | --- |\n| GET | Read something | No |", methods);
+        Assert.Contains("- Reproduce: Follow the steps until the bug appears on your machine.", reproduce);
+        Assert.Contains("[Interactive diagram: branches]", ciCd);
     }
 
     [Fact]
     public void Picks_a_random_lesson_within_the_category()
     {
-        var picked = Enumerable.Range(0, 50).Select(i => _knowledge.PickLesson("databases", new Random(i))).ToList();
+        var picked = Enumerable.Range(0, 200).Select(i => _knowledge.PickLesson("databases", new Random(i))).ToList();
 
         Assert.All(picked, l => Assert.Equal("databases", l.CategoryId));
-        Assert.Equal(["keys", "tables"], picked.Select(l => l.LessonId).Distinct().Order());
+        Assert.Equal(10, picked.Select(l => l.LessonId).Distinct().Count());
     }
 
     [Fact]
@@ -59,7 +66,7 @@ public class LearnKnowledgeBaseTests
     {
         Assert.Null(_knowledge.FindLesson("nope"));
         Assert.False(_knowledge.HasCategory("nope"));
-        Assert.True(_knowledge.HasCategory("backend"));
+        Assert.True(_knowledge.HasCategory("security"));
     }
 
     [Fact]

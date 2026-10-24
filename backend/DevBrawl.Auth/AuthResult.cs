@@ -7,7 +7,10 @@ public enum AuthError
     EmailTaken,
     NicknameTaken,
     InvalidCredentials,
-    InvalidRefreshToken
+    InvalidRefreshToken,
+    // Account changes: the current password didn't match
+    WrongPassword,
+    UserNotFound
 }
 
 public sealed record AuthResult(AuthResponse? Response, AuthError? Error)

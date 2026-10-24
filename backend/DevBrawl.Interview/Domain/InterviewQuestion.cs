@@ -6,7 +6,7 @@ public class InterviewQuestion
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
-    // Ids from frontend/src/learn/content.ts, e.g. "databases" / "keys"
+    // Ids from frontend/src/learn/content.ts, e.g. "databases" / "primary-foreign-keys"
     public string CategoryId { get; set; } = string.Empty;
     public string LessonId { get; set; } = string.Empty;
     public string Question { get; set; } = string.Empty;

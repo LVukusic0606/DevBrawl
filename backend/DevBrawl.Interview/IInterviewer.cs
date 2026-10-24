@@ -20,6 +20,9 @@ public interface IInterviewer
 
     Task<AnswerReview> ReviewAnswerAsync(LessonKnowledge lesson, string question, IReadOnlyList<string> keyPoints, string answer,
         CancellationToken cancellationToken = default);
+
+    // A spoken answer to the question, as text. Empty when the recording has no speech.
+    Task<string> TranscribeAsync(string question, byte[] audio, string mimeType, CancellationToken cancellationToken = default);
 }
 
 public sealed class InterviewerUnavailableException(string message, Exception? innerException = null)

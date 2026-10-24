@@ -92,6 +92,66 @@ public class AuthService(
         return user is null ? null : UserResponse.From(user);
     }
 
+    public async Task<AuthResult> ChangeNicknameAsync(Guid userId, ChangeNicknameRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await users.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+            return AuthResult.Fail(AuthError.UserNotFound);
+
+        var nickname = request.Nickname.Trim();
+        if (nickname != user.Nickname)
+        {
+            if (await users.NicknameExistsAsync(nickname, cancellationToken))
+                return AuthResult.Fail(AuthError.NicknameTaken);
+            user.Nickname = nickname;
+        }
+
+        var (response, _) = IssueTokens(user);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return AuthResult.Ok(response);
+    }
+
+    public async Task<AuthResult> ChangeEmailAsync(Guid userId, ChangeEmailRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await users.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+            return AuthResult.Fail(AuthError.UserNotFound);
+        if (!passwordHasher.Verify(request.CurrentPassword, user.PasswordHash))
+            return AuthResult.Fail(AuthError.WrongPassword);
+
+        var email = NormalizeEmail(request.Email);
+        if (email != user.Email)
+        {
+            if (await users.EmailExistsAsync(email, cancellationToken))
+                return AuthResult.Fail(AuthError.EmailTaken);
+            user.Email = email;
+        }
+
+        var (response, _) = IssueTokens(user);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return AuthResult.Ok(response);
+    }
+
+    public async Task<AuthResult> ChangePasswordAsync(Guid userId, ChangePasswordRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await users.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+            return AuthResult.Fail(AuthError.UserNotFound);
+        if (!passwordHasher.Verify(request.CurrentPassword, user.PasswordHash))
+            return AuthResult.Fail(AuthError.WrongPassword);
+
+        user.PasswordHash = passwordHasher.Hash(request.NewPassword);
+        // Sessions on other devices were opened with the old password; this device gets the new pair below
+        await refreshTokens.RevokeAllForUserAsync(user.Id, DateTime.UtcNow, cancellationToken);
+
+        var (response, _) = IssueTokens(user);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return AuthResult.Ok(response);
+    }
+
     // Stages a new refresh token; the caller saves it
     private (AuthResponse Response, RefreshToken Stored) IssueTokens(User user)
     {

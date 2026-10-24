@@ -33,6 +33,7 @@ public static class DependencyInjection
 
         services.AddDuelContent(configuration);
         services.AddDuelEngine(configuration);
+        services.AddInterview(configuration);
 
         return services;
     }

@@ -5,6 +5,7 @@ using DevBrawl.Duel.Engine;
 using DevBrawl.Infrastructure;
 using DevBrawl.Infrastructure.Data;
 using DevBrawl.Api.OpenApi;
+using DevBrawl.Api.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddInterviewRateLimit(builder.Configuration);
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 // Enums as camelCase strings ("conceptQuiz", "won"), the same as in the challenge content
@@ -46,6 +48,8 @@ else
 
 app.UseAuthentication();
 app.UseAuthorization();
+// After authentication, so limits are counted per user
+app.UseRateLimiter();
 
 app.MapControllers();
 app.MapHub<DuelHub>("/hubs/duel");

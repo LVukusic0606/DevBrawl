@@ -1,0 +1,403 @@
+[
+  {
+    "id": "frontend-web",
+    "title": "Frontend web development",
+    "description": "How pages are built and shown in the browser.",
+    "icon": "ti-brand-html5",
+    "lessons": [
+      {
+        "id": "browser-page",
+        "title": "How a browser shows a page",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Every website goes through the same pipeline in the browser. The browser takes the files it downloaded and turns them into the pixels you see."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "Download the HTML document",
+              "Build the structure of the page",
+              "Apply the styles",
+              "Run the scripts",
+              "Paint the pixels on screen"
+            ]
+          },
+          {
+            "type": "text",
+            "text": "A project keeps these jobs in separate files. The structure, the look and the behavior can change independently."
+          },
+          {
+            "type": "code",
+            "file": "my-site/",
+            "code": "my-site/\n├── index.html        structure\n├── styles/\n│   └── main.css      look\n└── scripts/\n    └── app.js        behavior"
+          },
+          {
+            "type": "text",
+            "text": "When a script changes the page, the browser runs the steps again for the part that changed. Keeping the work small is why pages feel fast."
+          }
+        ]
+      },
+      {
+        "id": "html-structure",
+        "title": "Structuring content with HTML",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A page is a tree. One root holds children, and each child can hold its own children. The nesting shows which parts belong together."
+          },
+          {
+            "type": "code",
+            "file": "page tree",
+            "code": "page\n├── header\n│   ├── logo\n│   └── navigation\n│       ├── learn\n│       └── duel\n├── main\n│   └── lesson\n└── footer"
+          },
+          {
+            "type": "text",
+            "text": "Each element has a role. A navigation area holds links, and a heading names the section below it. Screen readers and search engines rely on these roles to understand the page."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Role",
+              "Meaning",
+              "Examples"
+            ],
+            "rows": [
+              [
+                "Structure",
+                "Groups related content",
+                "header, main, footer"
+              ],
+              [
+                "Text",
+                "Carries the words",
+                "heading, paragraph"
+              ],
+              [
+                "Interaction",
+                "The user can act on it",
+                "button, link"
+              ]
+            ]
+          },
+          {
+            "type": "text",
+            "text": "Choose an element for its meaning first. How it looks comes later, in the styles."
+          }
+        ]
+      },
+      {
+        "id": "layout-flexbox",
+        "title": "Arranging elements with flexbox",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Layout answers one question: where does each box go? Flexbox places children in a line and decides how the free space is shared between them."
+          },
+          {
+            "type": "visual",
+            "visual": "flexbox"
+          },
+          {
+            "type": "text",
+            "text": "Two ideas drive it. The direction says which way the children flow. The justify setting says what happens with the free space along that direction."
+          },
+          {
+            "type": "code",
+            "file": "one navbar, two layouts",
+            "code": "row:     logo ........ links ........ button\ncolumn:  logo\n         links\n         button"
+          },
+          {
+            "type": "text",
+            "text": "Most layouts are a row inside a column, or a column inside a row. Nesting these two is enough for almost every screen."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "backend",
+    "title": "Backend development",
+    "description": "How servers receive requests and send back data.",
+    "icon": "ti-server",
+    "lessons": [
+      {
+        "id": "server-role",
+        "title": "What a server does",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A server is a program that waits for requests and answers them. The client, such as a browser or a phone, is the one that asks."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "Client sends a request",
+              "Server checks who is asking",
+              "Server runs the logic",
+              "Server reads or writes data",
+              "Server sends a response"
+            ]
+          },
+          {
+            "type": "text",
+            "text": "Each request stands on its own. The server knows who is asking only if the request says so, usually with a token that proves the login."
+          },
+          {
+            "type": "code",
+            "file": "api/",
+            "code": "api/\n├── controllers/    receive requests, return responses\n├── services/       the rules of the app\n├── repositories/   talk to the database\n└── models/         the shape of the data"
+          },
+          {
+            "type": "text",
+            "text": "Splitting the server into layers keeps each job in one place. A request passes through the layers in order, and each layer does only its own part."
+          }
+        ]
+      },
+      {
+        "id": "http-methods",
+        "title": "Reading and writing with HTTP methods",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A method tells the server what the client wants to do. The same address can accept different methods, and each one means something different."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Method",
+              "Intent",
+              "Changes data?"
+            ],
+            "rows": [
+              [
+                "GET",
+                "Read something",
+                "No"
+              ],
+              [
+                "POST",
+                "Create something new",
+                "Yes"
+              ],
+              [
+                "PUT",
+                "Replace something",
+                "Yes"
+              ],
+              [
+                "PATCH",
+                "Change part of something",
+                "Yes"
+              ],
+              [
+                "DELETE",
+                "Remove something",
+                "Yes"
+              ]
+            ]
+          },
+          {
+            "type": "code",
+            "file": "the same address, different intent",
+            "code": "GET     /lessons/12    read lesson 12\nDELETE  /lessons/12    remove lesson 12\nPOST    /lessons       create a new lesson"
+          },
+          {
+            "type": "text",
+            "text": "Repeating a GET changes nothing, so it is safe. Repeating a POST may create a second item. Knowing this helps when a request fails and has to be sent again."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "databases",
+    "title": "Databases",
+    "description": "How data is stored, found and kept consistent.",
+    "icon": "ti-database",
+    "lessons": [
+      {
+        "id": "tables",
+        "title": "Why we store data in tables",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Data has to outlive a single request. A database keeps it safely and lets many users read and write at the same time."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "id",
+              "username",
+              "level"
+            ],
+            "rows": [
+              [
+                "1",
+                "mara",
+                "12"
+              ],
+              [
+                "2",
+                "ivan",
+                "7"
+              ],
+              [
+                "3",
+                "lea",
+                "21"
+              ]
+            ]
+          },
+          {
+            "type": "text",
+            "text": "A row is one record, and a column is one property that every record has. Because each column holds one kind of value, the data stays predictable."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "Create a record",
+              "Read records that match",
+              "Update a record",
+              "Delete a record"
+            ]
+          },
+          {
+            "type": "text",
+            "text": "These four operations cover most of the work a database does. Learning to think in them makes every data feature easier to design."
+          }
+        ]
+      },
+      {
+        "id": "keys",
+        "title": "Linking tables with keys",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Copying the same data into many places causes mistakes. A better way is to store each fact once and link to it by a key."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "users.id",
+              "username"
+            ],
+            "rows": [
+              [
+                "1",
+                "mara"
+              ],
+              [
+                "2",
+                "ivan"
+              ]
+            ]
+          },
+          {
+            "type": "table",
+            "headers": [
+              "duels.id",
+              "winner_id",
+              "loser_id"
+            ],
+            "rows": [
+              [
+                "10",
+                "1",
+                "2"
+              ],
+              [
+                "11",
+                "2",
+                "1"
+              ]
+            ]
+          },
+          {
+            "type": "text",
+            "text": "The primary key identifies one row. A foreign key stores the primary key of a row in another table, such as winner_id pointing at users.id."
+          },
+          {
+            "type": "text",
+            "text": "If mara changes her name, every duel still points at the same row, so nothing has to be updated in two places. Database rules also stop a link from pointing at a row that does not exist."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "version-control",
+    "title": "Version control",
+    "description": "How teams track and combine changes to code.",
+    "icon": "ti-git-branch",
+    "lessons": [
+      {
+        "id": "commits",
+        "title": "Saving history with commits",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Version control records a project as a series of saved states. Each saved state is a commit, and the list of commits is the history of the project."
+          },
+          {
+            "type": "timeline",
+            "items": [
+              {
+                "title": "Initial project",
+                "detail": "The first files of the app."
+              },
+              {
+                "title": "Add login screen",
+                "detail": "A new page and its styles."
+              },
+              {
+                "title": "Fix button color",
+                "detail": "One small change, with a clear reason."
+              },
+              {
+                "title": "Add main page",
+                "detail": "Navigation to the sections of the app."
+              }
+            ]
+          },
+          {
+            "type": "code",
+            "file": "what one commit records",
+            "code": "commit 4f2a9c\nauthor:   the person who made the change\ndate:     when it was saved\nmessage:  why the change was made\nchanges:  which files and lines differ from before"
+          },
+          {
+            "type": "text",
+            "text": "Because every commit has a reason, the history explains the project later. A good message says why the change exists, not only what it touches."
+          }
+        ]
+      },
+      {
+        "id": "branches",
+        "title": "Working apart with branches",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A branch is a separate line of work. Commits on a branch do not touch the main line until you join them back."
+          },
+          {
+            "type": "visual",
+            "visual": "branches"
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "Create a branch from main",
+              "Commit the work on that branch",
+              "Review the changes",
+              "Merge the branch back into main"
+            ]
+          },
+          {
+            "type": "text",
+            "text": "When two branches change the same lines, the merge cannot decide alone. That situation is a conflict, and a person decides which version to keep."
+          }
+        ]
+      }
+    ]
+  }
+]

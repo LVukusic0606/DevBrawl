@@ -46,7 +46,7 @@ Color rules:
 
 ## Radius and borders
 
-- Radius: **8px** for cards, buttons and inputs. Pills only for small badges.
+- Radius: **8px** for cards, buttons and inputs. **12px** for large inner panels, **16px** for full-screen frames. Pills only for small badges.
 - Borders are **1px** in `--color-border`. No thick outlines except for focus and active states.
 - Shadows are minimal. Only the focus ring is allowed (`box-shadow: 0 0 0 2px` in the accent color).
 
@@ -55,6 +55,20 @@ Color rules:
 - **Sidebar** on desktop. Fixed width around 220px, containing learning, duel, profile and streak.
 - **Mobile:** the sidebar becomes a bottom bar with four items: learning, duel, profile and streak. Each item has an icon and a short label. The active item uses `--color-accent` (or `--color-duel` inside the duel).
 - The bottom bar sits on `--color-surface` with a 1px top border in `--color-border`.
+
+## Layout and composition
+
+- Key screens use the full screen with a bold composition, not a small centered card.
+- Headings are large (40 to 48px on key screens). Hierarchy comes from scale.
+- Inputs are filled (`--color-field`), 52px tall, without leading icons. The focus state is a 1px accent ring.
+- Switching between related views (log in / sign up) uses an inline text link, not segmented tabs.
+
+### Auth screen
+
+- Split layout inside a large frame: a visual panel on the left, the form on the right.
+- The visual panel holds the logo, the mascot artwork (to be defined) and the tagline. Its background is `--color-bg` with a subtle 32px grid in `--color-grid`.
+- Form order: title, switch link, fields, remember me (log in only), primary button, "Or log in with" divider, Google button.
+- Below 900px the visual panel collapses into a header with only the logo.
 
 ## Icons
 
@@ -86,6 +100,7 @@ These rules prevent generic AI-looking design. Check every new screen against th
 - No glassmorphism (frosted glass) without a purpose.
 - No emoji used as icons. Use Tabler.
 - No generic hero screens with three cards and a big button.
+- No small centered card with tabs, icons in every input and a generic subtitle. This was rejected for the auth screen.
 - No shadows, glows or neon outlines except the focus ring.
 - Not every element has the same weight. Hierarchy comes from size and color, not from added effects.
 - No decorative elements that carry no meaning. Every element needs a function.

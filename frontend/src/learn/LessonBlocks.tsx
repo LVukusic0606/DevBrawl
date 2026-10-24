@@ -92,88 +92,36 @@ export function LessonBlockView({ block }: LessonBlockViewProps) {
     case 'visual':
       return (
         <div className="lesson-visual">
-          {block.visual === 'flexbox' ? <FlexboxDemo /> : <BranchesDemo />}
+          <BranchesDemo />
         </div>
       )
+
+    case 'mistakes':
+      return (
+        <section className="lesson-mistakes" aria-label="Common mistakes">
+          <p className="lesson-callout-title">
+            <i className="ti ti-alert-triangle" aria-hidden="true" />
+            Common mistakes
+          </p>
+          <ul className="lesson-mistakes-list">
+            {block.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      )
+
+    case 'takeaway':
+      return (
+        <section className="lesson-takeaway" aria-label="Key takeaway">
+          <p className="lesson-callout-title">
+            <i className="ti ti-bulb" aria-hidden="true" />
+            Key takeaway
+          </p>
+          <p className="lesson-takeaway-text">{block.text}</p>
+        </section>
+      )
   }
-}
-
-type Direction = 'row' | 'column'
-type Justify = 'start' | 'between'
-
-const DIRECTION_CAPTIONS: Record<Direction, string> = {
-  row: 'Children sit side by side.',
-  column: 'Children stack from top to bottom.',
-}
-
-const JUSTIFY_CAPTIONS: Record<Justify, string> = {
-  start: 'Children stay together at the start.',
-  between: 'The free space is spread between the children.',
-}
-
-function FlexboxDemo() {
-  const [direction, setDirection] = useState<Direction>('row')
-  const [justify, setJustify] = useState<Justify>('start')
-  const boxes = ['Logo', 'Links', 'Button']
-
-  return (
-    <>
-      <div className="flex-demo-controls" role="group" aria-label="Flexbox settings">
-        <button
-          type="button"
-          className="flex-demo-button"
-          aria-pressed={direction === 'row'}
-          onClick={() => setDirection('row')}
-        >
-          Row
-        </button>
-        <button
-          type="button"
-          className="flex-demo-button"
-          aria-pressed={direction === 'column'}
-          onClick={() => setDirection('column')}
-        >
-          Column
-        </button>
-        <button
-          type="button"
-          className="flex-demo-button"
-          aria-pressed={justify === 'start'}
-          onClick={() => setJustify('start')}
-        >
-          Start
-        </button>
-        <button
-          type="button"
-          className="flex-demo-button"
-          aria-pressed={justify === 'between'}
-          onClick={() => setJustify('between')}
-        >
-          Space between
-        </button>
-      </div>
-
-      {/* The key replays the entrance animation whenever a setting changes. */}
-      <div
-        key={`${direction}-${justify}`}
-        className={`flex-demo-stage is-${direction} justify-${justify}`}
-      >
-        {boxes.map((box, index) => (
-          <span
-            key={box}
-            className="flex-demo-box"
-            style={{ animationDelay: `${index * 120}ms` }}
-          >
-            {box}
-          </span>
-        ))}
-      </div>
-
-      <p className="lesson-visual-caption">
-        {DIRECTION_CAPTIONS[direction]} {JUSTIFY_CAPTIONS[justify]}
-      </p>
-    </>
-  )
 }
 
 function BranchesDemo() {
@@ -210,8 +158,8 @@ function BranchesDemo() {
         <text className="branches-label" x="352" y="200">merge</text>
       </svg>
 
-      <div className="flex-demo-controls">
-        <button type="button" className="flex-demo-button" onClick={() => setRun((value) => value + 1)}>
+      <div className="lesson-visual-controls">
+        <button type="button" className="lesson-visual-button" onClick={() => setRun((value) => value + 1)}>
           Replay
         </button>
       </div>

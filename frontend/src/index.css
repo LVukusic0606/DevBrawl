@@ -11,11 +11,15 @@
   --color-surface-glass: rgba(13, 27, 38, 0.72);
   --color-surface-raised: #0f2230;
   --color-grid: rgba(34, 211, 238, 0.07);
+  --color-grid-duel: rgba(244, 114, 182, 0.06);
   --color-duel: #f472b6;
   --color-duel-soft: rgba(244, 114, 182, 0.12);
   --color-success: #4ade80;
   --color-danger: #f87171;
   --color-warning: #facc15;
+  --color-success-soft: rgba(74, 222, 128, 0.12);
+  --color-danger-soft: rgba(248, 113, 113, 0.12);
+  --color-warning-soft: rgba(250, 204, 21, 0.12);
 
   --font-text: 'Share Tech Mono', monospace;
   --font-body: 'Exo 2', sans-serif;

@@ -62,6 +62,10 @@ function LearnPage({ onBack }: LearnPageProps) {
                 </span>
                 <span className="learn-tile-title">{item.title}</span>
                 <span className="learn-tile-desc">{item.description}</span>
+                <span className="learn-tile-meta">
+                  {item.lessons.length} lessons
+                  <i className="ti ti-arrow-right learn-tile-arrow" aria-hidden="true" />
+                </span>
               </button>
             </li>
           ))}

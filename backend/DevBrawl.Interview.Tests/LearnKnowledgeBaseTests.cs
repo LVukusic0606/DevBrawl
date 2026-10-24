@@ -53,20 +53,29 @@ public class LearnKnowledgeBaseTests
     }
 
     [Fact]
-    public void Picks_a_random_lesson_within_the_category()
+    public void Picks_every_category_at_random()
     {
-        var picked = Enumerable.Range(0, 200).Select(i => _knowledge.PickLesson("databases", new Random(i))).ToList();
+        var picked = Enumerable.Range(0, 200).Select(i => _knowledge.PickCategory(new Random(i)).Id).Distinct();
 
-        Assert.All(picked, l => Assert.Equal("databases", l.CategoryId));
-        Assert.Equal(10, picked.Select(l => l.LessonId).Distinct().Count());
+        Assert.Equal(6, picked.Count());
+    }
+
+    [Fact]
+    public void Category_material_contains_every_lesson_of_the_category()
+    {
+        var databases = _knowledge.FindCategory("databases")!;
+        var material = _knowledge.CategoryMaterial(databases);
+
+        Assert.All(databases.Lessons, lesson => Assert.Contains($"# {lesson.Title}\n", material));
+        Assert.DoesNotContain("# What happens during an API request?", material);
     }
 
     [Fact]
     public void Unknown_lesson_and_category_are_not_found()
     {
         Assert.Null(_knowledge.FindLesson("nope"));
-        Assert.False(_knowledge.HasCategory("nope"));
-        Assert.True(_knowledge.HasCategory("security"));
+        Assert.Null(_knowledge.FindCategory("nope"));
+        Assert.Equal("Security", _knowledge.FindCategory("security")!.Title);
     }
 
     [Fact]

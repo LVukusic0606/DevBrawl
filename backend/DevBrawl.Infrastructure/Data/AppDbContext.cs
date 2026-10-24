@@ -19,7 +19,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RatingHistoryEntry> RatingChanges => Set<RatingHistoryEntry>();
     public DbSet<XpEvent> XpEvents => Set<XpEvent>();
     public DbSet<PlayerProgress> PlayerProgress => Set<PlayerProgress>();
-    public DbSet<InterviewQuestion> InterviewQuestions => Set<InterviewQuestion>();
+    public DbSet<InterviewSession> InterviewSessions => Set<InterviewSession>();
+    public DbSet<InterviewMessage> InterviewMessages => Set<InterviewMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

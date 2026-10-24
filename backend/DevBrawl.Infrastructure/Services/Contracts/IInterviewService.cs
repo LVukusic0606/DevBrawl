@@ -7,14 +7,23 @@ public interface IInterviewService
 {
     InterviewTopicsResponse GetTopics();
 
-    Task<InterviewResult<QuestionResponse>> CreateQuestionAsync(Guid userId, CreateQuestionRequest request,
+    // The user's interviews, newest first
+    Task<IReadOnlyList<InterviewSessionSummaryResponse>> ListSessionsAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    // Starts an interview; the response already contains the interviewer's opening message
+    Task<InterviewResult<InterviewSessionResponse>> StartAsync(Guid userId, StartInterviewRequest request,
         CancellationToken cancellationToken = default);
 
-    // Turns a recorded answer into text the user can check before submitting it
-    Task<InterviewResult<TranscriptResponse>> TranscribeAnswerAsync(Guid userId, Guid questionId, byte[] audio, string mimeType,
+    Task<InterviewResult<InterviewSessionResponse>> GetAsync(Guid userId, Guid sessionId, CancellationToken cancellationToken = default);
+
+    // Adds the user's answer and the interviewer's reply. After the last answer the interview finishes and is evaluated.
+    Task<InterviewResult<InterviewSessionResponse>> SendAsync(Guid userId, Guid sessionId, string content,
         CancellationToken cancellationToken = default);
 
-    // Each question can be answered once
-    Task<InterviewResult<AnswerReviewResponse>> SubmitAnswerAsync(Guid userId, Guid questionId, string answer,
+    // Ends the interview early, or retries an evaluation that failed
+    Task<InterviewResult<InterviewSessionResponse>> FinishAsync(Guid userId, Guid sessionId, CancellationToken cancellationToken = default);
+
+    // Turns a recorded answer into text the user can check before sending it
+    Task<InterviewResult<TranscriptResponse>> TranscribeAsync(Guid userId, Guid sessionId, byte[] audio, string mimeType,
         CancellationToken cancellationToken = default);
 }

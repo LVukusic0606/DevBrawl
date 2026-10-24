@@ -1,33 +1,26 @@
-using DevBrawl.Interview.Domain;
-
 namespace DevBrawl.Interview.Prompts;
 
 // The JSON the interviewer asks the model for, and its conversion into the interviewer's results
-internal sealed record QuestionOutput(string Question, List<string> KeyPoints, string ModelAnswer);
+internal sealed record ReplyOutput(string Message, bool Done);
+
+internal sealed record EvaluationOutput(int Score, string Summary, List<string> Strengths, List<string> Improvements);
 
 internal sealed record TranscriptOutput(string Transcript);
 
-internal sealed record ReviewOutput(string Verdict, int Score, string Feedback, List<string> Strengths, List<string> Improvements);
-
 internal static class InterviewOutputs
 {
-    public static GeneratedQuestion ToQuestion(QuestionOutput output, string provider)
+    public static InterviewerReply ToReply(ReplyOutput output, string provider)
     {
-        if (string.IsNullOrWhiteSpace(output.Question) || output.KeyPoints is not { Count: > 0 })
-            throw new InterviewerUnavailableException($"{provider} returned an empty question");
-        return new GeneratedQuestion(output.Question.Trim(), output.KeyPoints, output.ModelAnswer?.Trim() ?? string.Empty);
+        if (string.IsNullOrWhiteSpace(output.Message))
+            throw new InterviewerUnavailableException($"{provider} returned an empty message");
+        return new InterviewerReply(output.Message.Trim(), output.Done);
     }
 
-    public static AnswerReview ToReview(ReviewOutput output, string provider)
+    public static InterviewEvaluation ToEvaluation(EvaluationOutput output, string provider)
     {
-        var verdict = output.Verdict switch
-        {
-            "correct" => AnswerVerdict.Correct,
-            "partiallyCorrect" => AnswerVerdict.PartiallyCorrect,
-            "incorrect" => AnswerVerdict.Incorrect,
-            _ => throw new InterviewerUnavailableException($"{provider} returned an unknown verdict '{output.Verdict}'")
-        };
-        return new AnswerReview(verdict, Math.Clamp(output.Score, 0, 100), output.Feedback?.Trim() ?? string.Empty,
+        if (string.IsNullOrWhiteSpace(output.Summary))
+            throw new InterviewerUnavailableException($"{provider} returned an empty evaluation");
+        return new InterviewEvaluation(Math.Clamp(output.Score, 0, 100), output.Summary.Trim(),
             output.Strengths ?? [], output.Improvements ?? []);
     }
 }

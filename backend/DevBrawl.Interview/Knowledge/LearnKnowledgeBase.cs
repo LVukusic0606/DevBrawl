@@ -33,14 +33,13 @@ public sealed class LearnKnowledgeBase
 
     public LessonKnowledge? FindLesson(string lessonId) => _lessons.GetValueOrDefault(lessonId);
 
-    public bool HasCategory(string categoryId) => _categories.Any(c => c.Id == categoryId);
+    public LearnCategory? FindCategory(string categoryId) => _categories.Find(c => c.Id == categoryId);
 
-    // A random lesson, optionally limited to one category
-    public LessonKnowledge PickLesson(string? categoryId, Random random)
-    {
-        var candidates = _lessons.Values.Where(l => categoryId is null || l.CategoryId == categoryId).ToList();
-        return candidates[random.Next(candidates.Count)];
-    }
+    public LearnCategory PickCategory(Random random) => _categories[random.Next(_categories.Count)];
+
+    // Every lesson of a category, one after another, for an interview about the whole category
+    public string CategoryMaterial(LearnCategory category) =>
+        string.Join("\n", category.Lessons.Select(l => _lessons[l.Id].Text));
 
     internal static string Render(LearnLesson lesson)
     {

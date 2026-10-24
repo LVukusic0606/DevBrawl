@@ -354,7 +354,12 @@ The server is the single source of truth for a duel:
 
 ### Disconnects
 
-**(Default)** If a player disconnects during a duel, they have 30 seconds to reconnect and continue. If they don't reconnect, every remaining round counts as unanswered (incorrect) for them, and the duel is finalized normally.
+The duel clock never stops: each round's time runs out whether or not both players are connected.
+
+- A player who disconnects can reconnect at any time and continues with the round that is currently running.
+- If they don't answer a round before its time runs out, that round counts as unanswered (incorrect) for them.
+- A round still ends early only when both players have answered. The connected player waits for the timer if the opponent is away.
+- If a player never comes back, the remaining rounds time out one by one and the duel is finalized normally.
 
 ---
 

@@ -9,6 +9,7 @@ interface MainPageProps {
   onSelect: (section: MainSection) => void
   onLogout: () => void
   onOpenProfile: () => void
+  onOpenLeaderboard: () => void
 }
 
 // bugHead is the horizontal position of the bug's head in its image, from 0 (left) to 1 (right)
@@ -42,12 +43,16 @@ const SECTIONS: {
   },
 ]
 
-function MainPage({ onSelect, onLogout, onOpenProfile }: MainPageProps) {
+function MainPage({ onSelect, onLogout, onOpenProfile, onOpenLeaderboard }: MainPageProps) {
   return (
     <main className="home">
       <header className="home-header">
         <span className="home-logo">DevBrawl</span>
         <div className="home-header-actions">
+          <button type="button" className="home-logout" onClick={onOpenLeaderboard}>
+            <i className="ti ti-trophy" aria-hidden="true" />
+            Leaderboard
+          </button>
           <button type="button" className="home-logout" onClick={onOpenProfile}>
             <i className="ti ti-user" aria-hidden="true" />
             Profile

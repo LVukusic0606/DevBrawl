@@ -1,0 +1,283 @@
+/* Overall leaderboard. Every class starts with "leaderboard-" because CSS is global in this app. */
+
+.leaderboard {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 36px 36px;
+  background-attachment: fixed;
+}
+
+.leaderboard-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.leaderboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-8);
+}
+
+.leaderboard-logo {
+  font-family: var(--font-text);
+  font-size: 24px;
+  color: var(--color-text);
+}
+
+.leaderboard-back {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 200ms ease-out;
+}
+
+.leaderboard-back:hover {
+  border-color: var(--color-accent);
+}
+
+.leaderboard-primary {
+  appearance: none;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-duel);
+  border-radius: var(--radius);
+  background: var(--color-duel);
+  color: var(--color-bg);
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 200ms ease-out, color 200ms ease-out;
+}
+
+.leaderboard-primary:hover {
+  background: var(--color-duel-soft);
+  color: var(--color-text);
+}
+
+.leaderboard-back:focus-visible,
+.leaderboard-player:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.leaderboard-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-duel);
+}
+
+.leaderboard-content {
+  flex: 1;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-8) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  animation: leaderboard-enter 250ms ease-out;
+}
+
+@keyframes leaderboard-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.leaderboard-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.leaderboard-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.leaderboard-note,
+.leaderboard-muted,
+.leaderboard-count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.leaderboard-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.leaderboard-error {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.leaderboard-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+}
+
+.leaderboard-empty .ti {
+  font-size: 20px;
+}
+
+.leaderboard-empty p {
+  margin: 0;
+}
+
+.leaderboard-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow-x: auto;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.leaderboard-table th {
+  padding: var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-align: left;
+}
+
+.leaderboard-table td {
+  padding: var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.leaderboard-table .is-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.leaderboard-table .is-position {
+  width: 56px;
+}
+
+.leaderboard-position {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-code);
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+/* The top three stand out by size and the duel accent on the trophy, nothing more */
+.leaderboard-table tr.is-podium .leaderboard-position {
+  font-size: 18px;
+  color: var(--color-text);
+}
+
+.leaderboard-position .ti {
+  font-size: 16px;
+  color: var(--color-duel);
+}
+
+.leaderboard-player {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.leaderboard-player:hover {
+  color: var(--color-duel);
+}
+
+.leaderboard-you-tag {
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--color-duel-soft);
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.leaderboard-rating {
+  font-family: var(--font-code);
+  font-weight: 700;
+}
+
+.leaderboard-tier {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.leaderboard-table tr.is-you td {
+  background: var(--color-duel-soft);
+}
+
+/* Your own row below the list, when you're outside the shown positions */
+.leaderboard-you tr:first-child td {
+  border-top: var(--space-3) solid var(--color-surface);
+}
+
+@media (max-width: 640px) {
+  .leaderboard-header,
+  .leaderboard-content {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .leaderboard-title {
+    font-size: 32px;
+  }
+
+  /* Wins and tier hide on small screens; rating and duels stay */
+  .leaderboard-table th:nth-child(4),
+  .leaderboard-table td:nth-child(4),
+  .leaderboard-table th:nth-child(6),
+  .leaderboard-table td:nth-child(6) {
+    display: none;
+  }
+}

@@ -23,7 +23,8 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   try {
     response = await fetch(path, {
       ...init,
-      headers: { 'Content-Type': 'application/json', ...init.headers },
+      // FormData (file uploads) needs the browser to set its own multipart Content-Type
+      headers: init.body instanceof FormData ? init.headers : { 'Content-Type': 'application/json', ...init.headers },
     })
   } catch {
     throw new ApiError(0, CONNECTION_ERROR)

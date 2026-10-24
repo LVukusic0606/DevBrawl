@@ -1,0 +1,272 @@
+{
+  "$schema": "./challenge.schema.json",
+  "category": {
+    "id": "debugging",
+    "name": "Debugging"
+  },
+  "challenges": [
+    {
+      "id": "dbg-concept-01",
+      "type": "conceptQuiz",
+      "title": "A bug you can't reproduce",
+      "prompt": "For months, about 1 in 50 requests to /api/checkout has failed with a 500 error in production. You can't reproduce it locally. What is the most effective first step?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Rewrite the checkout module, since the bug is hard to find."
+        },
+        {
+          "id": "b",
+          "text": "Give the production servers more memory and CPU, since production has more load than your machine."
+        },
+        {
+          "id": "c",
+          "text": "Add an automatic retry around the checkout call so users don't notice."
+        },
+        {
+          "id": "d",
+          "text": "Collect evidence: find the failing requests in the logs or traces by request id and compare them with successful ones."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Intermittent bugs usually depend on something specific to the failing requests: certain input, a particular server, a timing window. Comparing failing and successful requests side by side shows what is different, which gives you a hypothesis you can test. Guessing at fixes before you have evidence wastes time and can hide the real cause.",
+      "commonMistake": {
+        "optionId": "c",
+        "explanation": "A retry hides the symptom from some users but doesn't explain the failure, and if checkout isn't idempotent, retries can even charge customers twice. You still don't know what's broken."
+      }
+    },
+    {
+      "id": "dbg-concept-02",
+      "type": "conceptQuiz",
+      "title": "Passes alone, fails in the suite",
+      "prompt": "A test passes when you run it alone but fails when the whole test suite runs. What is the most likely cause?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Another test changes shared state, such as a static variable or database rows, and doesn't reset it."
+        },
+        {
+          "id": "b",
+          "text": "The test suite runs on a slower machine than your laptop."
+        },
+        {
+          "id": "c",
+          "text": "The assertion library gives random results when many tests run."
+        },
+        {
+          "id": "d",
+          "text": "The test depends on the current time of day."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "If a test passes alone and fails in the suite, the difference is what ran before it. Shared state (a static cache, a singleton, rows left in a database, an environment variable) lets one test's leftovers change another test's result. Running the failing test together with the tests before it, and halving that set, finds the culprit quickly.",
+      "commonMistake": {
+        "optionId": "d",
+        "explanation": "A time-dependent test fails at certain times whether it runs alone or in the suite. Here the deciding factor is whether other tests ran first, which points to state they leave behind."
+      }
+    },
+    {
+      "id": "dbg-investigate-01",
+      "type": "codeInvestigation",
+      "title": "Streaks that reset overnight",
+      "prompt": "Players in Japan (UTC+9) report that their daily streak resets to 1 even though they played every day. Players in the UK rarely see it. Find the file where the problem originates.",
+      "files": [
+        {
+          "path": "src/routes/lessons.ts",
+          "language": "typescript",
+          "content": "import { users } from '../users'\nimport { updateStreak } from '../services/streak'\n\nexport async function completeLesson(req, res) {\n  const user = await users.get(req.user.id)\n  const updated = updateStreak(user, new Date())\n  await users.save(updated)\n  res.json({ streak: updated.streak })\n}"
+        },
+        {
+          "path": "src/services/streak.ts",
+          "language": "typescript",
+          "content": "export function dayKey(date: Date): string {\n  return date.toISOString().slice(0, 10)\n}\n\nexport function updateStreak(user: User, playedAt: Date): User {\n  const today = dayKey(playedAt)\n  const yesterday = dayKey(new Date(playedAt.getTime() - 24 * 60 * 60 * 1000))\n\n  if (user.lastPlayedDay === today) return user\n  const streak = user.lastPlayedDay === yesterday ? user.streak + 1 : 1\n  return { ...user, streak, lastPlayedDay: today }\n}"
+        },
+        {
+          "path": "src/components/StreakBadge.tsx",
+          "language": "tsx",
+          "content": "export function StreakBadge({ streak }: { streak: number }) {\n  if (streak === 0) return null\n  return <span className=\"streak\">{streak} day streak</span>\n}"
+        }
+      ],
+      "answer": {
+        "path": "src/services/streak.ts",
+        "lines": [
+          1,
+          3
+        ]
+      },
+      "explanation": "toISOString() always returns UTC, so dayKey decides the day in UTC, not in the player's time zone. A player in Tokyo who plays at 08:00 on Monday (23:00 Sunday UTC) and at 23:30 on Tuesday (14:30 Tuesday UTC) gets the keys Sunday and Tuesday, which skip Monday and reset the streak. UK players are only an hour or so away from UTC, so it rarely happens to them. The day has to be calculated in the player's time zone."
+    },
+    {
+      "id": "dbg-investigate-02",
+      "type": "codeInvestigation",
+      "title": "Results for an old search",
+      "prompt": "Typing \"index\" quickly into the lesson search sometimes shows the results for \"ind\". The backend logs show the request for \"ind\" took 900 ms and the request for \"index\" took 120 ms. Find the file where the problem originates.",
+      "files": [
+        {
+          "path": "src/api/lessons.ts",
+          "language": "typescript",
+          "content": "export async function searchLessons(query: string): Promise<string[]> {\n  const res = await fetch(`/api/lessons/search?q=${encodeURIComponent(query)}`)\n  if (!res.ok) throw new Error(`Search failed: ${res.status}`)\n  return res.json()\n}"
+        },
+        {
+          "path": "src/components/SearchBox.tsx",
+          "language": "tsx",
+          "content": "import { useEffect, useState } from 'react'\nimport { searchLessons } from '../api/lessons'\nimport { ResultsList } from './ResultsList'\n\nexport function SearchBox() {\n  const [query, setQuery] = useState('')\n  const [results, setResults] = useState<string[]>([])\n\n  useEffect(() => {\n    if (!query) return\n    searchLessons(query).then(setResults)\n  }, [query])\n\n  return (\n    <>\n      <input value={query} onChange={(e) => setQuery(e.target.value)} />\n      <ResultsList items={results} />\n    </>\n  )\n}"
+        },
+        {
+          "path": "src/components/ResultsList.tsx",
+          "language": "tsx",
+          "content": "export function ResultsList({ items }: { items: string[] }) {\n  if (items.length === 0) return <p>No lessons found.</p>\n  return <ul>{items.map((item) => <li key={item}>{item}</li>)}</ul>\n}"
+        }
+      ],
+      "answer": {
+        "path": "src/components/SearchBox.tsx",
+        "lines": [
+          9,
+          12
+        ]
+      },
+      "explanation": "Every keystroke starts a new request, and whichever response arrives last wins. The \"ind\" request was slower, so its results overwrote the newer \"index\" results. The effect never ignores outdated responses; returning a cleanup function that sets an ignore flag, or aborts the request with an AbortController, fixes it. The API client and the list are correct."
+    },
+    {
+      "id": "dbg-fix-01",
+      "type": "fixTheBug",
+      "title": "Paid orders that stay unpaid",
+      "prompt": "A customer paid 29.85 for 3 items at 9.95, but the order still shows as unpaid. Logging shows the computed total is 29.849999999999998. Which change fixes it?",
+      "code": {
+        "language": "typescript",
+        "content": "const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)\n\nif (total === order.paidAmount) {\n  markAsPaid(order)\n}"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Compare with == instead of ===.",
+          "code": "if (total == order.paidAmount) {\n  markAsPaid(order)\n}",
+          "outcome": "Nothing changes: both values are already numbers, so == compares them the same way, and 29.849999999999998 is still not equal to 29.85."
+        },
+        {
+          "id": "b",
+          "summary": "Store and calculate money as whole cents (integers).",
+          "code": "// Prices and payments are stored in cents, e.g. 995\nconst totalCents = items.reduce((sum, item) => sum + item.priceCents * item.quantity, 0)\n\nif (totalCents === order.paidAmountCents) {\n  markAsPaid(order)\n}",
+          "outcome": "995 × 3 = 2985 exactly. Integer arithmetic has no rounding error, so the comparison is reliable for every order."
+        },
+        {
+          "id": "c",
+          "summary": "Convert the total with parseFloat(total.toString()) before comparing.",
+          "code": "if (parseFloat(total.toString()) === order.paidAmount) {\n  markAsPaid(order)\n}",
+          "outcome": "The string is \"29.849999999999998\", so parsing it gives back the same number. The order stays unpaid."
+        },
+        {
+          "id": "d",
+          "summary": "Round both values to whole numbers before comparing.",
+          "code": "if (Math.round(total) === Math.round(order.paidAmount)) {\n  markAsPaid(order)\n}",
+          "outcome": "This order is marked as paid, but so is an order where the customer paid 29.60 instead of 29.85: the cents are thrown away."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Most decimal fractions, such as 0.95, can't be represented exactly in binary floating point, so calculations pick up tiny errors. Money should be stored as integer cents, or in a decimal type such as C#'s decimal or PostgreSQL's numeric, so that arithmetic is exact."
+    },
+    {
+      "id": "dbg-fix-02",
+      "type": "fixTheBug",
+      "title": "Resizing gets slower over time",
+      "prompt": "After switching between pages for a while, resizing the window gets slower and slower. A heap snapshot shows thousands of resize listeners attached to window. Which change fixes this hook?",
+      "code": {
+        "language": "typescript",
+        "content": "function useWindowWidth() {\n  const [width, setWidth] = useState(window.innerWidth)\n\n  useEffect(() => {\n    const handleResize = () => setWidth(window.innerWidth)\n    window.addEventListener('resize', handleResize)\n  }, [])\n\n  return width\n}"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Define handleResize with useCallback.",
+          "code": "const handleResize = useCallback(() => setWidth(window.innerWidth), [])\n\nuseEffect(() => {\n  window.addEventListener('resize', handleResize)\n}, [handleResize])",
+          "outcome": "The function now has a stable identity, but nothing ever removes it from window. Every new mount still adds another listener."
+        },
+        {
+          "id": "b",
+          "summary": "Throttle handleResize so it runs at most every 100 ms.",
+          "code": "useEffect(() => {\n  const handleResize = throttle(() => setWidth(window.innerWidth), 100)\n  window.addEventListener('resize', handleResize)\n}, [])",
+          "outcome": "Each listener runs less often, but listeners still pile up with every mount, so resizing still gets slower over time."
+        },
+        {
+          "id": "c",
+          "summary": "Return a cleanup function that removes the listener.",
+          "code": "useEffect(() => {\n  const handleResize = () => setWidth(window.innerWidth)\n  window.addEventListener('resize', handleResize)\n  return () => window.removeEventListener('resize', handleResize)\n}, [])",
+          "outcome": "Each component removes its listener when it unmounts. The number of listeners always matches the number of mounted components, and resizing stays fast."
+        },
+        {
+          "id": "d",
+          "summary": "Remove the empty dependency array.",
+          "code": "useEffect(() => {\n  const handleResize = () => setWidth(window.innerWidth)\n  window.addEventListener('resize', handleResize)\n})",
+          "outcome": "The effect now runs after every render, and every resize causes a render, so each resize adds another listener. The leak grows much faster."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "An effect that subscribes to something must unsubscribe in its cleanup function. React runs the cleanup when the component unmounts, and before running the effect again, so the listener lives exactly as long as the component."
+    },
+    {
+      "id": "dbg-flow-01",
+      "type": "followTheRequest",
+      "title": "Finding the commit that broke it",
+      "prompt": "A test that passed in release v1.4 fails on main, and there are 200 commits in between. Arrange how git bisect finds the commit that broke it.",
+      "steps": [
+        "You run git bisect start and mark the current commit as bad and the v1.4 tag as good.",
+        "Git checks out a commit halfway between the good and the bad commit.",
+        "You run the failing test on that commit and mark it as good or bad.",
+        "Git halves the remaining range and repeats until only one commit is left.",
+        "Git reports the first bad commit.",
+        "You run git bisect reset to return to the branch you started from."
+      ],
+      "explanation": "git bisect is a binary search over history: every test halves the range of suspect commits, so 200 commits take about 8 steps. The check you run at each step must reliably tell good from bad, or the search ends at the wrong commit."
+    },
+    {
+      "id": "dbg-flow-02",
+      "type": "followTheRequest",
+      "title": "An unhandled exception in production",
+      "prompt": "An ASP.NET Core app running in production uses app.UseExceptionHandler(). Arrange what happens when a controller action throws an unhandled exception.",
+      "steps": [
+        "Code in the controller action throws an exception.",
+        "The exception travels up the call stack, out of the action and back through the middleware registered after the exception handler.",
+        "The exception handler middleware catches it.",
+        "The middleware logs the exception with its stack trace.",
+        "The middleware sends a 500 response that doesn't include the stack trace.",
+        "The client shows the user a generic error message."
+      ],
+      "explanation": "Exceptions travel up the call stack until something catches them. The exception handler middleware sits near the start of the pipeline, so it catches errors from everything registered after it. It logs the full details for developers and returns a generic 500 to the client, because a stack trace can reveal internals to attackers."
+    },
+    {
+      "id": "dbg-logs-01",
+      "type": "logAnalysis",
+      "title": "Recommendations crash after a restart",
+      "prompt": "Every request to /api/recommendations has failed with a 500 error since the service restarted at 07:59. Which log line reveals the root cause?",
+      "logs": [
+        "07:59:58 INFO  app    Starting recommendations-service v2.8.1",
+        "07:59:59 WARN  flags  Could not reach flags.internal:443 (timeout); continuing with an empty flag set",
+        "08:00:00 INFO  app    Listening on http://0.0.0.0:8080",
+        "08:00:14 INFO  http   GET /api/recommendations 500 (12 ms)",
+        "08:00:14 ERROR app    System.NullReferenceException: Object reference not set to an instance of an object.",
+        "08:00:14 ERROR app       at RecommendationService.PickAlgorithm() in RecommendationService.cs:line 42",
+        "08:00:14 ERROR app       at RecommendationsController.Get() in RecommendationsController.cs:line 18",
+        "08:00:20 INFO  http   GET /api/health 200 (1 ms)"
+      ],
+      "rootCauseLine": 2,
+      "explanation": "The exception shows where the code crashed, not why. At startup the service couldn't reach the feature flag service and continued with an empty flag set, and PickAlgorithm then used a flag that doesn't exist. Restoring access to flags.internal fixes the outage; making PickAlgorithm fall back to a default when a flag is missing stops it from happening again."
+    },
+    {
+      "id": "dbg-logs-02",
+      "type": "logAnalysis",
+      "title": "A worker that keeps restarting",
+      "prompt": "The image worker restarts about once an hour. Which log line reveals the root cause?",
+      "logs": [
+        "10:00:00 INFO  worker   Started image-worker v1.9.0 (memory limit 512 MiB)",
+        "10:00:01 INFO  worker   Thumbnail cache initialized (max entries: unlimited)",
+        "10:20:00 INFO  metrics  heap used 180 MiB, cache entries 12,040",
+        "10:40:00 INFO  metrics  heap used 340 MiB, cache entries 25,310",
+        "10:58:00 WARN  metrics  heap used 495 MiB, cache entries 37,902",
+        "10:58:41 ERROR kernel   Out of memory: Killed process 2211 (node)",
+        "10:58:43 INFO  k8s      Container image-worker restarted (reason: OOMKilled)"
+      ],
+      "rootCauseLine": 2,
+      "explanation": "Heap usage grows in step with the number of cache entries, and the cache was configured without a limit. It keeps every thumbnail forever, so memory grows until the kernel kills the process at the 512 MiB limit. The OOM kill and the restart are the consequence; giving the cache a maximum size or an expiry time keeps memory bounded."
+    }
+  ]
+}

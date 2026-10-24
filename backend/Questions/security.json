@@ -1,0 +1,269 @@
+{
+  "$schema": "./challenge.schema.json",
+  "category": {
+    "id": "security",
+    "name": "Security"
+  },
+  "challenges": [
+    {
+      "id": "sec-concept-01",
+      "type": "conceptQuiz",
+      "title": "Storing passwords",
+      "prompt": "You are building registration for a new app. How should user passwords be stored?",
+      "options": [
+        {
+          "id": "a",
+          "text": "SHA-256 of the password combined with one secret salt shared by all users."
+        },
+        {
+          "id": "b",
+          "text": "Encrypted with AES, with the key stored in the server configuration."
+        },
+        {
+          "id": "c",
+          "text": "Hashed with a slow, adaptive algorithm such as bcrypt or Argon2, with a unique salt per user."
+        },
+        {
+          "id": "d",
+          "text": "SHA-256 of the password, without a salt."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Password hashes must be slow to compute so that guessing is expensive if the database leaks. bcrypt and Argon2 are deliberately slow and tunable, and a unique salt per user gives identical passwords different hashes, so each must be cracked separately. Encryption is reversible: anyone with the key gets every password back.",
+      "commonMistake": {
+        "optionId": "a",
+        "explanation": "A salt helps against precomputed tables, but SHA-256 is fast enough for attackers to try billions of guesses per second on GPUs, and one shared salt lets them attack every account in a single pass."
+      }
+    },
+    {
+      "id": "sec-concept-02",
+      "type": "conceptQuiz",
+      "title": "Reading other users' notes",
+      "prompt": "GET /api/notes/{id} returns a note. Users found they can read other users' private notes by changing the id in the URL. Which approach fixes this?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Require HTTPS for all API requests."
+        },
+        {
+          "id": "b",
+          "text": "Switch from sequential ids to random UUIDs so ids can't be guessed."
+        },
+        {
+          "id": "c",
+          "text": "Hide links to other users' notes in the frontend."
+        },
+        {
+          "id": "d",
+          "text": "On every request, load the note and check that its owner is the user from the access token; otherwise return 404 or 403."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "This is an insecure direct object reference: the server trusts the id without checking authorization. The fix is an ownership check on the server for every request, using the identity from the validated token. Hiding links only changes the UI, and HTTPS protects data in transit, not access to it.",
+      "commonMistake": {
+        "optionId": "b",
+        "explanation": "Random ids make guessing harder, but ids still leak through shared links, logs and browser history. Anyone who gets one can still read the note, because the server never checks who is asking."
+      }
+    },
+    {
+      "id": "sec-investigate-01",
+      "type": "codeInvestigation",
+      "title": "A comment that runs code",
+      "prompt": "Users report that opening a certain post shows a fake login form, and some accounts were taken over. The post has a comment containing <img src=x onerror=\"...\">, and the script in it runs for everyone who views the post. Find the file where the problem originates.",
+      "files": [
+        {
+          "path": "backend/Controllers/CommentsController.cs",
+          "language": "csharp",
+          "content": "[ApiController]\n[Route(\"api/posts/{postId}/comments\")]\npublic class CommentsController(AppDbContext db) : ControllerBase\n{\n    [HttpPost, Authorize]\n    public async Task<IActionResult> Create(Guid postId, CreateCommentRequest request)\n    {\n        var comment = new Comment(postId, User.Identity!.Name!, request.Body);\n        db.Comments.Add(comment);\n        await db.SaveChangesAsync();\n        return Created($\"/api/posts/{postId}/comments/{comment.Id}\", comment);\n    }\n}"
+        },
+        {
+          "path": "frontend/src/api/comments.ts",
+          "language": "typescript",
+          "content": "export interface Comment {\n  id: string\n  author: string\n  body: string\n}\n\nexport async function getComments(postId: string): Promise<Comment[]> {\n  const res = await fetch(`/api/posts/${postId}/comments`)\n  if (!res.ok) throw new Error(`HTTP ${res.status}`)\n  return res.json()\n}"
+        },
+        {
+          "path": "frontend/src/components/CommentList.tsx",
+          "language": "tsx",
+          "content": "import type { Comment } from '../api/comments'\n\nexport function CommentList({ comments }: { comments: Comment[] }) {\n  return (\n    <ul>\n      {comments.map((c) => (\n        <li key={c.id}>\n          <strong>{c.author}</strong>\n          <p dangerouslySetInnerHTML={{ __html: c.body }} />\n        </li>\n      ))}\n    </ul>\n  )\n}"
+        }
+      ],
+      "answer": {
+        "path": "frontend/src/components/CommentList.tsx",
+        "lines": [
+          9,
+          9
+        ]
+      },
+      "explanation": "React escapes text in JSX, so {c.body} would render the comment as harmless text. dangerouslySetInnerHTML skips that and inserts the comment as HTML, so the onerror handler runs in every viewer's browser (stored XSS). Storing the raw text in the API is normal; the fix is to render it as text, or to sanitize it with a library such as DOMPurify if HTML formatting is really needed."
+    },
+    {
+      "id": "sec-investigate-02",
+      "type": "codeInvestigation",
+      "title": "A forged admin token",
+      "prompt": "The audit log shows a regular player deleted other accounts. Their request carried a token with role \"admin\", and its signature doesn't match any token the server issued. Find the file where the problem originates.",
+      "files": [
+        {
+          "path": "src/routes/login.ts",
+          "language": "typescript",
+          "content": "import jwt from 'jsonwebtoken'\nimport { users } from '../users'\n\nexport async function login(req, res) {\n  const user = await users.verifyPassword(req.body.email, req.body.password)\n  if (!user) return res.status(401).json({ error: 'Invalid email or password' })\n\n  const token = jwt.sign({ sub: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '15m' })\n  res.json({ token })\n}"
+        },
+        {
+          "path": "src/middleware/requireAuth.ts",
+          "language": "typescript",
+          "content": "import jwt from 'jsonwebtoken'\n\nexport function requireAuth(req, res, next) {\n  const header = req.headers.authorization ?? ''\n  const token = header.replace('Bearer ', '')\n  const payload = jwt.decode(token)\n\n  if (!payload) {\n    return res.status(401).json({ error: 'Invalid token' })\n  }\n\n  req.user = payload\n  next()\n}"
+        },
+        {
+          "path": "src/routes/admin.ts",
+          "language": "typescript",
+          "content": "import { users } from '../users'\n\nexport async function deleteUser(req, res) {\n  if (req.user.role !== 'admin') {\n    return res.status(403).json({ error: 'Admins only' })\n  }\n  await users.delete(req.params.id)\n  res.status(204).end()\n}"
+        }
+      ],
+      "answer": {
+        "path": "src/middleware/requireAuth.ts",
+        "lines": [
+          6,
+          6
+        ]
+      },
+      "explanation": "jwt.decode only reads the payload; it never checks the signature. Anyone can create a token with role \"admin\" and the middleware will trust it. The login route signs tokens correctly and the admin route checks the role correctly, but both depend on the middleware having verified the token. The fix is jwt.verify(token, process.env.JWT_SECRET), which rejects tokens with an invalid signature or an expired lifetime."
+    },
+    {
+      "id": "sec-fix-01",
+      "type": "fixTheBug",
+      "title": "Searching players by nickname",
+      "prompt": "Searching for the nickname x' OR '1'='1 returns every user in the database. Which change fixes it?",
+      "code": {
+        "language": "python",
+        "content": "def find_players(conn, nickname: str):\n    query = f\"SELECT id, nickname FROM users WHERE nickname = '{nickname}'\"\n    return conn.execute(query).fetchall()"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Pass the nickname as a query parameter.",
+          "code": "def find_players(conn, nickname: str):\n    query = \"SELECT id, nickname FROM users WHERE nickname = %s\"\n    return conn.execute(query, (nickname,)).fetchall()",
+          "outcome": "Searching for x' OR '1'='1 returns no users: the database compares the whole string with each nickname and never interprets it as SQL."
+        },
+        {
+          "id": "b",
+          "summary": "Reject nicknames longer than 30 characters.",
+          "code": "def find_players(conn, nickname: str):\n    if len(nickname) > 30:\n        raise ValueError(\"Nickname too long\")\n    query = f\"SELECT id, nickname FROM users WHERE nickname = '{nickname}'\"\n    return conn.execute(query).fetchall()",
+          "outcome": "The attack string is only 15 characters long, so it passes the check and still returns every user."
+        },
+        {
+          "id": "c",
+          "summary": "Remove the words OR and AND from the input.",
+          "code": "def find_players(conn, nickname: str):\n    nickname = nickname.replace(\"OR\", \"\").replace(\"AND\", \"\")\n    query = f\"SELECT id, nickname FROM users WHERE nickname = '{nickname}'\"\n    return conn.execute(query).fetchall()",
+          "outcome": "This exact input now causes a syntax error, but the replacement is case-sensitive: x' oR '1'='1 still returns every user, and attacks like UNION SELECT don't use OR at all."
+        },
+        {
+          "id": "d",
+          "summary": "Connect with a read-only database user.",
+          "code": "readonly_conn = psycopg.connect(READONLY_DATABASE_URL)\n\ndef find_players(conn, nickname: str):\n    query = f\"SELECT id, nickname FROM users WHERE nickname = '{nickname}'\"\n    return conn.execute(query).fetchall()",
+          "outcome": "Attackers can no longer change data through this query, but they can still read every row of every table that user can access."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "With a parameterized query, the SQL text and the value are sent to the database separately, so the value is never parsed as SQL. Filtering input tries to guess every dangerous pattern; parameters remove the problem entirely. A read-only user is good defense in depth, but not a fix."
+    },
+    {
+      "id": "sec-fix-02",
+      "type": "fixTheBug",
+      "title": "A predictable reset token",
+      "prompt": "An attacker reset another user's password by predicting the reset token sent by email. Which change fixes token generation?",
+      "code": {
+        "language": "typescript",
+        "content": "function createResetToken(): string {\n  return Math.random().toString(36).slice(2)\n}"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Combine the current time with Math.random().",
+          "code": "function createResetToken(): string {\n  return Date.now().toString(36) + Math.random().toString(36).slice(2)\n}",
+          "outcome": "The timestamp is easy to guess from when the email was sent, and Math.random() is still predictable. The token is longer but not harder to predict."
+        },
+        {
+          "id": "b",
+          "summary": "Use a cryptographically secure random generator with 32 bytes of randomness.",
+          "code": "import { randomBytes } from 'node:crypto'\n\nfunction createResetToken(): string {\n  return randomBytes(32).toString('hex')\n}",
+          "outcome": "Tokens now carry 256 bits of unpredictable randomness. Guessing or deriving one is not feasible."
+        },
+        {
+          "id": "c",
+          "summary": "Call Math.random() three times and join the results.",
+          "code": "function createResetToken(): string {\n  return [1, 2, 3].map(() => Math.random().toString(36).slice(2)).join('')\n}",
+          "outcome": "Three outputs of the same predictable generator are still predictable: once an attacker recovers the generator state, they can compute all of them."
+        },
+        {
+          "id": "d",
+          "summary": "Encode the user's email and the current time in base64.",
+          "code": "function createResetToken(email: string): string {\n  return Buffer.from(`${email}:${Date.now()}`).toString('base64url')\n}",
+          "outcome": "Anyone who knows the victim's email and roughly when the reset was requested can build the token themselves."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Math.random() isn't designed for security: its output can be predicted after observing some values. Security tokens need a cryptographically secure generator such as crypto.randomBytes. A complete fix also stores only a hash of the token, makes it expire quickly, and lets it be used only once."
+    },
+    {
+      "id": "sec-flow-01",
+      "type": "followTheRequest",
+      "title": "Log in with Google",
+      "prompt": "A user clicks \"Log in with Google\" in a web app that uses the OAuth 2.0 authorization code flow with PKCE. Arrange the steps in order.",
+      "steps": [
+        "The app redirects the browser to Google's authorization endpoint with its client_id, redirect_uri and a code_challenge.",
+        "The user signs in to Google and approves the requested access.",
+        "Google redirects the browser back to the app's redirect_uri with a short-lived authorization code.",
+        "The app's backend sends the code and the code_verifier to Google's token endpoint.",
+        "Google checks them and returns an access token and an ID token.",
+        "The app creates its own session for the user."
+      ],
+      "explanation": "The browser only ever carries the short-lived code. The tokens are exchanged directly between the app and Google, and PKCE's code_verifier proves that whoever redeems the code also started the login, so a stolen code is useless on its own."
+    },
+    {
+      "id": "sec-flow-02",
+      "type": "followTheRequest",
+      "title": "An expired access token",
+      "prompt": "A DevBrawl client's 15-minute access token has expired. Arrange what happens when the user opens their profile.",
+      "steps": [
+        "The client sends GET /api/auth/me with the expired access token.",
+        "The API rejects the token and responds with 401 Unauthorized.",
+        "The client sends its refresh token to POST /api/auth/refresh.",
+        "The server finds the stored hash of the refresh token, revokes it and issues a new token pair.",
+        "The client stores the new access and refresh tokens.",
+        "The client retries GET /api/auth/me with the new access token."
+      ],
+      "explanation": "Short-lived access tokens limit the damage if one leaks, and the refresh token keeps the user logged in. Rotating the refresh token on every use means a stolen one works at most once; if an old one comes back, the server can tell it was stolen and revoke all of the user's sessions."
+    },
+    {
+      "id": "sec-logs-01",
+      "type": "logAnalysis",
+      "title": "Admin actions without a login",
+      "prompt": "Someone is deleting accounts with a valid admin token, although the admin's login attempt at 11:02 failed and nobody has logged in as admin since. Which log line reveals the root cause?",
+      "logs": [
+        "09:12:00 INFO  ci   Build #482 started for commit a1b2c3d",
+        "09:12:41 INFO  ci   Loaded config: DATABASE_URL=*****, JWT_SECRET=pr0d-s1gn1ng-k3y-2026, SMTP_HOST=smtp.devbrawl.io",
+        "09:14:03 INFO  ci   Build #482 succeeded; build logs are public (public repository)",
+        "11:02:13 INFO  api  POST /api/login 401 email=admin@devbrawl.io",
+        "11:03:39 WARN  api  Valid token for user 1 (admin) has no matching login in the audit log",
+        "11:03:41 INFO  api  DELETE /api/users/77 204 user=1"
+      ],
+      "rootCauseLine": 2,
+      "explanation": "The build printed the JWT signing secret in plain text into publicly visible CI logs, while the database URL was masked. With the secret, an attacker can sign any token they want, including an admin token, without logging in. The fix is to rotate the secret immediately, which invalidates the forged tokens, and to mask secrets in CI output."
+    },
+    {
+      "id": "sec-logs-02",
+      "type": "logAnalysis",
+      "title": "An unexpected admin",
+      "prompt": "A regular player can now open the admin panel. Nobody granted them the admin role. Which log line reveals the root cause?",
+      "logs": [
+        "14:00:01 INFO  api    POST /api/login 200 user=5521 role=player",
+        "14:00:09 INFO  api    PATCH /api/users/me 200 user=5521 fields=[nickname]",
+        "14:00:30 INFO  api    PATCH /api/users/me 200 user=5521 fields=[nickname, role]",
+        "14:00:31 INFO  api    POST /api/auth/refresh 200 user=5521 role=admin",
+        "14:01:02 INFO  api    GET /api/admin/users 200 user=5521",
+        "14:01:15 WARN  audit  Role of user 5521 changed from player to admin without an admin action"
+      ],
+      "rootCauseLine": 3,
+      "explanation": "The profile endpoint accepted a role field from the request body and saved it (mass assignment). The refresh at 14:00:31 only issued a new token with the role that was already in the database; the admin request and the audit warning are consequences. Update endpoints should bind only the fields a user may change, for example with a request type that has no role property."
+    }
+  ]
+}

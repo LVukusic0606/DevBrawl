@@ -1,0 +1,275 @@
+{
+  "$schema": "./challenge.schema.json",
+  "category": {
+    "id": "infrastructure",
+    "name": "Infrastructure"
+  },
+  "challenges": [
+    {
+      "id": "infra-concept-01",
+      "type": "conceptQuiz",
+      "title": "Killed while starting",
+      "prompt": "A Kubernetes pod runs 40 seconds of database migrations at startup. Its liveness probe checks /health every 10 seconds and fails after 3 attempts, so Kubernetes kills the container before it finishes starting, again and again. What is the best fix?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Remove the liveness probe."
+        },
+        {
+          "id": "b",
+          "text": "Add a startup probe that gives the app up to 2 minutes to start, so liveness checks begin only after startup succeeds."
+        },
+        {
+          "id": "c",
+          "text": "Raise the container's memory limit."
+        },
+        {
+          "id": "d",
+          "text": "Set restartPolicy: Never on the pod."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "A liveness probe restarts a container that is stuck, but it can't tell \"stuck\" from \"still starting\". A startup probe holds off the liveness checks until the app has started once. Running migrations as a separate job before the deploy is even better, because it keeps app startup fast.",
+      "commonMistake": {
+        "optionId": "a",
+        "explanation": "Without a liveness probe the pod starts, but if the app later hangs (a deadlock, an exhausted thread pool), Kubernetes will never restart it. You've traded a startup problem for silent outages."
+      }
+    },
+    {
+      "id": "infra-concept-02",
+      "type": "conceptQuiz",
+      "title": "Where the database password lives",
+      "prompt": "Where should the production database password for a containerized API be kept?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Hardcoded in the source code and obfuscated."
+        },
+        {
+          "id": "b",
+          "text": "In the Docker image, set with ENV in the Dockerfile."
+        },
+        {
+          "id": "c",
+          "text": "Injected at runtime from a secret store, such as a Kubernetes Secret or Vault, as an environment variable or a file."
+        },
+        {
+          "id": "d",
+          "text": "In appsettings.Production.json, committed to the private repository."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Secrets belong outside the code and the image, so the same image runs in every environment and access to the secret can be controlled and audited on its own. A value baked into an image can be read by anyone who can pull the image, for example with docker history.",
+      "commonMistake": {
+        "optionId": "d",
+        "explanation": "Everyone with repository access, every clone and every backup now has the production password, and it stays in git history even after you delete it. Changing it requires a commit and a deploy."
+      }
+    },
+    {
+      "id": "infra-investigate-01",
+      "type": "codeInvestigation",
+      "title": "Unreachable inside Docker",
+      "prompt": "The API works with dotnet run on a laptop. In Docker, curl http://localhost:8080/health on the host fails with \"Connection reset by peer\", although the container is running and its log says \"Now listening on: http://localhost:8080\". Find the file where the problem originates.",
+      "files": [
+        {
+          "path": "Dockerfile",
+          "language": "dockerfile",
+          "content": "FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build\nWORKDIR /src\nCOPY . .\nRUN dotnet publish DevBrawl.Api -c Release -o /app\n\nFROM mcr.microsoft.com/dotnet/aspnet:10.0\nWORKDIR /app\nCOPY --from=build /app .\nENV ASPNETCORE_URLS=http://localhost:8080\nEXPOSE 8080\nENTRYPOINT [\"dotnet\", \"DevBrawl.Api.dll\"]"
+        },
+        {
+          "path": "docker-compose.yml",
+          "language": "yaml",
+          "content": "services:\n  api:\n    build: .\n    ports:\n      - \"8080:8080\"\n    environment:\n      ConnectionStrings__DefaultConnection: \"Host=db;Database=devbrawl;Username=dev;Password=dev\"\n  db:\n    image: postgres:18"
+        },
+        {
+          "path": "DevBrawl.Api/Program.cs",
+          "language": "csharp",
+          "content": "var builder = WebApplication.CreateBuilder(args);\nvar app = builder.Build();\n\napp.MapGet(\"/health\", () => Results.Ok(new { status = \"ok\" }));\n\napp.Run();"
+        }
+      ],
+      "answer": {
+        "path": "Dockerfile",
+        "lines": [
+          9,
+          9
+        ]
+      },
+      "explanation": "Inside a container, localhost is the container's own loopback interface. Docker forwards the published port to the container's network interface, where nothing is listening, so the connection is reset. Binding to all interfaces with ASPNETCORE_URLS=http://+:8080 makes the app reachable through the published port. The port mapping in the compose file is correct."
+    },
+    {
+      "id": "infra-investigate-02",
+      "type": "codeInvestigation",
+      "title": "Staging talks to production",
+      "prompt": "The staging site at staging.devbrawl.io sends its API requests to production (api.devbrawl.io) instead of api.staging.devbrawl.io. Find the file where the problem originates.",
+      "files": [
+        {
+          "path": ".github/workflows/deploy-staging.yml",
+          "language": "yaml",
+          "content": "name: Deploy staging\non:\n  push:\n    branches: [develop]\njobs:\n  deploy:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npm ci\n      - run: npm run build\n      - run: ./scripts/upload.sh staging dist/"
+        },
+        {
+          "path": ".env.production",
+          "language": "dotenv",
+          "content": "VITE_API_URL=https://api.devbrawl.io"
+        },
+        {
+          "path": ".env.staging",
+          "language": "dotenv",
+          "content": "VITE_API_URL=https://api.staging.devbrawl.io"
+        },
+        {
+          "path": "scripts/upload.sh",
+          "language": "bash",
+          "content": "#!/usr/bin/env bash\nset -euo pipefail\nENVIRONMENT=\"$1\"\naws s3 sync \"$2\" \"s3://devbrawl-$ENVIRONMENT-frontend\" --delete"
+        }
+      ],
+      "answer": {
+        "path": ".github/workflows/deploy-staging.yml",
+        "lines": [
+          11,
+          11
+        ]
+      },
+      "explanation": "Vite inlines VITE_ variables at build time and picks the .env file from the build mode. vite build uses production mode by default, so the staging deploy is built with .env.production. Building with npm run build -- --mode staging loads .env.staging instead. The env files and the upload script are correct."
+    },
+    {
+      "id": "infra-fix-01",
+      "type": "fixTheBug",
+      "title": "Slow Docker builds",
+      "prompt": "Every CI build reinstalls all npm packages and takes 6 minutes, even when only one source file changed. Which Dockerfile change fixes it?",
+      "code": {
+        "language": "dockerfile",
+        "content": "FROM node:22-alpine\nWORKDIR /app\nCOPY . .\nRUN npm ci\nRUN npm run build"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Build with docker build --no-cache.",
+          "code": "# CI step\ndocker build --no-cache -t devbrawl/frontend .",
+          "outcome": "Every layer is rebuilt from scratch on every build. Builds get slower, not faster."
+        },
+        {
+          "id": "b",
+          "summary": "Add a .dockerignore file that excludes node_modules.",
+          "code": "# .dockerignore\nnode_modules",
+          "outcome": "The build context gets smaller and uploads faster, which is worth doing, but any source change still invalidates COPY . . and reruns npm ci."
+        },
+        {
+          "id": "c",
+          "summary": "Use npm install instead of npm ci.",
+          "code": "FROM node:22-alpine\nWORKDIR /app\nCOPY . .\nRUN npm install\nRUN npm run build",
+          "outcome": "npm install still runs after COPY . ., so it still reruns on every change, and it may modify the lockfile during the build. Builds are no faster."
+        },
+        {
+          "id": "d",
+          "summary": "Copy only package.json and package-lock.json, run npm ci, then copy the rest of the source.",
+          "code": "FROM node:22-alpine\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN npm ci\nCOPY . .\nRUN npm run build",
+          "outcome": "Changing a source file no longer invalidates the npm ci layer. Builds reuse the cached dependencies and drop from 6 minutes to about 1."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Docker caches each layer and reuses it until something the layer depends on changes. COPY . . changes whenever any file changes, so every step after it reruns. Copying the dependency manifests first means the expensive npm ci layer only reruns when the dependencies themselves change."
+    },
+    {
+      "id": "infra-fix-02",
+      "type": "fixTheBug",
+      "title": "Downtime on every deploy",
+      "prompt": "Every deploy causes about 30 seconds of 502 errors. Which change to the deploy script fixes it?",
+      "code": {
+        "language": "bash",
+        "content": "docker pull devbrawl/api:$VERSION\ndocker stop api && docker rm api\ndocker run -d --name api -p 8080:8080 devbrawl/api:$VERSION"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Start the new version next to the old one, wait until its health check passes, switch nginx to it, then stop the old one.",
+          "code": "# The current version runs as api-blue on port 8080\ndocker run -d --name api-green -p 8081:8080 devbrawl/api:$VERSION\nuntil curl -fs http://localhost:8081/health; do sleep 1; done\nln -sf /etc/nginx/upstreams/green.conf /etc/nginx/upstreams/current.conf\nnginx -s reload\ndocker stop api-blue",
+          "outcome": "nginx switches only once the new version is ready, and the reload lets requests already in progress on the old version finish. Users see no errors during the deploy."
+        },
+        {
+          "id": "b",
+          "summary": "Deploy at 3 AM, when traffic is lowest.",
+          "code": "# crontab: deploy nightly at 03:00\n0 3 * * * /opt/deploy/deploy.sh",
+          "outcome": "Fewer users notice, but the API is still down for 30 seconds on every deploy, and urgent fixes can't wait until 3 AM."
+        },
+        {
+          "id": "c",
+          "summary": "Make the frontend retry 502 responses for up to 30 seconds.",
+          "code": "// frontend fetch wrapper\nfor (let i = 0; i < 30 && res.status === 502; i++) {\n  await sleep(1000)\n  res = await fetch(url, init)\n}",
+          "outcome": "Users wait up to 30 seconds instead of seeing an error, and requests from other clients still fail. The downtime is still there."
+        },
+        {
+          "id": "d",
+          "summary": "Shrink the image so the new container starts faster.",
+          "code": "FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine",
+          "outcome": "The gap gets shorter, perhaps 10 seconds instead of 30, but there's still a window in which no container is running."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "The old script stops the running version before the new one can serve traffic, so there is always a gap. A blue-green (or rolling) deploy keeps the old version serving until the new one passes its health check, then switches traffic over, so nothing is ever down."
+    },
+    {
+      "id": "infra-flow-01",
+      "type": "followTheRequest",
+      "title": "From push to production",
+      "prompt": "Arrange the steps of the team's CI/CD pipeline, from a push to production.",
+      "steps": [
+        "A developer pushes a commit to main.",
+        "CI checks out the code and installs the dependencies.",
+        "CI runs the tests and stops the pipeline if any of them fail.",
+        "CI builds a Docker image tagged with the commit SHA and pushes it to the registry.",
+        "CD deploys that image to staging.",
+        "After approval, CD deploys the same image to production."
+      ],
+      "explanation": "Testing before building avoids publishing images that are known to be broken. Tagging by commit SHA identifies exactly what is running, and promoting the same image from staging to production guarantees that what was verified is what ships, instead of rebuilding and hoping the result is identical."
+    },
+    {
+      "id": "infra-flow-02",
+      "type": "followTheRequest",
+      "title": "A Kubernetes rolling update",
+      "prompt": "A Kubernetes Deployment with 3 replicas is updated to a new image tag using the default RollingUpdate strategy. Arrange what happens, in order.",
+      "steps": [
+        "kubectl apply updates the Deployment with the new image tag.",
+        "The Deployment controller creates a new ReplicaSet for the new version.",
+        "A new pod is scheduled on a node and its container starts.",
+        "The new pod's readiness probe passes and the pod is added to the Service's endpoints.",
+        "One old pod is removed from the endpoints and terminated.",
+        "The controller repeats this until all 3 pods run the new version."
+      ],
+      "explanation": "With the default settings and 3 replicas, Kubernetes adds one new pod at a time and removes an old pod only after the new one is ready, so capacity never drops. The readiness probe is what makes this safe: a new pod that never becomes ready stops the rollout instead of replacing working pods."
+    },
+    {
+      "id": "infra-logs-01",
+      "type": "logAnalysis",
+      "title": "An expired certificate",
+      "prompt": "Since midnight, every request to https://api.devbrawl.io fails with a certificate error. Certificates are renewed automatically by certbot. Which log line reveals the root cause?",
+      "logs": [
+        "2026-09-01 10:14 INFO  firewall  Rule removed: allow tcp/80 from 0.0.0.0/0 (ticket OPS-112: close plain HTTP)",
+        "2026-09-24 00:00 INFO  certbot   Attempting renewal for api.devbrawl.io (expires in 30 days)",
+        "2026-09-24 00:00 ERROR certbot   http-01 challenge failed: Timeout during connect (likely firewall problem)",
+        "2026-10-10 00:00 ERROR certbot   http-01 challenge failed: Timeout during connect (likely firewall problem)",
+        "2026-10-24 00:00 WARN  monitor   TLS certificate for api.devbrawl.io expired",
+        "2026-10-24 00:01 ERROR frontend  Requests to https://api.devbrawl.io failing: NET::ERR_CERT_DATE_INVALID"
+      ],
+      "rootCauseLine": 1,
+      "explanation": "certbot's http-01 challenge proves that you control the domain by serving a file over plain HTTP on port 80. The hardening change closed port 80, so every renewal attempt timed out and the certificate eventually expired. Reopening port 80 (nginx can still redirect everything except the challenge path to HTTPS), or switching to the dns-01 challenge, fixes renewals."
+    },
+    {
+      "id": "infra-logs-02",
+      "type": "logAnalysis",
+      "title": "A pod that never becomes ready",
+      "prompt": "After version 2.1.0 was deployed, the API pod never becomes ready. Which log line reveals the root cause?",
+      "logs": [
+        "12:00:01 INFO  k8s  Deployment api updated to image devbrawl/api:2.1.0",
+        "12:00:05 INFO  k8s  Pod api-7f9c-x2 started container api",
+        "12:00:06 INFO  api  Starting DevBrawl.Api 2.1.0 (Environment: Production)",
+        "12:00:06 CRIT  api  Unhandled exception. System.InvalidOperationException: Jwt:Key must be at least 32 bytes. Set it in appsettings.Development.json or the Jwt__Key environment variable.",
+        "12:00:06 INFO  k8s  Container api terminated with a non-zero exit code",
+        "12:00:36 WARN  k8s  Back-off restarting failed container api in pod api-7f9c-x2",
+        "12:01:20 WARN  k8s  Pod api-7f9c-x2 status: CrashLoopBackOff (restarts: 4)"
+      ],
+      "rootCauseLine": 4,
+      "explanation": "The app needs its JWT signing key at startup and refuses to start without one. appsettings.Development.json isn't loaded in Production, and the deployment doesn't set the Jwt__Key environment variable, so the app exits immediately and Kubernetes keeps restarting it (CrashLoopBackOff). Providing Jwt__Key from a Kubernetes Secret fixes it."
+    }
+  ]
+}

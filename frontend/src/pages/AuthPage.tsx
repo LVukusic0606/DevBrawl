@@ -1,5 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import mascotUrl from '../assets/mascot.webp'
+import { ApiError } from '../api/client'
 import { useTypewriter } from '../hooks/useTypewriter'
 import './AuthPage.css'
 
@@ -18,8 +19,9 @@ export interface SignupValues {
 }
 
 interface AuthPageProps {
-  onLogin: (values: LoginValues) => void
-  onSignup: (values: SignupValues) => void
+  // Reject with an ApiError to show its message on the form
+  onLogin: (values: LoginValues) => Promise<void>
+  onSignup: (values: SignupValues) => Promise<void>
   onGoogle: () => void
 }
 
@@ -39,6 +41,8 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
   const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Errors>({})
+  const [formError, setFormError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const typedWord = useTypewriter(HEADLINE_WORDS)
 
   const isSignup = mode === 'signup'
@@ -46,6 +50,7 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
   function switchMode(next: AuthMode) {
     setMode(next)
     setErrors({})
+    setFormError(null)
     setShowPassword(false)
   }
 
@@ -75,16 +80,26 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
     return next
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (submitting) return
+
     const found = validate()
     setErrors(found)
+    setFormError(null)
     if (Object.keys(found).length > 0) return
 
-    if (isSignup) {
-      onSignup({ email: email.trim(), username, password })
-    } else {
-      onLogin({ email: email.trim(), password, rememberMe })
+    setSubmitting(true)
+    try {
+      if (isSignup) {
+        await onSignup({ email: email.trim(), username, password })
+      } else {
+        await onLogin({ email: email.trim(), password, rememberMe })
+      }
+    } catch (error) {
+      setFormError(error instanceof ApiError ? error.message : "Couldn't connect. Try again.")
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -226,8 +241,14 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
                 </label>
               )}
 
-              <button type="submit" className="auth-submit">
-                {isSignup ? 'Create account' : 'Log in'}
+              {formError && (
+                <p className="auth-error" role="alert">{formError}</p>
+              )}
+
+              <button type="submit" className="auth-submit" disabled={submitting}>
+                {submitting
+                  ? isSignup ? 'Creating account' : 'Logging in'
+                  : isSignup ? 'Create account' : 'Log in'}
               </button>
             </form>
 

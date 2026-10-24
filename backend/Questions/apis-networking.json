@@ -1,0 +1,270 @@
+{
+  "$schema": "./challenge.schema.json",
+  "category": {
+    "id": "apis-networking",
+    "name": "APIs & Networking"
+  },
+  "challenges": [
+    {
+      "id": "api-concept-01",
+      "type": "conceptQuiz",
+      "title": "Retrying a payment safely",
+      "prompt": "A mobile app sends POST /payments. The request times out on the client, so the app retries. The first request had actually succeeded on the server, and the customer was charged twice. Which change prevents duplicate charges when the client retries?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Send a unique Idempotency-Key header with each payment attempt. The server stores the key and returns the original result if the same key arrives again."
+        },
+        {
+          "id": "b",
+          "text": "Change the endpoint from POST to PUT, because PUT is idempotent."
+        },
+        {
+          "id": "c",
+          "text": "Only retry when the server responds with a 5xx status code."
+        },
+        {
+          "id": "d",
+          "text": "Increase the client timeout from 10 to 60 seconds."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "A timeout tells the client nothing about whether the server processed the request. An idempotency key lets the server recognize a retry of the same attempt and return the stored result instead of charging again. A longer timeout only makes the problem rarer, and a timed-out request never produces a 5xx response to check.",
+      "commonMistake": {
+        "optionId": "b",
+        "explanation": "PUT is idempotent only when the server treats a repeated request as setting the same resource state. Changing the method alone doesn't make the payment logic recognize a repeated attempt; the server still needs something to detect the duplicate."
+      }
+    },
+    {
+      "id": "api-concept-02",
+      "type": "conceptQuiz",
+      "title": "Caching a read-heavy catalog",
+      "prompt": "Your public product catalog API is read thousands of times per minute but changes only a few times a day. Clients must see price changes within 5 minutes. Which caching strategy fits best?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Cache-Control: public, max-age=86400, and tell clients to hard refresh after price changes."
+        },
+        {
+          "id": "b",
+          "text": "Cache-Control: public, max-age=300, with an ETag so clients and CDNs can revalidate cheaply."
+        },
+        {
+          "id": "c",
+          "text": "No caching headers; let each browser decide."
+        },
+        {
+          "id": "d",
+          "text": "Cache-Control: no-store, so clients always get fresh data."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "max-age=300 lets browsers and CDNs reuse the response for 5 minutes, which matches the freshness requirement exactly. After that, the ETag lets the client ask \"has it changed?\" and get a small 304 Not Modified response when it hasn't. A one-day max-age breaks the 5-minute requirement, and leaving the headers out lets caches apply heuristics you don't control.",
+      "commonMistake": {
+        "optionId": "d",
+        "explanation": "no-store guarantees fresh data but forces every one of those thousands of requests to hit your servers, even though the data rarely changes. The requirement allows up to 5 minutes of staleness, which caching can safely use."
+      }
+    },
+    {
+      "id": "api-investigate-01",
+      "type": "codeInvestigation",
+      "title": "Blocked by CORS",
+      "prompt": "The frontend at https://app.devbrawl.io can't load scores from https://api.devbrawl.io/scores. The browser console shows: \"Access to fetch has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.\" Calling the same URL with curl works. Find the file where the problem originates.",
+      "files": [
+        {
+          "path": "frontend/src/api/scores.ts",
+          "language": "typescript",
+          "content": "export async function getScores(): Promise<number[]> {\n  const res = await fetch('https://api.devbrawl.io/scores')\n  if (!res.ok) throw new Error(`HTTP ${res.status}`)\n  return res.json()\n}"
+        },
+        {
+          "path": "backend/Program.cs",
+          "language": "csharp",
+          "content": "var builder = WebApplication.CreateBuilder(args);\n\nbuilder.Services.AddCors(options =>\n{\n    options.AddPolicy(\"frontend\", policy =>\n        policy.WithOrigins(\"http://app.devbrawl.io\")\n              .AllowAnyHeader()\n              .AllowAnyMethod());\n});\n\nvar app = builder.Build();\napp.UseCors(\"frontend\");\napp.MapGet(\"/scores\", () => Results.Ok(new[] { 1200, 1150 }));\napp.Run();"
+        },
+        {
+          "path": "deploy/nginx/api.conf",
+          "language": "nginx",
+          "content": "server {\n    listen 443 ssl;\n    server_name api.devbrawl.io;\n\n    location / {\n        proxy_pass http://localhost:5000;\n        proxy_set_header Host $host;\n    }\n}"
+        }
+      ],
+      "answer": {
+        "path": "backend/Program.cs",
+        "lines": [
+          6,
+          6
+        ]
+      },
+      "explanation": "An origin is scheme + host + port. The policy allows http://app.devbrawl.io, but the browser sends Origin: https://app.devbrawl.io, so the CORS middleware adds no Access-Control-Allow-Origin header and the browser blocks the response. curl works because CORS is enforced by browsers, not by servers. The fix is WithOrigins(\"https://app.devbrawl.io\")."
+    },
+    {
+      "id": "api-investigate-02",
+      "type": "codeInvestigation",
+      "title": "The fallback that never happens",
+      "prompt": "When the shipping service hangs (it accepts connections but never answers), checkout requests take 60 seconds and fail with 504 Gateway Timeout. The team expected customers to see flat fallback shipping rates instead. Find the file where the problem originates.",
+      "files": [
+        {
+          "path": "checkout/routes.py",
+          "language": "python",
+          "content": "import requests\nfrom shipping_client import get_rates\n\nFALLBACK_RATES = {\"standard\": 4.99}\n\ndef checkout_rates(cart_id: str) -> dict:\n    try:\n        return get_rates(cart_id)\n    except requests.Timeout:\n        # Shipping is slow or down: show flat rates instead of failing\n        return FALLBACK_RATES"
+        },
+        {
+          "path": "checkout/shipping_client.py",
+          "language": "python",
+          "content": "import requests\n\nSHIPPING_URL = \"http://shipping.internal/rates\"\n\ndef get_rates(cart_id: str) -> dict:\n    response = requests.get(SHIPPING_URL, params={\"cart\": cart_id})\n    response.raise_for_status()\n    return response.json()"
+        },
+        {
+          "path": "deploy/nginx/checkout.conf",
+          "language": "nginx",
+          "content": "location /api/ {\n    proxy_pass http://checkout:8000;\n    proxy_read_timeout 60s;\n}"
+        }
+      ],
+      "answer": {
+        "path": "checkout/shipping_client.py",
+        "lines": [
+          6,
+          6
+        ]
+      },
+      "explanation": "requests.get has no default timeout, so when the shipping service accepts the connection but never answers, the call waits indefinitely. requests.Timeout is never raised, the fallback in routes.py never runs, and nginx gives up after 60 seconds with a 504. Passing a timeout, for example requests.get(..., timeout=(3, 5)), makes the fallback work as intended. The nginx timeout is only where the waiting finally stops."
+    },
+    {
+      "id": "api-fix-01",
+      "type": "fixTheBug",
+      "title": "Retry storm on 429",
+      "prompt": "When the API starts rate limiting, the mobile app makes it worse: every client that gets 429 Too Many Requests retries immediately in a tight loop, and the request rate goes up instead of down. Which change fixes the retry logic?",
+      "code": {
+        "language": "typescript",
+        "content": "async function fetchWithRetry(url: string): Promise<Response> {\n  while (true) {\n    const res = await fetch(url)\n    if (res.status !== 429) return res\n  }\n}"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Send the retry to the backup hostname api2.devbrawl.io.",
+          "code": "async function fetchWithRetry(url: string): Promise<Response> {\n  const res = await fetch(url)\n  if (res.status !== 429) return res\n  return fetch(url.replace('api.', 'api2.'))\n}",
+          "outcome": "The backup hostname routes to the same rate-limited backend, so every rejected request now costs two requests. The overload gets worse."
+        },
+        {
+          "id": "b",
+          "summary": "Raise the fetch timeout to 30 seconds so requests don't fail as often.",
+          "code": "async function fetchWithRetry(url: string): Promise<Response> {\n  while (true) {\n    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) })\n    if (res.status !== 429) return res\n  }\n}",
+          "outcome": "Nothing changes: 429 responses arrive quickly and were never timeouts. Clients still retry in a tight loop."
+        },
+        {
+          "id": "c",
+          "summary": "Wait between retries: honor the Retry-After header, otherwise back off exponentially with random jitter, and give up after a few attempts.",
+          "code": "async function fetchWithRetry(url: string, maxAttempts = 5): Promise<Response> {\n  for (let attempt = 1; ; attempt++) {\n    const res = await fetch(url)\n    if (res.status !== 429 || attempt === maxAttempts) return res\n    const retryAfter = Number(res.headers.get('Retry-After'))\n    const backoff = 2 ** attempt * 250 + Math.random() * 250\n    await sleep(retryAfter > 0 ? retryAfter * 1000 : backoff)\n  }\n}",
+          "outcome": "Clients spread their retries out and slow down when the server asks them to. The request rate drops below the limit and the API recovers within a minute."
+        },
+        {
+          "id": "d",
+          "summary": "Sleep for exactly 1 second before every retry, with no limit on attempts.",
+          "code": "async function fetchWithRetry(url: string): Promise<Response> {\n  while (true) {\n    const res = await fetch(url)\n    if (res.status !== 429) return res\n    await sleep(1000)\n  }\n}",
+          "outcome": "The load drops at first, but all clients that were rejected together retry together, once per second, forever. The API sees synchronized waves of traffic and keeps rate limiting them."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "429 means \"slow down\". A fix has to reduce and spread out the retries: Retry-After tells the client how long to wait, exponential backoff increases the wait after each failure, and jitter stops clients from retrying in sync. A cap on attempts stops a client from retrying forever."
+    },
+    {
+      "id": "api-fix-02",
+      "type": "fixTheBug",
+      "title": "Duplicate posts while scrolling",
+      "prompt": "The feed uses page numbers. When new posts are published while a user scrolls, page 2 shows some posts that were already on page 1. Which query change fixes it?",
+      "code": {
+        "language": "sql",
+        "content": "-- GET /api/feed?page=2\nSELECT id, title, created_at\nFROM posts\nORDER BY created_at DESC\nLIMIT 20 OFFSET 20;"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Cache page 1 on the client for 5 minutes.",
+          "code": "-- Query unchanged; the client caches GET /api/feed?page=1 for 5 minutes\nSELECT id, title, created_at\nFROM posts\nORDER BY created_at DESC\nLIMIT 20 OFFSET 20;",
+          "outcome": "Page 1 stays stable, but page 2 is still calculated against the live table, so it still includes posts that moved off page 1."
+        },
+        {
+          "id": "b",
+          "summary": "Order by id instead of created_at and keep the OFFSET.",
+          "code": "SELECT id, title, created_at\nFROM posts\nORDER BY id DESC\nLIMIT 20 OFFSET 20;",
+          "outcome": "New posts still get the highest ids and land at the top, so older posts still shift down with every new post. Duplicates keep appearing."
+        },
+        {
+          "id": "c",
+          "summary": "Increase the page size to 100 so users load fewer pages.",
+          "code": "SELECT id, title, created_at\nFROM posts\nORDER BY created_at DESC\nLIMIT 100 OFFSET 100;",
+          "outcome": "Duplicates show up less often per scroll, but any post published between two page loads still pushes items onto the next page."
+        },
+        {
+          "id": "d",
+          "summary": "Switch to cursor pagination: the client sends the created_at and id of the last post it saw, and the query continues after it.",
+          "code": "-- GET /api/feed?after_created_at=...&after_id=...\nSELECT id, title, created_at\nFROM posts\nWHERE (created_at, id) < (:after_created_at, :after_id)\nORDER BY created_at DESC, id DESC\nLIMIT 20;",
+          "outcome": "Each page starts right after the last post the user saw. New posts appear at the top on the next refresh and no longer push older posts onto the next page."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "OFFSET counts rows from the top at the moment of the query. When new rows are inserted at the top, everything shifts down and the next page re-reads rows the user already saw. A cursor (keyset) query asks for rows after a specific position, so inserts above it don't matter. Adding id as a tie-breaker keeps the order unique when two posts share a timestamp."
+    },
+    {
+      "id": "api-flow-01",
+      "type": "followTheRequest",
+      "title": "Opening a website for the first time",
+      "prompt": "Arrange what happens, in order, when a browser opens https://devbrawl.io for the first time (HTTP/1.1 or HTTP/2, nothing cached).",
+      "steps": [
+        "The browser resolves devbrawl.io to an IP address using DNS.",
+        "The browser opens a TCP connection to that IP address on port 443.",
+        "The browser and server perform the TLS handshake: the server presents its certificate and they agree on encryption keys.",
+        "The browser sends the HTTP GET request over the encrypted connection.",
+        "The server responds with the HTML page.",
+        "The browser parses the HTML and requests the CSS and JavaScript files it references."
+      ],
+      "explanation": "The browser first needs an IP address (DNS), then a TCP connection to it. TLS runs on top of that connection to authenticate the server and set up encryption. Only then can the HTTP request be sent. The browser discovers CSS and JavaScript only after it receives and parses the HTML."
+    },
+    {
+      "id": "api-flow-02",
+      "type": "followTheRequest",
+      "title": "A cross-origin PUT request",
+      "prompt": "The frontend at https://app.devbrawl.io calls fetch() with method PUT, a JSON body and an Authorization header to https://api.devbrawl.io. Arrange what happens, in order.",
+      "steps": [
+        "The frontend code calls fetch() with method PUT.",
+        "The browser sees a cross-origin request that isn't a simple request and first sends an OPTIONS preflight request.",
+        "The API answers the preflight with Access-Control-Allow-Origin, Access-Control-Allow-Methods and Access-Control-Allow-Headers.",
+        "The browser checks that the preflight response allows PUT and the Authorization header.",
+        "The browser sends the actual PUT request.",
+        "The API responds, and the browser hands the response to the frontend code after checking Access-Control-Allow-Origin."
+      ],
+      "explanation": "Methods other than GET, HEAD and POST, and headers such as Authorization or Content-Type: application/json, make a request non-simple. For those, the browser asks for permission with an OPTIONS preflight before sending a request that could have side effects. The real request is only sent if the preflight allows it."
+    },
+    {
+      "id": "api-logs-01",
+      "type": "logAnalysis",
+      "title": "502 after a deploy",
+      "prompt": "Since a deploy at 14:02, every request to /api/orders returns 502 Bad Gateway. Which log line reveals the root cause?",
+      "logs": [
+        "14:01:58 INFO  deploy  orders-service v2.4.0 rollout started",
+        "14:02:11 INFO  orders  Now listening on: http://0.0.0.0:5000",
+        "14:02:11 INFO  orders  Application started. Press Ctrl+C to shut down.",
+        "14:03:02 ERROR nginx   connect() failed (111: Connection refused) while connecting to upstream, upstream: \"http://10.0.3.7:8080/api/orders\"",
+        "14:03:02 INFO  nginx   GET /api/orders 502",
+        "14:03:09 ERROR nginx   connect() failed (111: Connection refused) while connecting to upstream, upstream: \"http://10.0.3.7:8080/api/orders\"",
+        "14:03:09 INFO  nginx   GET /api/orders 502"
+      ],
+      "rootCauseLine": 2,
+      "explanation": "nginx keeps proxying to port 8080, but the new version listens on port 5000. Nothing listens on 8080, so the connection is refused and nginx returns 502. The refused connections and the 502s are symptoms; the line showing the service listening on a different port explains them."
+    },
+    {
+      "id": "api-logs-02",
+      "type": "logAnalysis",
+      "title": "Avatar uploads that fail",
+      "prompt": "Some users can't upload a new avatar; the app shows \"Upload failed\". Smaller images work. Which log line reveals the root cause?",
+      "logs": [
+        "11:20:01 INFO  web       POST /api/avatar 200 (312 KB)",
+        "11:20:01 WARN  avatar    Resize took 1180 ms for user 4411",
+        "11:21:15 ERROR nginx     client intended to send too large body: 2516582 bytes, client: 10.1.4.20, request: \"POST /api/avatar HTTP/1.1\"",
+        "11:21:15 INFO  nginx     POST /api/avatar 413",
+        "11:21:15 ERROR frontend  Avatar upload failed: request failed with status code 413",
+        "11:22:40 INFO  web       POST /api/avatar 200 (845 KB)"
+      ],
+      "rootCauseLine": 3,
+      "explanation": "nginx rejected the 2.4 MB request body before it reached the application, because its default client_max_body_size is 1 MB. That's why the frontend sees a 413 and why the 312 KB and 845 KB uploads work. The slow resize warning is a separate performance issue on a successful upload. Raising client_max_body_size, and keeping a matching limit in the app, fixes it."
+    }
+  ]
+}

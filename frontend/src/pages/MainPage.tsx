@@ -7,6 +7,7 @@ export type MainSection = 'learn' | 'duel' | 'interview'
 
 interface MainPageProps {
   onSelect: (section: MainSection) => void
+  onLogout: () => void
 }
 
 const SECTIONS: { id: MainSection; label: string; description: string; bug: string }[] = [
@@ -30,11 +31,15 @@ const SECTIONS: { id: MainSection; label: string; description: string; bug: stri
   },
 ]
 
-function MainPage({ onSelect }: MainPageProps) {
+function MainPage({ onSelect, onLogout }: MainPageProps) {
   return (
     <main className="home">
       <header className="home-header">
         <span className="home-logo">DevBrawl</span>
+        <button type="button" className="home-logout" onClick={onLogout}>
+          <i className="ti ti-logout" aria-hidden="true" />
+          Log out
+        </button>
       </header>
 
       <section className="home-content" aria-labelledby="home-title">

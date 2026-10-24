@@ -12,8 +12,14 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DevBrawl.Auth\DevBrawl.Auth.csproj" />
+    <ProjectReference Include="..\DevBrawl.Infrastructure\DevBrawl.Infrastructure.csproj" />
+    <ProjectReference Include="..\DevBrawl.Common\DevBrawl.Common.csproj" />
+    <ProjectReference Include="..\DevBrawl.Duel\DevBrawl.Duel.csproj" />
   </ItemGroup>
 
 </Project>

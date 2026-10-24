@@ -1,0 +1,268 @@
+{
+  "$schema": "./challenge.schema.json",
+  "category": {
+    "id": "system-design",
+    "name": "System Design"
+  },
+  "challenges": [
+    {
+      "id": "sys-concept-01",
+      "type": "conceptQuiz",
+      "title": "A slow welcome email",
+      "prompt": "After signup, the API sends a welcome email through a third-party provider that sometimes takes 10 seconds to respond. Signup must stay fast, and the email should still arrive. Which design fits best?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Put a message on a queue during signup and let a background worker send the email, with retries."
+        },
+        {
+          "id": "b",
+          "text": "Send the email from the frontend after signup, using the provider's API key."
+        },
+        {
+          "id": "c",
+          "text": "Send the email synchronously in the signup request, with a 30-second timeout."
+        },
+        {
+          "id": "d",
+          "text": "Start the email in a fire-and-forget Task.Run inside the signup request handler."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "A queue separates the slow, unreliable step from the user's request: signup only has to store a small message, and a worker sends the email and retries on failure. If the worker or the provider is down, messages wait in the queue instead of being lost. Sending from the frontend would expose the provider's API key to every user.",
+      "commonMistake": {
+        "optionId": "d",
+        "explanation": "The response returns quickly, but the email is lost if the process restarts or the provider fails, because nothing retries it. Work started this way also isn't tracked, so nobody notices when it fails."
+      }
+    },
+    {
+      "id": "sys-concept-02",
+      "type": "conceptQuiz",
+      "title": "An expensive leaderboard",
+      "prompt": "The global leaderboard is requested 50,000 times a minute. Building it requires an expensive query over all duels. Players accept that it can be up to a minute out of date. Which design fits best?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Run the query on each request against a read replica."
+        },
+        {
+          "id": "b",
+          "text": "Recompute the leaderboard every 30 seconds in a background job and serve the stored result."
+        },
+        {
+          "id": "c",
+          "text": "Add more API servers behind the load balancer."
+        },
+        {
+          "id": "d",
+          "text": "Send all duel results to the browser and compute the ranking there."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Because players accept data up to a minute old, the result can be computed once and shared. A background job that refreshes it every 30 seconds runs the query twice a minute instead of 50,000 times, and every request becomes a cheap read. More API servers would all still hit the same database.",
+      "commonMistake": {
+        "optionId": "a",
+        "explanation": "A replica takes load off the primary database, but it still runs the expensive query 50,000 times a minute. That moves the bottleneck instead of removing it."
+      }
+    },
+    {
+      "id": "sys-investigate-01",
+      "type": "codeInvestigation",
+      "title": "Nobody gets matched",
+      "prompt": "Since the API was scaled from 1 to 3 instances, players often wait in the duel queue forever, even when the admin dashboard shows 6 players waiting. Find the file where the problem originates.",
+      "files": [
+        {
+          "path": "docker-compose.yml",
+          "language": "yaml",
+          "content": "services:\n  api:\n    image: devbrawl/api:latest\n    deploy:\n      replicas: 3\n  lb:\n    image: nginx:1.27\n    ports:\n      - \"443:443\""
+        },
+        {
+          "path": "Hubs/DuelHub.cs",
+          "language": "csharp",
+          "content": "[Authorize]\npublic class DuelHub(MatchmakingService matchmaking) : Hub\n{\n    public async Task FindDuel()\n    {\n        var opponentId = matchmaking.Join(Context.UserIdentifier!);\n        if (opponentId is not null)\n            await Clients.Users(Context.UserIdentifier!, opponentId).SendAsync(\"MatchFound\");\n    }\n}"
+        },
+        {
+          "path": "Services/MatchmakingService.cs",
+          "language": "csharp",
+          "content": "public class MatchmakingService\n{\n    private static readonly ConcurrentQueue<string> Waiting = new();\n\n    public string? Join(string userId)\n    {\n        if (Waiting.TryDequeue(out var opponentId))\n            return opponentId;\n\n        Waiting.Enqueue(userId);\n        return null;\n    }\n}"
+        }
+      ],
+      "answer": {
+        "path": "Services/MatchmakingService.cs",
+        "lines": [
+          3,
+          3
+        ]
+      },
+      "explanation": "The queue lives in each instance's memory. With 3 instances behind the load balancer, waiting players are spread across 3 separate queues, and two players on different instances can never be matched. Shared state like a matchmaking queue has to live somewhere every instance can see, such as the database or Redis. Scaling out is what exposed the problem, but the compose file itself is fine."
+    },
+    {
+      "id": "sys-investigate-02",
+      "type": "codeInvestigation",
+      "title": "XP paid out twice",
+      "prompt": "Some players get the XP for a duel twice. The logs show the same DuelFinished message (same duel id) handled twice, each time shortly after a worker pod was restarted. Find the file where the problem originates.",
+      "files": [
+        {
+          "path": "Services/DuelService.cs",
+          "language": "csharp",
+          "content": "public async Task FinalizeAsync(Duel duel)\n{\n    duel.Status = DuelStatus.Finished;\n    db.Outbox.Add(new DuelFinished(duel.Id, duel.PlayerIds, duel.XpByPlayer));\n    await db.SaveChangesAsync();\n}"
+        },
+        {
+          "path": "Workers/QueueConsumer.cs",
+          "language": "csharp",
+          "content": "public class QueueConsumer(IQueue queue, DuelFinishedHandler handler)\n{\n    public async Task RunAsync(CancellationToken ct)\n    {\n        await foreach (var delivery in queue.ReadAsync<DuelFinished>(ct))\n        {\n            await handler.HandleAsync(delivery.Message);\n            // Acknowledge only after the work is saved, so a crash means redelivery instead of loss\n            await delivery.AckAsync();\n        }\n    }\n}"
+        },
+        {
+          "path": "Workers/DuelFinishedHandler.cs",
+          "language": "csharp",
+          "content": "public class DuelFinishedHandler(AppDbContext db)\n{\n    public async Task HandleAsync(DuelFinished message)\n    {\n        foreach (var playerId in message.PlayerIds)\n        {\n            var player = await db.Players.FindAsync(playerId);\n            player!.Xp += message.XpByPlayer[playerId];\n        }\n        await db.SaveChangesAsync();\n    }\n}"
+        }
+      ],
+      "answer": {
+        "path": "Workers/DuelFinishedHandler.cs",
+        "lines": [
+          5,
+          10
+        ]
+      },
+      "explanation": "The consumer acknowledges a message only after the handler finishes. That's the right choice, because a crash then causes a redelivery instead of losing the XP, but it means any message can be delivered more than once (at-least-once delivery). The handler adds XP every time it runs, so a redelivered message pays out twice. Recording the processed duel id in the same transaction as the XP, and skipping ids already recorded, makes the handler idempotent."
+    },
+    {
+      "id": "sys-fix-01",
+      "type": "fixTheBug",
+      "title": "Database spikes every minute",
+      "prompt": "The leaderboard is cached for 60 seconds. Each time the entry expires, the database CPU jumps to 100% for a few seconds and requests slow down. Which change fixes it?",
+      "code": {
+        "language": "csharp",
+        "content": "public async Task<Leaderboard> GetLeaderboardAsync()\n{\n    var board = await cache.GetAsync<Leaderboard>(\"leaderboard\");\n    if (board is null)\n    {\n        board = await ComputeLeaderboardAsync(); // heavy query, about 3 s\n        await cache.SetAsync(\"leaderboard\", board, TimeSpan.FromSeconds(60));\n    }\n    return board;\n}"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Add two read replicas for the leaderboard query.",
+          "code": "board = await ComputeLeaderboardAsync(readReplica: true); // round-robin over 2 replicas",
+          "outcome": "Each spike is spread across more machines, but hundreds of identical 3-second queries still run every minute."
+        },
+        {
+          "id": "b",
+          "summary": "Remove the cache so the load is spread out evenly.",
+          "code": "public Task<Leaderboard> GetLeaderboardAsync() => ComputeLeaderboardAsync();",
+          "outcome": "Every request now runs the 3-second query. The database is overloaded all the time instead of once a minute."
+        },
+        {
+          "id": "c",
+          "summary": "Refresh the cache from a background job every 30 seconds, and have requests only read it.",
+          "code": "// LeaderboardRefresher : BackgroundService\nwhile (!stoppingToken.IsCancellationRequested)\n{\n    var board = await ComputeLeaderboardAsync();\n    await cache.SetAsync(\"leaderboard\", board);\n    await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);\n}\n\n// Request path\npublic Task<Leaderboard?> GetLeaderboardAsync() => cache.GetAsync<Leaderboard>(\"leaderboard\");",
+          "outcome": "The heavy query runs once every 30 seconds, no matter how much traffic there is. Requests always find a cached value and the CPU spikes disappear."
+        },
+        {
+          "id": "d",
+          "summary": "Increase the cache duration to 10 minutes.",
+          "code": "await cache.SetAsync(\"leaderboard\", board, TimeSpan.FromMinutes(10));",
+          "outcome": "The spike happens every 10 minutes instead of every minute, and it's just as bad when it happens."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "When a popular cache entry expires, every request that arrives during the 3-second recompute misses the cache and runs the same heavy query: a cache stampede. Refreshing in the background means only one process ever computes the value. Letting a single request recompute while the others wait (a \"single flight\" lock) also works."
+    },
+    {
+      "id": "sys-fix-02",
+      "type": "fixTheBug",
+      "title": "Avatars that disappear",
+      "prompt": "After the API was scaled from 1 to 3 instances, newly uploaded avatars show as broken images about two thirds of the time. Which change fixes it?",
+      "code": {
+        "language": "csharp",
+        "content": "[HttpPost(\"avatar\")]\npublic async Task<IActionResult> UploadAvatar(IFormFile file)\n{\n    var fileName = $\"{User.GetUserId()}.png\";\n    await using var stream = System.IO.File.Create(Path.Combine(\"wwwroot/avatars\", fileName));\n    await file.CopyToAsync(stream);\n    return Ok(new { url = $\"/avatars/{fileName}\" });\n}"
+      },
+      "options": [
+        {
+          "id": "a",
+          "summary": "Copy wwwroot/avatars to the other instances every 5 minutes.",
+          "code": "# cron on every instance\n*/5 * * * * rsync -a api-1:/app/wwwroot/avatars/ /app/wwwroot/avatars/",
+          "outcome": "New avatars are broken for up to 5 minutes, files uploaded to api-2 or api-3 are never copied anywhere, and files are lost when an instance is replaced."
+        },
+        {
+          "id": "b",
+          "summary": "Give each instance a bigger disk.",
+          "code": "# docker-compose.yml\nvolumes:\n  avatars:\n    driver_opts:\n      size: 50G",
+          "outcome": "Disk space was never the problem. Each instance still has only the files that were uploaded to it."
+        },
+        {
+          "id": "c",
+          "summary": "Enable sticky sessions on the load balancer.",
+          "code": "# nginx upstream\nupstream api {\n    ip_hash;\n    server api-1:8080;\n    server api-2:8080;\n    server api-3:8080;\n}",
+          "outcome": "The uploader sees their own avatar, but other players' requests go to other instances, where the file doesn't exist. Leaderboards still show broken images."
+        },
+        {
+          "id": "d",
+          "summary": "Store avatars in shared object storage, such as an S3 bucket, and save the URL.",
+          "code": "var key = $\"avatars/{User.GetUserId()}.png\";\nawait storage.UploadAsync(key, file.OpenReadStream());\nreturn Ok(new { url = storage.PublicUrl(key) });",
+          "outcome": "Every instance reads and writes the same bucket, so the avatar loads no matter which instance serves the request."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Files on an instance's local disk exist only on that instance. Once there are several instances, any state that every request needs (files, sessions, queues) has to live in shared storage, and object storage is built for exactly this."
+    },
+    {
+      "id": "sys-flow-01",
+      "type": "followTheRequest",
+      "title": "A DevBrawl duel",
+      "prompt": "Arrange the flow of a DevBrawl duel, from the queue to the results screen.",
+      "steps": [
+        "The player clicks \"Find duel\" and joins the matchmaking queue.",
+        "The server pairs them with the next waiting player.",
+        "The server sends the same challenge and its time limit to both players.",
+        "Each player submits an answer before the timer runs out.",
+        "The server scores the round and sends both players the result and the correct answer.",
+        "After the last round, the server updates ratings and XP, and both players see the results screen."
+      ],
+      "explanation": "The server stays in control at every step: it pairs the players, sends both of them the same challenge with the same time limit, scores each round itself, and reveals the correct answer only after both players have answered or time has run out. Ratings and XP are calculated once, at the end of the duel."
+    },
+    {
+      "id": "sys-flow-02",
+      "type": "followTheRequest",
+      "title": "A cache miss",
+      "prompt": "An API uses the cache-aside pattern with Redis. Product 42 isn't cached yet. Arrange what happens when a client requests it, given that the API caches the result before responding.",
+      "steps": [
+        "The API receives GET /api/products/42.",
+        "The API looks up the key product:42 in Redis.",
+        "Redis reports a cache miss.",
+        "The API loads product 42 from the database.",
+        "The API stores the product in Redis under product:42 with a TTL.",
+        "The API returns the product to the client."
+      ],
+      "explanation": "In cache-aside, the application manages the cache itself: it checks the cache first, loads from the database on a miss, and stores the result so the next request is a hit. The TTL limits how long a stale value can be served after the product changes."
+    },
+    {
+      "id": "sys-logs-01",
+      "type": "logAnalysis",
+      "title": "Search down during reindexing",
+      "prompt": "Search has returned 500 errors since 03:00, even before the nightly reindex job failed at 03:20. Which log line explains why search went down at 03:00?",
+      "logs": [
+        "03:00:00 INFO  cron    Nightly reindex job started",
+        "03:00:05 INFO  search  Dropping index \"lessons\" before rebuild",
+        "03:00:06 WARN  api     Search query failed: index_not_found_exception [lessons]",
+        "03:00:06 INFO  api     GET /api/search 500",
+        "03:20:41 ERROR cron    Reindex job failed: OutOfMemoryError while loading documents",
+        "03:20:42 WARN  api     Search query failed: index_not_found_exception [lessons]"
+      ],
+      "rootCauseLine": 2,
+      "explanation": "The job deletes the live index before building the new one, so search has nothing to query for the whole rebuild, and nothing at all once the rebuild fails. The OutOfMemoryError explains why it never came back, not why it went down. Building the new index under a different name and switching an alias to it at the end keeps search available, and a failed rebuild then leaves the old index in place."
+    },
+    {
+      "id": "sys-logs-02",
+      "type": "logAnalysis",
+      "title": "XP that arrives late",
+      "prompt": "Players report that their XP isn't updated after duels. The duel-finished queue has been growing since 18:00. Which log line shows what started the backlog?",
+      "logs": [
+        "18:00:00 INFO  autoscaler  xp-worker scaled from 4 to 1 replica (CPU 12%, target 50%)",
+        "18:00:30 INFO  queue       duel-finished depth 120",
+        "18:10:00 WARN  queue       duel-finished depth 4,800, oldest message 9 min old",
+        "18:10:02 INFO  xp-worker   Processing 40 messages/min, mostly waiting on database I/O",
+        "18:12:00 WARN  support     Players report XP not updated after duels"
+      ],
+      "rootCauseLine": 1,
+      "explanation": "The autoscaler removed three workers because CPU was low, but the worker is I/O-bound: it spends its time waiting on the database, so low CPU doesn't mean it's idle. One worker handles 40 messages a minute, fewer than the duels finishing, so the queue grows. Scaling on queue depth or message age instead of CPU matches what the worker actually does."
+    }
+  ]
+}

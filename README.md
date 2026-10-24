@@ -89,7 +89,7 @@ All endpoints need the `Authorization: Bearer` header:
 
 The lessons come from `frontend/src/learn/content.ts`, exported to `backend/DevBrawl.Interview/Knowledge/learn-content.json`. The backend build re-exports it when `content.ts` changes (needs Node 22.18+); a test fails if the JSON is out of date.
 
-Settings in the `Gemini` section of `appsettings.json`: `Model` (default `gemini-3.8-flash`), `ThinkingLevel` (default `low`, which keeps replies to a few seconds; empty uses the model's slower default) and `TimeoutSeconds` (default 120).
+Settings in the `Gemini` section of `appsettings.json`: `Model` (default `gemini-3.5-flash-lite`), `ThinkingLevel` (default `low`, which keeps replies to a few seconds; empty uses the model's slower default) and `TimeoutSeconds` (default 120).
 
 In the app, open **Interview** on the main page: pick a topic, then type your answer or press **Record answer**. The browser records the microphone, converts it to WAV and sends it to `transcribe`; the text appears in the answer box to check and edit before submitting.
 

@@ -1,8 +1,62 @@
 :root {
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
-  color-scheme: light dark;
+  --color-bg: #07111a;
+  --color-surface: #0d1b26;
+  --color-border: #1b3345;
+  --color-text: #e0f2fe;
+  --color-text-muted: #7893a8;
+  --color-accent: #22d3ee;
+  --color-accent-soft: rgba(34, 211, 238, 0.12);
+  --color-field: #12293a;
+  --color-grid: rgba(34, 211, 238, 0.06);
+  --color-duel: #f472b6;
+  --color-success: #4ade80;
+  --color-danger: #f87171;
+  --color-warning: #facc15;
+
+  --font-text: 'Share Tech Mono', monospace;
+  --font-body: 'Exo 2', sans-serif;
+  --font-code: 'Martian Mono', monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --focus-ring: 0 0 0 2px var(--color-accent);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
 }
 
 body {
   margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-text);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
 }

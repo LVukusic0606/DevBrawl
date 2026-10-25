@@ -11,7 +11,9 @@ public enum InterviewError
     // Another request (e.g. a second tab) added a message at the same time
     SessionChanged,
     // The AI couldn't be reached, declined, or returned something unusable
-    InterviewerUnavailable
+    InterviewerUnavailable,
+    // The player started all the interviews their plan allows this month (Free or Premium)
+    MonthlyLimitReached
 }
 
 public sealed record InterviewResult<T>(T? Value, InterviewError? Error)

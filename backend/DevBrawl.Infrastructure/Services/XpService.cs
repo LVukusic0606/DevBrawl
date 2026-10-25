@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevBrawl.Infrastructure.Services;
 
-public class XpService(AppDbContext db) : IXpService
+public class XpService(AppDbContext db, ISeasonService seasons) : IXpService
 {
     public async Task<XpAward> AwardAsync(Guid userId, string source, string sourceId, int amount,
         CancellationToken cancellationToken = default)
@@ -38,6 +38,8 @@ public class XpService(AppDbContext db) : IXpService
             CreatedAt = DateTime.UtcNow
         });
         progress.TotalXp += amount;
+        // The same XP advances this month's season pass; reached rewards are staged with it
+        await seasons.GrantUnlockedAsync(userId, cancellationToken);
 
         return new XpAward(true, progress.TotalXp, Levels.FromTotalXp(progress.TotalXp));
     }

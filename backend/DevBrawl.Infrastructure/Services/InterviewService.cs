@@ -16,7 +16,8 @@ public class InterviewService(
     LearnKnowledgeBase knowledge,
     IInterviewer interviewer,
     IOptions<InterviewOptions> options,
-    IMemoryCache cache) : IInterviewService
+    IMemoryCache cache,
+    IPremiumService premium) : IInterviewService
 {
     private const int HistoryShown = 20;
     // Replaying a message reuses the audio instead of paying for speech again
@@ -40,6 +41,11 @@ public class InterviewService(
     public async Task<InterviewResult<InterviewSessionResponse>> StartAsync(Guid userId, StartInterviewRequest request,
         CancellationToken cancellationToken = default)
     {
+        // Free and Premium allow a number of interviews per calendar month
+        var allowance = await premium.GetInterviewAllowanceAsync(userId, cancellationToken);
+        if (allowance.Used >= allowance.Limit)
+            return Fail(InterviewError.MonthlyLimitReached);
+
         string categoryId, title;
         if (request.LessonId is not null)
         {

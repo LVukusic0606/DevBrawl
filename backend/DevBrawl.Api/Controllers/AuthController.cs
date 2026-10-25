@@ -12,7 +12,7 @@ namespace DevBrawl.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(IAuthService authService, IGoogleTokenValidator google) : ControllerBase
+public class AuthController(IAuthService authService, IGoogleTokenValidator google, ISeasonService seasons) : ControllerBase
 {
     // The Google client ID for the sign-in button; null hides the button
     [HttpGet("google/config")]
@@ -98,23 +98,26 @@ public class AuthController(IAuthService authService, IGoogleTokenValidator goog
     [HttpPut("avatar")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ChangeAvatar(ChangeAvatarRequest request, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out var userId))
             return Unauthorized();
+        if (!await seasons.CanUseAvatarAsync(userId, request.AvatarId, cancellationToken))
+            return Problem("This avatar is locked. Unlock it in the season pass.", statusCode: StatusCodes.Status403Forbidden);
         return await authService.ChangeAvatarAsync(userId, request, cancellationToken) ? NoContent() : Unauthorized();
     }
 
     [Authorize]
     [HttpPut("tag")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ChangeTag(ChangeTagRequest request, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out var userId))
             return Unauthorized();
-        if (request.Tag is not null && !UserTags.All.Contains(request.Tag))
-            return Problem("Unknown tag.", statusCode: StatusCodes.Status400BadRequest);
+        if (request.Tag is not null && !await seasons.CanUseTagAsync(userId, request.Tag, cancellationToken))
+            return Problem("This tag is locked. Unlock it in the season pass.", statusCode: StatusCodes.Status403Forbidden);
         return await authService.ChangeTagAsync(userId, request.Tag, cancellationToken) ? NoContent() : Unauthorized();
     }
 

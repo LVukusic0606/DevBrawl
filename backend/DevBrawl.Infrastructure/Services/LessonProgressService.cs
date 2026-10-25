@@ -5,8 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevBrawl.Infrastructure.Services;
 
-public class LessonProgressService(AppDbContext db) : ILessonProgressService
+public class LessonProgressService(AppDbContext db, IXpService xp) : ILessonProgressService
 {
+    // Spec section 10: completing a lesson for the first time
+    private const int LessonXp = 30;
+
     public async Task<IReadOnlyList<string>> GetCompletedAsync(Guid userId, CancellationToken cancellationToken = default) =>
         await db.LessonCompletions.AsNoTracking()
             .Where(c => c.UserId == userId)
@@ -22,6 +25,8 @@ public class LessonProgressService(AppDbContext db) : ILessonProgressService
             return;
 
         db.LessonCompletions.Add(new LessonCompletion { UserId = userId, LessonId = lessonId, CompletedAt = DateTime.UtcNow });
+        // First completion only, saved together with it; this XP also moves the season pass
+        await xp.AwardAsync(userId, XpSources.Lesson, lessonId, LessonXp, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
     }
 }

@@ -1,0 +1,327 @@
+/* Premium plans, demo checkout and the schools contact form. Every class starts with "premium-". */
+
+.premium {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 36px 36px;
+  background-attachment: fixed;
+}
+
+.premium-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.premium-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-8);
+}
+
+.premium-logo {
+  font-family: var(--font-text);
+  font-size: 24px;
+}
+
+.premium-button,
+.premium-primary {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 200ms ease-out, background-color 200ms ease-out, color 200ms ease-out;
+}
+
+.premium-button:hover {
+  border-color: var(--color-accent);
+}
+
+.premium-primary {
+  padding: var(--space-3) var(--space-4);
+  border-color: var(--color-duel);
+  background: var(--color-duel);
+  color: var(--color-bg);
+}
+
+.premium-primary:hover {
+  background: var(--color-duel-soft);
+  color: var(--color-text);
+}
+
+.premium-button:disabled,
+.premium-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.premium-button:focus-visible,
+.premium-primary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.premium-content {
+  flex: 1;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-8) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  animation: premium-enter 250ms ease-out;
+}
+
+@keyframes premium-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.premium-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.premium-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.premium-section-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.premium-muted {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.premium-error {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.premium-plans {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.premium-status p {
+  margin: 0 0 var(--space-1);
+}
+
+.premium-status .ti {
+  color: var(--color-duel);
+}
+
+.premium-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow-x: auto;
+}
+
+.premium-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.premium-table th,
+.premium-table td {
+  padding: var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.premium-table thead th {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.premium-table thead th.is-premium {
+  color: var(--color-duel);
+  font-family: var(--font-code);
+  font-weight: 700;
+}
+
+.premium-table tbody th {
+  font-weight: 400;
+}
+
+.premium-table td {
+  color: var(--color-text-muted);
+}
+
+.premium-table td.is-premium {
+  color: var(--color-text);
+}
+
+.premium-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.premium-dialog {
+  width: min(440px, calc(100vw - 32px));
+  padding: var(--space-6);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.premium-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+}
+
+.premium-dialog-title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.premium-demo {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.premium-demo .ti {
+  color: var(--color-warning);
+}
+
+/* Schools contact form */
+
+.premium-schools {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.premium-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.premium-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.premium-field.is-wide,
+.premium-form-footer {
+  grid-column: 1 / -1;
+}
+
+.premium-input {
+  height: 44px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--color-field);
+  box-shadow: inset 0 0 0 1px transparent;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  outline: none;
+  transition: box-shadow 200ms ease-out;
+}
+
+.premium-input.is-textarea {
+  height: auto;
+  padding: var(--space-3);
+  resize: vertical;
+}
+
+.premium-input:focus {
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+.premium-form-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.premium-form-status {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.premium-form-status .ti {
+  color: var(--color-success);
+}
+
+.premium-form-status.is-error {
+  color: var(--color-danger);
+}
+
+@media (max-width: 640px) {
+  .premium-header,
+  .premium-content {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .premium-title {
+    font-size: 32px;
+  }
+
+  .premium-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -146,6 +146,8 @@ public class InterviewController(IInterviewService interviewService) : Controlle
             "This interview changed in another tab. Reload it and try again.", statusCode: StatusCodes.Status409Conflict),
         InterviewError.InterviewerUnavailable => Problem(
             "The interviewer isn't available right now. Try again in a moment.", statusCode: StatusCodes.Status503ServiceUnavailable),
+        InterviewError.MonthlyLimitReached => Problem(
+            "You've used all your AI interviews for this month. Premium includes more.", statusCode: StatusCodes.Status403Forbidden),
         _ => throw new UnreachableException()
     };
 }

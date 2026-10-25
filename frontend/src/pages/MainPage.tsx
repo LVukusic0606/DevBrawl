@@ -2,6 +2,7 @@ import type { User } from '../api/auth'
 import bugDuel from '../assets/bug-duel.webp'
 import bugInterview from '../assets/bug-interview.webp'
 import bugLearn from '../assets/bug-learn.webp'
+import { AvatarPicture } from '../profile/AvatarPicture'
 import { findAvatar } from '../profile/avatars'
 import './MainPage.css'
 
@@ -13,6 +14,8 @@ interface MainPageProps {
   onLogout: () => void
   onOpenProfile: () => void
   onOpenLeaderboard: () => void
+  onOpenSeason: () => void
+  onOpenPremium: () => void
 }
 
 // bugHead is the horizontal position of the bug's head in its image, from 0 (left) to 1 (right)
@@ -46,7 +49,7 @@ const SECTIONS: {
   },
 ]
 
-function MainPage({ user, onSelect, onLogout, onOpenProfile, onOpenLeaderboard }: MainPageProps) {
+function MainPage({ user, onSelect, onLogout, onOpenProfile, onOpenLeaderboard, onOpenSeason, onOpenPremium }: MainPageProps) {
   const avatar = findAvatar(user.avatarId ?? null)
 
   return (
@@ -54,6 +57,14 @@ function MainPage({ user, onSelect, onLogout, onOpenProfile, onOpenLeaderboard }
       <header className="home-header">
         <span className="home-logo">DevBrawl</span>
         <div className="home-header-actions">
+          <button type="button" className="home-logout" onClick={onOpenSeason}>
+            <i className="ti ti-ticket" aria-hidden="true" />
+            Season pass
+          </button>
+          <button type="button" className="home-logout" onClick={onOpenPremium}>
+            <i className="ti ti-crown" aria-hidden="true" />
+            Premium
+          </button>
           <button type="button" className="home-logout" onClick={onOpenLeaderboard}>
             <i className="ti ti-trophy" aria-hidden="true" />
             Leaderboard
@@ -64,7 +75,7 @@ function MainPage({ user, onSelect, onLogout, onOpenProfile, onOpenLeaderboard }
           </button>
           {/* The player's picture, or the first letter of the nickname, opens their profile */}
           <button type="button" className="home-avatar" aria-label="Profile" onClick={onOpenProfile}>
-            {avatar ? <img src={avatar.url} alt="" /> : user.nickname.charAt(0).toUpperCase()}
+            <AvatarPicture avatar={avatar} nickname={user.nickname} />
           </button>
         </div>
       </header>

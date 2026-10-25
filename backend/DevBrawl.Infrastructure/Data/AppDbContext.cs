@@ -19,6 +19,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<RatingHistoryEntry> RatingChanges => Set<RatingHistoryEntry>();
     public DbSet<XpEvent> XpEvents => Set<XpEvent>();
     public DbSet<PlayerProgress> PlayerProgress => Set<PlayerProgress>();
+    public DbSet<UserReward> UserRewards => Set<UserReward>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<ContactRequest> ContactRequests => Set<ContactRequest>();
     public DbSet<LessonCompletion> LessonCompletions => Set<LessonCompletion>();
     public DbSet<InterviewSession> InterviewSessions => Set<InterviewSession>();
     public DbSet<InterviewMessage> InterviewMessages => Set<InterviewMessage>();

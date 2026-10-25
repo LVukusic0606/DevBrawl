@@ -5,6 +5,8 @@ import AuthPage, { type GoogleOutcome, type LoginValues, type SignupValues } fro
 import InterviewPage from './pages/InterviewPage'
 import DuelPage from './pages/DuelPage'
 import LeaderboardPage from './pages/LeaderboardPage'
+import PremiumPage from './pages/PremiumPage'
+import SeasonPage from './pages/SeasonPage'
 import LearnPage from './pages/LearnPage'
 import MainPage, { type MainSection } from './pages/MainPage'
 import ProfilePage from './pages/ProfilePage'
@@ -14,7 +16,7 @@ type AuthState =
   | { status: 'signedOut' }
   | { status: 'signedIn'; user: User }
 
-type Screen = 'main' | 'learn' | 'interview' | 'duel' | 'profile' | 'leaderboard'
+type Screen = 'main' | 'learn' | 'interview' | 'duel' | 'profile' | 'leaderboard' | 'season' | 'premium'
 
 function App() {
   const [auth, setAuth] = useState<AuthState>(() =>
@@ -138,6 +140,14 @@ function App() {
     )
   }
 
+  if (screen === 'season') {
+    return <SeasonPage onBack={() => setScreen('main')} onOpenPremium={() => setScreen('premium')} />
+  }
+
+  if (screen === 'premium') {
+    return <PremiumPage onBack={() => setScreen('main')} onOpenSeason={() => setScreen('season')} />
+  }
+
   return (
     <MainPage
       user={auth.user}
@@ -145,6 +155,8 @@ function App() {
       onLogout={handleLogout}
       onOpenProfile={() => openProfile()}
       onOpenLeaderboard={() => setScreen('leaderboard')}
+      onOpenSeason={() => setScreen('season')}
+      onOpenPremium={() => setScreen('premium')}
     />
   )
 }

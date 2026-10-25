@@ -188,6 +188,45 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DevBrawl.Common.Domain.ContactRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)");
+
+                    b.Property<string>("Institution")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ContactRequests");
+                });
+
             modelBuilder.Entity("DevBrawl.Common.Domain.LessonCompletion", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -216,6 +255,53 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("PlayerProgress", (string)null);
+                });
+
+            modelBuilder.Entity("DevBrawl.Common.Domain.Subscription", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("PremiumUntil")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("Subscriptions");
+                });
+
+            modelBuilder.Entity("DevBrawl.Common.Domain.UserReward", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Season")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<int>("Stage")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Track")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UnlockedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "Kind", "Key");
+
+                    b.ToTable("UserRewards");
                 });
 
             modelBuilder.Entity("DevBrawl.Common.Domain.XpEvent", b =>
@@ -509,6 +595,14 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DevBrawl.Common.Domain.ContactRequest", b =>
+                {
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("DevBrawl.Common.Domain.LessonCompletion", b =>
                 {
                     b.HasOne("DevBrawl.Auth.Domain.User", null)
@@ -523,6 +617,24 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                     b.HasOne("DevBrawl.Auth.Domain.User", null)
                         .WithOne()
                         .HasForeignKey("DevBrawl.Common.Domain.PlayerProgress", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DevBrawl.Common.Domain.Subscription", b =>
+                {
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithOne()
+                        .HasForeignKey("DevBrawl.Common.Domain.Subscription", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DevBrawl.Common.Domain.UserReward", b =>
+                {
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

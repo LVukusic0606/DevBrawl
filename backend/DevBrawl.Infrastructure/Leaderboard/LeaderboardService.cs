@@ -14,11 +14,11 @@ public class LeaderboardService(AppDbContext db, ILearningStreakService streaks)
     public async Task<LeaderboardResponse> GetOverallAsync(Guid requesterId, int limit, CancellationToken cancellationToken = default)
     {
         var finished = await db.Duels.AsNoTracking()
-            .Where(d => d.Status == DuelStatus.Finished)
+            .Where(d => d.Status == DuelStatus.Finished && !d.IsFriendly)
             .Select(d => new { d.Player1Id, d.Player2Id, d.WinnerId })
             .ToListAsync(cancellationToken);
 
-        // Only players who finished at least one duel are ranked
+        // Only players who finished at least one ranked duel are ranked
         var played = new Dictionary<Guid, (int Duels, int Wins)>();
         foreach (var duel in finished)
         {

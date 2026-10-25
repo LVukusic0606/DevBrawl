@@ -227,6 +227,37 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                     b.ToTable("ContactRequests");
                 });
 
+            modelBuilder.Entity("DevBrawl.Common.Domain.Friendship", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("AddresseeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RequesterId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AddresseeId");
+
+                    b.HasIndex("RequesterId", "AddresseeId")
+                        .IsUnique();
+
+                    b.ToTable("Friendships", (string)null);
+                });
+
             modelBuilder.Entity("DevBrawl.Common.Domain.LessonCompletion", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -345,6 +376,9 @@ namespace DevBrawl.Infrastructure.Data.Migrations
 
                     b.Property<DateTime?>("FinishedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsFriendly")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid>("Player1Id")
                         .HasColumnType("uuid");
@@ -601,6 +635,21 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("DevBrawl.Common.Domain.Friendship", b =>
+                {
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("AddresseeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("RequesterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("DevBrawl.Common.Domain.LessonCompletion", b =>

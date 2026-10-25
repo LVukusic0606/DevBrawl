@@ -12,4 +12,7 @@ public interface IDuelScoring
     // ELO: Elo with K = 32, computed from the ratings at the start of the duel; deltas of rounds
     // in the same category are summed. NoWinner rounds change nothing.
     Task<DuelRewards> ApplyDuelResultAsync(DuelOutcome outcome, CancellationToken cancellationToken = default);
+
+    // For a friendly duel: no rating changes and no XP, only each player's current XP and level
+    Task<DuelRewards> GetUnchangedRewardsAsync(DuelOutcome outcome, CancellationToken cancellationToken = default);
 }

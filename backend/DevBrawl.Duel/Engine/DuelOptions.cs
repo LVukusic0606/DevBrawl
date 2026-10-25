@@ -14,6 +14,8 @@ public sealed class DuelOptions
     public int CountdownSeconds { get; set; } = 3;
     // Pause after each round, while the players see the correct answer
     public int RevealSeconds { get; set; } = 5;
+    // How long a friend has to accept a duel invite
+    public int InviteSeconds { get; set; } = 60;
 
     public TimeSpan TimeLimit(ChallengeType type) =>
         TimeSpan.FromSeconds(RoundTimeLimitsSeconds.TryGetValue(type, out var seconds) ? seconds : DefaultTimeLimitSeconds);

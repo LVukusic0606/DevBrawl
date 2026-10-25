@@ -4,6 +4,7 @@ import { getProfile, type Profile, type ProfileDuel, type ProfileRating } from '
 import { CATEGORIES } from '../learn/content'
 import ScrollReveal from '../components/ScrollReveal'
 import AccountSettings from '../profile/AccountSettings'
+import FriendButton from '../profile/FriendButton'
 import { drawProfileCard } from '../share/cards'
 import { ShareButton } from '../share/ShareButton'
 import ProfileAvatar from '../profile/ProfileAvatar'
@@ -26,6 +27,7 @@ interface ProfilePageProps {
   onOpenProfile: (userId: string) => void
   onStartDuel: () => void
   onOpenCharacter: () => void
+  onChallengeFriend: (friendId: string) => void
 }
 
 type LoadState =
@@ -33,7 +35,7 @@ type LoadState =
   | { status: 'error'; message: string }
   | { status: 'ready'; profile: Profile }
 
-function ProfilePage({ userId, onBack, onOpenProfile, onStartDuel, onOpenCharacter }: ProfilePageProps) {
+function ProfilePage({ userId, onBack, onOpenProfile, onStartDuel, onOpenCharacter, onChallengeFriend }: ProfilePageProps) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
 
@@ -88,6 +90,7 @@ function ProfilePage({ userId, onBack, onOpenProfile, onStartDuel, onOpenCharact
           onOpenProfile={onOpenProfile}
           onStartDuel={onStartDuel}
           onOpenCharacter={onOpenCharacter}
+          onChallengeFriend={onChallengeFriend}
           // Reloads in place: the current profile stays on screen until the new one arrives
           onReload={() => setAttempt((n) => n + 1)}
         />
@@ -101,10 +104,11 @@ interface ProfileViewProps {
   onOpenProfile: (userId: string) => void
   onStartDuel: () => void
   onOpenCharacter: () => void
+  onChallengeFriend: (friendId: string) => void
   onReload: () => void
 }
 
-function ProfileView({ profile, onOpenProfile, onStartDuel, onOpenCharacter, onReload }: ProfileViewProps) {
+function ProfileView({ profile, onOpenProfile, onStartDuel, onOpenCharacter, onChallengeFriend, onReload }: ProfileViewProps) {
   const { user, progress, duels, accuracy } = profile
   const categoryName = new Map(profile.ratings.map((r) => [r.categoryId, r.name]))
   const winRate = duels.played > 0 ? Math.round((duels.wins / duels.played) * 100) : null
@@ -133,6 +137,29 @@ function ProfileView({ profile, onOpenProfile, onStartDuel, onOpenCharacter, onR
               activeToday={profile.isYou ? profile.streak.activeToday : true}
             />
           </div>
+          {profile.isYou && (
+            <div className="profile-identity-actions">
+              <AccountSettings onNicknameChanged={onReload} />
+              <ShareButton
+                label="Share profile"
+                fileName={`devbrawl-${user.nickname}`}
+                shareText={`My DevBrawl stats: overall rating ${profile.overall.rating}.`}
+                render={() => drawProfileCard(profile)}
+                className="profile-button"
+              />
+            </div>
+          )}
+          {!profile.isYou && profile.friendship && (
+            <div className="profile-identity-actions">
+              <FriendButton
+                nickname={user.nickname}
+                userId={user.id}
+                friendship={profile.friendship}
+                onChanged={onReload}
+                onChallenge={onChallengeFriend}
+              />
+            </div>
+          )}
         </div>
         <div className="profile-hero-stats">
           <div className="profile-level is-overall">

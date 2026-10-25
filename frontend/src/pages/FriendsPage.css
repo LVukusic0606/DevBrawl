@@ -1,0 +1,435 @@
+/* Friends and friend requests. Friends play friendly duels, so the actions use the duel color.
+   Every class starts with "friends-" because CSS is global in this app. */
+
+.friends {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(var(--color-grid-duel) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid-duel) 1px, transparent 1px);
+  background-size: 36px 36px;
+  background-attachment: fixed;
+}
+
+.friends-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-8);
+}
+
+.friends-logo {
+  font-family: var(--font-text);
+  font-size: 24px;
+  color: var(--color-text);
+}
+
+/* Same width and rhythm as the leaderboard */
+.friends-content {
+  flex: 1;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-8) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  animation: friends-enter 250ms ease-out;
+}
+
+@keyframes friends-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.friends-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.friends-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 52px;
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+.friends-lead {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.friends-muted {
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.friends-error {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-danger);
+}
+
+.friends-success {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-success);
+}
+
+.friends-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+/* Add by nickname */
+
+.friends-add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.friends-label {
+  font-family: var(--font-code);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.friends-add-row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.friends-field {
+  /* Basis auto keeps the 52px height when the row stacks on phones */
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 52px;
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: var(--color-field);
+  color: var(--color-text);
+  font-family: var(--font-text);
+  font-size: 16px;
+}
+
+.friends-field::placeholder {
+  color: var(--color-text-muted);
+}
+
+.friends-field:focus {
+  outline: none;
+  border-color: var(--color-duel);
+}
+
+/* The one primary action of the page */
+.friends-primary {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 52px;
+  padding: 0 var(--space-6);
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--color-duel);
+  color: var(--color-bg);
+  font-family: var(--font-code);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 200ms ease-out, opacity 200ms ease-out;
+}
+
+.friends-primary .ti {
+  font-size: 18px;
+}
+
+.friends-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.friends-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Secondary buttons */
+
+.friends-button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 200ms ease-out, background-color 200ms ease-out, color 200ms ease-out;
+}
+
+.friends-button .ti {
+  font-size: 16px;
+}
+
+.friends-button:hover:not(:disabled) {
+  border-color: var(--color-duel);
+}
+
+.friends-button.is-duel {
+  border-color: var(--color-duel);
+  background: var(--color-duel-soft);
+  color: var(--color-duel);
+}
+
+.friends-button.is-danger {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.friends-button.is-icon {
+  width: 40px;
+  padding: 0;
+  color: var(--color-text-muted);
+}
+
+.friends-button.is-icon:hover {
+  color: var(--color-text);
+}
+
+.friends-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.friends-button:focus-visible,
+.friends-primary:focus-visible,
+.friends-player:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-duel);
+}
+
+/* Lists */
+
+.friends-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.friends-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.friends-count {
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  font-family: var(--font-text);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.friends-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-3) var(--space-4);
+}
+
+.friends-row + .friends-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.friends-player {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.friends-player:hover .friends-player-name {
+  color: var(--color-duel);
+}
+
+/* Avatar: the chosen preset picture, or the first letter of the nickname */
+.friends-avatar {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.friends-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.friends-player-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.friends-player-name {
+  overflow: hidden;
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 200ms ease-out;
+}
+
+.friends-player-detail {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.friends-rating {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-elo);
+}
+
+.friends-rating-label {
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.friends-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.friends-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.friends-empty .ti {
+  font-size: 20px;
+  color: var(--color-duel);
+}
+
+@media (max-width: 700px) {
+  .friends-header {
+    padding: var(--space-4);
+  }
+
+  .friends-content {
+    padding: var(--space-4) var(--space-4) var(--space-8);
+    gap: var(--space-8);
+  }
+
+  .friends-title {
+    font-size: 40px;
+  }
+
+  .friends-add-row {
+    flex-direction: column;
+  }
+
+  .friends-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: var(--space-3);
+  }
+
+  .friends-actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+
+  .friends-actions .friends-button:not(.is-icon) {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .friends-content {
+    animation: none;
+  }
+
+  .friends-button,
+  .friends-primary,
+  .friends-player-name {
+    transition: none;
+  }
+}

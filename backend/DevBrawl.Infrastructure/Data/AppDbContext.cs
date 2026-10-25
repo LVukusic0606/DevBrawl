@@ -23,6 +23,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<ContactRequest> ContactRequests => Set<ContactRequest>();
     public DbSet<LessonCompletion> LessonCompletions => Set<LessonCompletion>();
+    public DbSet<Friendship> Friendships => Set<Friendship>();
     public DbSet<InterviewSession> InterviewSessions => Set<InterviewSession>();
     public DbSet<InterviewMessage> InterviewMessages => Set<InterviewMessage>();
 

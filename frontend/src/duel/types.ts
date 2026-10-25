@@ -122,6 +122,8 @@ export interface MatchFoundEvent {
   duelId: string
   you: Player
   opponent: Player
+  // Against a friend: no ELO or XP
+  friendly: boolean
   startsAt: string
   // Server clock when sent; see serverClock.ts
   serverTime: string
@@ -168,6 +170,8 @@ export interface DuelEndedEvent {
   result: DuelResult
   yourScore: number
   opponentScore: number
+  friendly: boolean
+  // Empty for a friendly duel
   ratingChanges: RatingChange[]
   xpGained: number
   totalXp: number
@@ -178,6 +182,7 @@ export interface DuelStateEvent {
   duelId: string
   you: Player
   opponent: Player
+  friendly: boolean
   phase: 'countdown' | 'round' | 'reveal'
   roundNumber: number
   phaseEndsAt: string
@@ -188,6 +193,22 @@ export interface DuelStateEvent {
   opponentScore: number
   lastRoundEnded: RoundEndedEvent | null
   serverTime: string
+}
+
+// A friendly duel offer. The inviter gets DuelInviteSent, the friend DuelInviteReceived.
+export interface DuelInvite {
+  inviteId: string
+  from: { id: string; nickname: string }
+  to: { id: string; nickname: string }
+  expiresAt: string
+  serverTime: string
+}
+
+export type DuelInviteClosedReason = 'accepted' | 'declined' | 'canceled' | 'expired' | 'unavailable'
+
+export interface DuelInviteClosedEvent {
+  inviteId: string
+  reason: DuelInviteClosedReason
 }
 
 export interface DuelAbortedEvent {
@@ -205,6 +226,8 @@ export interface SubmitResult {
 export interface DuelSummary {
   id: string
   status: 'inProgress' | 'finished' | 'abandoned'
+  // Against a friend: no ELO or XP
+  friendly: boolean
   opponent: { id: string; nickname: string }
   result: DuelResult | null
   yourScore: number

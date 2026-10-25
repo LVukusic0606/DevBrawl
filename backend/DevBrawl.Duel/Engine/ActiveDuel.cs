@@ -30,9 +30,11 @@ internal sealed class DuelPlayer(Guid userId, string nickname, int? avatarId, IR
 }
 
 // A running duel, kept in memory by DuelEngine. Every access goes through Lock.
-internal sealed class ActiveDuel(Guid id, DuelPlayer player1, DuelPlayer player2)
+internal sealed class ActiveDuel(Guid id, DuelPlayer player1, DuelPlayer player2, bool friendly)
 {
     public Guid Id { get; } = id;
+    // Between friends: finalizing changes no ELO or XP
+    public bool Friendly { get; } = friendly;
     public DuelPlayer Player1 { get; } = player1;
     public DuelPlayer Player2 { get; } = player2;
     public SemaphoreSlim Lock { get; } = new(1, 1);

@@ -306,21 +306,26 @@ function InterviewPage({ onBack }: InterviewPageProps) {
               </p>
             )}
 
+            {active && (recording || transcribing) && (
+              <p className={`interview-voice-status${recording ? ' is-recording' : ''}`} role="status">
+                {recording ? (
+                  <>
+                    <i className="ti ti-point-filled" aria-hidden="true" />
+                    Recording {formatTime(recorder.seconds)}. Speak your answer, then press Stop.
+                  </>
+                ) : (
+                  'Turning your speech into text…'
+                )}
+              </p>
+            )}
+
             {active && (
               <div className="interview-composer">
                 <textarea
                   ref={composer}
                   className="interview-input"
                   aria-label="Your answer"
-                  placeholder={
-                    transcribing
-                      ? 'Turning speech into text…'
-                      : recording
-                        ? 'Listening… press Stop when you are done.'
-                        : canRecord
-                          ? 'Type your answer, or record it'
-                          : 'Type your answer'
-                  }
+                  placeholder={canRecord ? 'Type your answer, or press Speak' : 'Type your answer'}
                   value={draft}
                   maxLength={MAX_ANSWER_LENGTH}
                   rows={1}
@@ -328,19 +333,21 @@ function InterviewPage({ onBack }: InterviewPageProps) {
                   onChange={(event) => setDraft(event.target.value)}
                   onKeyDown={handleKeyDown}
                 />
-                {canRecord && (
-                  <button
-                    type="button"
-                    className={`interview-icon-button${recording ? ' is-recording' : ''}`}
-                    onClick={recording ? recorder.stop : recorder.start}
-                    disabled={busy !== null || transcribing}
-                    aria-label={recording ? 'Stop recording' : 'Record your answer'}
-                    aria-pressed={recording}
-                  >
-                    <i className={`ti ${recording ? 'ti-player-stop' : 'ti-microphone'}`} aria-hidden="true" />
-                    {recording && <span className="interview-timer">{formatTime(recorder.seconds)}</span>}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className={`interview-voice${recording ? ' is-recording' : ''}`}
+                  onClick={recording ? recorder.stop : recorder.start}
+                  disabled={!canRecord || busy !== null || transcribing}
+                  aria-pressed={recording}
+                  title={
+                    canRecord
+                      ? 'Answer by voice: your speech is turned into text you can check before sending'
+                      : 'Voice input needs microphone access, which browsers only allow on https or localhost'
+                  }
+                >
+                  <i className={`ti ${recording ? 'ti-player-stop' : 'ti-microphone'}`} aria-hidden="true" />
+                  {recording ? 'Stop' : 'Speak'}
+                </button>
                 <button
                   type="button"
                   className="interview-send"

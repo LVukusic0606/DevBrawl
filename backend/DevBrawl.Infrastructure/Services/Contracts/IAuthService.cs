@@ -9,6 +9,8 @@ public interface IAuthService
     Task<AuthResult> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
     // Rotates the refresh token: the old one is revoked and a new pair is issued
     Task<AuthResult> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default);
+    // Logs in with a Google ID token, linking or creating the account. A new account first returns "nicknameRequired".
+    Task<GoogleLoginResult> GoogleLoginAsync(GoogleLoginRequest request, CancellationToken cancellationToken = default);
     Task LogoutAsync(string refreshToken, CancellationToken cancellationToken = default);
     Task<UserResponse?> GetUserAsync(Guid userId, CancellationToken cancellationToken = default);
 

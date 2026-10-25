@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import mascotUrl from '../assets/mascot.webp'
 import { ApiError } from '../api/client'
+import { GoogleSignInButton } from '../auth/GoogleSignInButton'
 import { useTypewriter } from '../hooks/useTypewriter'
 import './AuthPage.css'
 
@@ -18,11 +19,23 @@ export interface SignupValues {
   password: string
 }
 
+// After Google sign-in: logged in, or a new account that still needs a username
+export type GoogleOutcome =
+  | { status: 'loggedIn' }
+  | { status: 'usernameRequired'; email: string; suggestedUsername: string }
+
 interface AuthPageProps {
   // Reject with an ApiError to show its message on the form
   onLogin: (values: LoginValues) => Promise<void>
   onSignup: (values: SignupValues) => Promise<void>
-  onGoogle: () => void
+  // username is only sent for a new account, after usernameRequired
+  onGoogle: (idToken: string, username: string | undefined, rememberMe: boolean) => Promise<GoogleOutcome>
+}
+
+// A Google account signing in for the first time, waiting for its username
+interface GoogleSignup {
+  idToken: string
+  email: string
 }
 
 type Errors = Partial<Record<'email' | 'username' | 'password' | 'confirmPassword', string>>
@@ -43,6 +56,7 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
   const [errors, setErrors] = useState<Errors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [googleSignup, setGoogleSignup] = useState<GoogleSignup | null>(null)
   const typedWord = useTypewriter(HEADLINE_WORDS)
 
   const isSignup = mode === 'signup'
@@ -101,6 +115,52 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  async function handleGoogleCredential(idToken: string) {
+    if (submitting) return
+    setFormError(null)
+    setSubmitting(true)
+    try {
+      const outcome = await onGoogle(idToken, undefined, rememberMe)
+      if (outcome.status === 'usernameRequired') {
+        setGoogleSignup({ idToken, email: outcome.email })
+        setUsername(outcome.suggestedUsername)
+        setErrors({})
+      }
+    } catch (error) {
+      setFormError(error instanceof ApiError ? error.message : "Couldn't connect. Try again.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleGoogleUsername(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (submitting || !googleSignup) return
+
+    const found: Errors = USERNAME_PATTERN.test(username) ? {} : { username: 'Use 3 to 20 letters, numbers or underscores.' }
+    setErrors(found)
+    setFormError(null)
+    if (found.username) return
+
+    setSubmitting(true)
+    try {
+      await onGoogle(googleSignup.idToken, username, rememberMe)
+    } catch (error) {
+      // Google's token is only valid for about an hour; after that the user has to pick their account again
+      if (error instanceof ApiError && error.status === 400) setGoogleSignup(null)
+      setFormError(error instanceof ApiError ? error.message : "Couldn't connect. Try again.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function cancelGoogleSignup() {
+    setGoogleSignup(null)
+    setUsername('')
+    setErrors({})
+    setFormError(null)
   }
 
   const passwordToggle = (
@@ -162,6 +222,46 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
             </p>
           </section>
 
+          {googleSignup ? (
+          <section className="auth-form-pane" aria-labelledby="auth-title">
+            <header className="auth-header">
+              <h1 id="auth-title" className="auth-title">
+                Pick a username
+              </h1>
+              <p className="auth-switch">
+                Signed in with Google as {googleSignup.email}. This is the name other players see.
+              </p>
+            </header>
+
+            <form className="auth-form" onSubmit={handleGoogleUsername} noValidate>
+              <Field
+                id="auth-google-username"
+                label="Username"
+                type="text"
+                value={username}
+                autoComplete="username"
+                error={errors.username}
+                onChange={setUsername}
+              />
+
+              {formError && (
+                <p className="auth-error" role="alert">{formError}</p>
+              )}
+
+              <button type="submit" className="auth-submit" disabled={submitting}>
+                {submitting ? 'Creating account' : 'Create account'}
+              </button>
+            </form>
+
+            <p className="auth-switch">
+              Not you?{' '}
+              <button type="button" className="auth-link" onClick={cancelGoogleSignup} disabled={submitting}>
+                Use another account
+                <i className="ti ti-arrow-right" aria-hidden="true" />
+              </button>
+            </p>
+          </section>
+          ) : (
           <section className="auth-form-pane" aria-labelledby="auth-title">
             <header className="auth-header">
               <h1 id="auth-title" className="auth-title">
@@ -252,15 +352,16 @@ function AuthPage({ onLogin, onSignup, onGoogle }: AuthPageProps) {
               </button>
             </form>
 
-            <div className="auth-divider" role="separator">
-              <span>{isSignup ? 'Or register with' : 'Or log in with'}</span>
-            </div>
-
-            <button type="button" className="auth-google" onClick={onGoogle}>
-              <GoogleLogo />
-              Google
-            </button>
+            <GoogleSignInButton
+              onCredential={handleGoogleCredential}
+              before={
+                <div className="auth-divider" role="separator">
+                  <span>{isSignup ? 'Or register with' : 'Or log in with'}</span>
+                </div>
+              }
+            />
           </section>
+          )}
         </div>
       </div>
     </main>
@@ -302,17 +403,6 @@ function Field({ id, label, type, value, autoComplete, error, onChange, trailing
         <p id={errorId} className="auth-error">{error}</p>
       )}
     </div>
-  )
-}
-
-function GoogleLogo() {
-  return (
-    <svg className="auth-google-logo" viewBox="0 0 48 48" aria-hidden="true">
-      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
-      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
-      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
-      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
-    </svg>
   )
 }
 

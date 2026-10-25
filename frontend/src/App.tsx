@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { getMe, login, logout, signup, type User } from './api/auth'
+import { getMe, googleLogin, login, logout, signup, type User } from './api/auth'
 import { clearSession, loadSession, startSession } from './api/session'
-import AuthPage, { type LoginValues, type SignupValues } from './pages/AuthPage'
+import AuthPage, { type GoogleOutcome, type LoginValues, type SignupValues } from './pages/AuthPage'
 import InterviewPage from './pages/InterviewPage'
 import DuelPage from './pages/DuelPage'
 import LeaderboardPage from './pages/LeaderboardPage'
@@ -75,8 +75,14 @@ function App() {
     setScreen('profile')
   }
 
-  function handleGoogle() {
-    console.info('Google sign-in (not connected yet)')
+  async function handleGoogle(idToken: string, username: string | undefined, rememberMe: boolean): Promise<GoogleOutcome> {
+    const response = await googleLogin(idToken, username)
+    if (response.status === 'nicknameRequired' || !response.auth) {
+      return { status: 'usernameRequired', email: response.email ?? '', suggestedUsername: response.suggestedNickname ?? '' }
+    }
+    startSession(response.auth, rememberMe)
+    setAuth({ status: 'signedIn', user: response.auth.user })
+    return { status: 'loggedIn' }
   }
 
   function handleSelect(section: MainSection) {

@@ -30,6 +30,26 @@ export function login(email: string, password: string) {
   })
 }
 
+// Status "nicknameRequired" means a new account: ask for a username, then call googleLogin again with the same token
+export interface GoogleLoginResponse {
+  status: 'loggedIn' | 'nicknameRequired'
+  auth: AuthResponse | null
+  email: string | null
+  suggestedNickname: string | null
+}
+
+// clientId is null when Google sign-in isn't set up on the server
+export function getGoogleConfig() {
+  return request<{ clientId: string | null }>('/api/auth/google/config')
+}
+
+export function googleLogin(idToken: string, nickname?: string) {
+  return request<GoogleLoginResponse>('/api/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ idToken, nickname }),
+  })
+}
+
 export function logout(refreshToken: string) {
   return request<void>('/api/auth/logout', {
     method: 'POST',

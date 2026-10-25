@@ -12,8 +12,12 @@ public class AuthService(
     IUnitOfWork unitOfWork,
     IPasswordHasher passwordHasher,
     ITokenService tokenService,
-    IPlayerStatsRepository playerStats) : IAuthService
+    IPlayerStatsRepository playerStats,
+    IGoogleTokenValidator google) : IAuthService
 {
+    // Same rules as the signup form: 3 to 20 letters, numbers or underscores
+    private const int SuggestedNicknameLength = 20;
+
     public async Task<AuthResult> SignupAsync(SignupRequest request, CancellationToken cancellationToken = default)
     {
         var email = NormalizeEmail(request.Email);
@@ -50,6 +54,73 @@ public class AuthService(
         var (response, _) = IssueTokens(user);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return AuthResult.Ok(response);
+    }
+
+    public async Task<GoogleLoginResult> GoogleLoginAsync(GoogleLoginRequest request, CancellationToken cancellationToken = default)
+    {
+        if (!google.IsConfigured)
+            return GoogleLoginResult.Fail(AuthError.GoogleNotConfigured);
+        var identity = await google.ValidateAsync(request.IdToken, cancellationToken);
+        if (identity is null)
+            return GoogleLoginResult.Fail(AuthError.InvalidGoogleToken);
+
+        var user = await users.GetByGoogleSubjectAsync(identity.Subject, cancellationToken);
+        if (user is null)
+        {
+            var email = NormalizeEmail(identity.Email);
+            var existing = await users.GetByEmailAsync(email, cancellationToken);
+            if (existing is not null)
+            {
+                // Link only when Google has verified the address; otherwise anyone could claim an account by its email
+                if (!identity.EmailVerified)
+                    return GoogleLoginResult.Fail(AuthError.EmailTaken);
+                existing.GoogleSubject = identity.Subject;
+                user = existing;
+            }
+            else
+            {
+                // A new player picks their nickname first; the frontend sends the same ID token again with it
+                if (string.IsNullOrWhiteSpace(request.Nickname))
+                    return GoogleLoginResult.NicknameRequired(email, await SuggestNicknameAsync(identity, cancellationToken));
+
+                var nickname = request.Nickname.Trim();
+                if (await users.NicknameExistsAsync(nickname, cancellationToken))
+                    return GoogleLoginResult.Fail(AuthError.NicknameTaken);
+
+                user = new User
+                {
+                    Id = Guid.CreateVersion7(),
+                    Nickname = nickname,
+                    Email = email,
+                    PasswordHash = string.Empty,
+                    GoogleSubject = identity.Subject,
+                    CreatedAt = DateTime.UtcNow
+                };
+                users.Add(user);
+                await playerStats.AddStartingStatsAsync(user.Id, cancellationToken);
+            }
+        }
+
+        var (response, _) = IssueTokens(user);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return GoogleLoginResult.LoggedIn(response);
+    }
+
+    // From the Google name (or the email before the @): letters, numbers and underscores, made unique with a number
+    private async Task<string> SuggestNicknameAsync(GoogleIdentity identity, CancellationToken cancellationToken)
+    {
+        var source = string.IsNullOrWhiteSpace(identity.Name) ? identity.Email.Split('@')[0] : identity.Name;
+        var cleaned = new string(source.Trim().Replace(' ', '_').Where(c => char.IsAsciiLetterOrDigit(c) || c == '_').ToArray());
+        var baseName = cleaned.Length >= 3 ? cleaned[..Math.Min(cleaned.Length, SuggestedNicknameLength)] : "player";
+
+        for (var attempt = 1; attempt < 100; attempt++)
+        {
+            var suffix = attempt == 1 ? "" : attempt.ToString();
+            var candidate = baseName[..Math.Min(baseName.Length, SuggestedNicknameLength - suffix.Length)] + suffix;
+            if (!await users.NicknameExistsAsync(candidate, cancellationToken))
+                return candidate;
+        }
+        return $"player{Random.Shared.Next(10000, 99999)}";
     }
 
     public async Task<AuthResult> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default)
@@ -140,7 +211,9 @@ public class AuthService(
         var user = await users.GetByIdAsync(userId, cancellationToken);
         if (user is null)
             return AuthResult.Fail(AuthError.UserNotFound);
-        if (!passwordHasher.Verify(request.CurrentPassword, user.PasswordHash))
+        // A Google-only account has no password yet and can set its first one without a current password
+        var hasPassword = user.PasswordHash.Length > 0;
+        if (hasPassword && !passwordHasher.Verify(request.CurrentPassword, user.PasswordHash))
             return AuthResult.Fail(AuthError.WrongPassword);
 
         user.PasswordHash = passwordHasher.Hash(request.NewPassword);

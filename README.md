@@ -80,20 +80,39 @@ dotnet user-secrets set "Gemini:ApiKey" "<your Gemini key>"   # or export GEMINI
 
 Never put a key in `appsettings.json` (it's committed). A `.env` file isn't read by .NET.
 
-All endpoints need the `Authorization: Bearer` header:
+An interview is a chat: the interviewer opens with a question, reacts to each answer (sometimes with one follow-up), and after `Interview:MaxAnswers` answers (default 6) closes the interview and gives overall feedback. All endpoints need the `Authorization: Bearer` header:
 
-- `GET /api/interview/topics`: categories and lessons that can be asked about.
-- `POST /api/interview/questions` with `{ "lessonId": "primary-foreign-keys" }`, `{ "categoryId": "databases" }` or `{}` for a random lesson (ids are the Learn ones from `topics`, not the numeric duel category ids): returns `{ id, categoryId, categoryTitle, lessonId, lessonTitle, question, createdAt }`.
-- `POST /api/interview/questions/{id}/transcribe` with a multipart `audio` file (WAV, MP3, OGG, FLAC or AAC, up to 5 MB, about 2 minutes of 16 kHz WAV): returns `{ questionId, text }`, the spoken answer as text (empty if no speech was heard). Only for your own unanswered questions.
-- `POST /api/interview/questions/{id}/answer` with `{ "answer": "..." }` (up to 2000 characters, once per question): returns `{ questionId, verdict, score, feedback, strengths, improvements, modelAnswer }`. `verdict` is `correct`, `partiallyCorrect` or `incorrect`; `score` is 0 to 100.
+- `GET /api/interview/topics`: categories and lessons to interview about.
+- `GET /api/interview/sessions`: your last 20 interviews, `[{ id, title, status, score, createdAt }]`.
+- `POST /api/interview/sessions` with `{ "lessonId": "primary-foreign-keys" }`, `{ "categoryId": "databases" }` (all its lessons) or `{}` (random category): starts an interview and returns the session with the opening message.
+- `GET /api/interview/sessions/{id}`: the session `{ id, title, status, answersGiven, maxAnswers, messages: [{ id, role, content, createdAt }], evaluation }`. `role` is `interviewer` or `candidate`; `status` is `active` or `finished`; `evaluation` is `{ score, summary, strengths, improvements }` once finished.
+- `POST /api/interview/sessions/{id}/messages` with `{ "content": "..." }` (up to 2000 characters): adds your answer and the interviewer's reply and returns the session. If the AI fails, nothing is saved and you can resend.
+- `POST /api/interview/sessions/{id}/finish`: ends the interview early and evaluates the answers so far (also retries a failed evaluation).
+- `POST /api/interview/sessions/{id}/transcribe` with a multipart `audio` file (WAV, MP3, OGG, FLAC or AAC, up to 5 MB): returns `{ sessionId, text }`, the spoken answer as text.
 
 The lessons come from `frontend/src/learn/content.ts`, exported to `backend/DevBrawl.Interview/Knowledge/learn-content.json`. The backend build re-exports it when `content.ts` changes (needs Node 22.18+); a test fails if the JSON is out of date.
 
 Settings in the `Gemini` section of `appsettings.json`: `Model` (default `gemini-3.5-flash-lite`), `ThinkingLevel` (default `low`, which keeps replies to a few seconds; empty uses the model's slower default) and `TimeoutSeconds` (default 120).
 
-In the app, open **Interview** on the main page: pick a topic, then type your answer or press **Record answer**. The browser records the microphone, converts it to WAV and sends it to `transcribe`; the text appears in the answer box to check and edit before submitting.
+In the app, open **Interview** on the main page, pick a topic and start. Answer in the chat box (Enter sends, Shift+Enter adds a line) or press the microphone: the browser records, converts to WAV and sends it to `transcribe`, and the text lands in the box to check before sending. Past interviews are in the history on the left.
 
-Each question, transcription and answer is one AI call, so they share a per-user rate limit: 30 per hour by default (`Interview:RateLimit:RequestsPerHour`). Past the limit they return 429 with a `Retry-After` header; a user gets one request back every 60 / limit minutes.
+Starting, every answer, the final feedback and every transcription are one AI call each (a full interview is about 8), so they share a per-user rate limit: 30 per hour by default (`Interview:RateLimit:RequestsPerHour`). Past the limit they return 429 with a `Retry-After` header; a user gets one request back every 60 / limit minutes.
+
+## Google sign-in
+
+The login and signup pages show a "Continue with Google" button once a Google client ID is set. Without one, the button is hidden and `POST /api/auth/google` answers 503.
+
+1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create credentials of type **OAuth client ID**, application type **Web application**. If asked, set up the consent screen first (External, app name and support email are enough).
+2. Under **Authorized JavaScript origins** add `http://localhost:5173` and `http://localhost`. No redirect URI is needed.
+3. Put the client ID in `backend/DevBrawl.Api/appsettings.json` under `"Google": { "ClientId": "...apps.googleusercontent.com" }`. The client ID is public (it ships to the browser), so it can be committed. Don't create or use a client secret.
+
+How it works: the Google button gives the frontend an ID token, and the backend checks it with `Google.Apis.Auth` (signature, expiry, audience = our client ID) before issuing the usual JWT and refresh token.
+
+- A returning Google user is logged in.
+- A Google account whose verified email matches an existing account is linked to that account, and the password still works.
+- A new user gets `status: "nicknameRequired"` with a suggested username. The frontend asks them to pick one and sends the same ID token again with `nickname`. Nothing is saved until then.
+
+Google-only accounts have no password. They can set one in settings without a current password, and changing the email needs a password, so they have to set one first.
 
 ## Other commands
 

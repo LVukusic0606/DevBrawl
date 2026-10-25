@@ -420,36 +420,6 @@
   background: var(--color-border);
 }
 
-.auth-google {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-3);
-  height: 52px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius);
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-body);
-  font-size: 16px;
-  cursor: pointer;
-  transition: border-color 200ms ease-out;
-}
-
-.auth-google:hover {
-  border-color: var(--color-text-muted);
-}
-
-.auth-google:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-.auth-google-logo {
-  width: 20px;
-  height: 20px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .auth-caret {
     animation: none;
@@ -528,4 +498,11 @@
   .auth-title {
     font-size: 30px;
   }
+}
+
+/* Google renders its own button in here; the height keeps the form from jumping while it loads */
+.auth-google-slot {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
 }

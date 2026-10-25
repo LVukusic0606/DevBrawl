@@ -11,8 +11,24 @@ namespace DevBrawl.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController(IAuthService authService, IGoogleTokenValidator google) : ControllerBase
 {
+    // The Google client ID for the sign-in button; null hides the button
+    [HttpGet("google/config")]
+    [ProducesResponseType<GoogleConfigResponse>(StatusCodes.Status200OK)]
+    public GoogleConfigResponse GoogleConfig() => new(google.ClientId);
+
+    [HttpPost("google")]
+    [ProducesResponseType<GoogleLoginResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> Google(GoogleLoginRequest request, CancellationToken cancellationToken)
+    {
+        var result = await authService.GoogleLoginAsync(request, cancellationToken);
+        return result.Error is null ? Ok(result.Response) : ToProblem(result.Error.Value);
+    }
+
     [HttpPost("signup")]
     [ProducesResponseType<AuthResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -85,9 +101,11 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     private IActionResult ToActionResult(AuthResult result, int successStatusCode = StatusCodes.Status200OK) =>
-        result.Error switch
+        result.Error is null ? StatusCode(successStatusCode, result.Response) : ToProblem(result.Error.Value);
+
+    private ObjectResult ToProblem(AuthError error) =>
+        error switch
         {
-            null => StatusCode(successStatusCode, result.Response),
             AuthError.EmailTaken => Problem("An account with this email already exists.", statusCode: StatusCodes.Status409Conflict),
             AuthError.NicknameTaken => Problem("This nickname is already taken.", statusCode: StatusCodes.Status409Conflict),
             AuthError.InvalidCredentials => Problem("Invalid email or password.", statusCode: StatusCodes.Status401Unauthorized),
@@ -95,6 +113,8 @@ public class AuthController(IAuthService authService) : ControllerBase
             // 400, not 401: the frontend treats a 401 as an expired session and refreshes the tokens
             AuthError.WrongPassword => Problem("Your current password is incorrect.", statusCode: StatusCodes.Status400BadRequest),
             AuthError.UserNotFound => Problem("Account not found.", statusCode: StatusCodes.Status401Unauthorized),
+            AuthError.InvalidGoogleToken => Problem("Google sign-in didn't work. Try again.", statusCode: StatusCodes.Status400BadRequest),
+            AuthError.GoogleNotConfigured => Problem("Google sign-in isn't set up on this server.", statusCode: StatusCodes.Status503ServiceUnavailable),
             _ => throw new UnreachableException()
         };
 }

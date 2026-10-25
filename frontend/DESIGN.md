@@ -128,7 +128,7 @@ These rules prevent generic AI-looking design. Check every new screen against th
 - No emoji used as icons. Use Tabler.
 - No generic hero screens with three cards and a big button.
 - No small centered card with tabs, icons in every input and a generic subtitle. This was rejected for the auth screen.
-- No shadows, glows or neon outlines except the focus ring.
+- No shadows, glows or neon outlines except the focus ring. The season pass reward cards may have translucent backgrounds with a soft gradient in their track color, but no glow.
 - Not every element has the same weight. Hierarchy comes from size and color, not from added effects.
 - No decorative elements that carry no meaning. Every element needs a function.
 - No lorem ipsum or placeholder headings in finished designs.

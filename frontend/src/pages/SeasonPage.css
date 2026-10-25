@@ -1,5 +1,6 @@
 /* Season pass. Every class starts with "season-" because CSS is global in this app.
-   The free track is neutral; the premium track uses the duel accent. Buco will restyle the reward art. */
+   Laid out like the leaderboard and profile: a big title, a stat card, then titled sections in panels.
+   XP progress uses the main accent, as on the profile; the premium track uses the duel accent. */
 
 .season {
   min-height: 100vh;
@@ -27,12 +28,13 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-6) var(--space-8);
+  padding: var(--space-3) var(--space-8) var(--space-2);
 }
 
 .season-logo {
   font-family: var(--font-text);
   font-size: 24px;
+  color: var(--color-text);
 }
 
 .season-button {
@@ -46,7 +48,7 @@
   background: var(--color-surface);
   color: var(--color-text);
   font-family: var(--font-code);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition: border-color 200ms ease-out;
@@ -56,21 +58,26 @@
   border-color: var(--color-accent);
 }
 
-.season-button:focus-visible,
-.season-premium-button:focus-visible {
+.season-button:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
 
+/* Same rhythm as the leaderboard: a big title, then generous gaps between blocks.
+   Wider than the leaderboard so the rewards get room. */
 .season-content {
+  --season-card-width: 144px;
+  --season-card-height: 168px;
   flex: 1;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: var(--space-4) var(--space-8) var(--space-8);
+  /* Centered in the space under the header; no extra space above the block, so it sits close to the header */
+  padding: 0 var(--space-8) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  justify-content: center;
+  gap: var(--space-16);
   animation: season-enter 250ms ease-out;
 }
 
@@ -81,9 +88,16 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .season-content {
+    animation: none;
+  }
+}
+
 .season-muted {
   margin: 0;
-  font-size: 13px;
+  font-size: 15px;
+  line-height: 1.6;
   color: var(--color-text-muted);
 }
 
@@ -99,68 +113,118 @@
   color: var(--color-danger);
 }
 
-/* Hero: title and progress */
+/* Hero: title on the left, the stat card on the right */
 
 .season-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 480px);
   align-items: end;
-  gap: var(--space-6);
+  gap: var(--space-8);
 }
 
+.season-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* The month in the accent, then the time left as a small pill */
 .season-eyebrow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-1);
-  margin: 0 0 var(--space-2);
-  font-size: 13px;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.season-month {
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+/* Same pill as the tags on the leaderboard and profile */
+.season-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface-raised);
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.season-countdown .ti {
+  font-size: 16px;
   color: var(--color-text-muted);
 }
 
 .season-title {
-  margin: 0 0 var(--space-2);
+  margin: 0;
   font-family: var(--font-text);
-  font-size: 40px;
+  font-size: 52px;
   font-weight: 400;
   line-height: 1.1;
+  color: var(--color-text);
 }
 
+/* The stat card: the label on top, the big number and the XP meter beside it, as on the profile */
 .season-progress {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: var(--space-3) var(--space-4);
   padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
 }
 
-.season-progress-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.season-stage-label {
+.season-progress-label {
+  grid-column: 1 / -1;
   font-size: 13px;
   color: var(--color-text-muted);
 }
 
 .season-stage {
   font-family: var(--font-code);
-  font-size: 32px;
+  font-size: 56px;
   font-weight: 700;
   line-height: 1;
-  color: var(--color-duel);
+  /* Gold, the reward color: the stage decides which rewards are unlocked */
+  color: var(--color-elo);
 }
 
 .season-stage-max {
-  font-size: 15px;
+  font-size: 20px;
   color: var(--color-text-muted);
 }
 
+.season-meter {
+  min-width: 0;
+}
+
+.season-meter-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.season-meter-labels strong {
+  font-family: var(--font-code);
+  color: var(--color-text);
+}
+
 .season-bar {
-  height: 10px;
+  height: 8px;
   border-radius: 4px;
   background: var(--color-field);
   overflow: hidden;
@@ -170,101 +234,181 @@
   display: block;
   height: 100%;
   border-radius: 0 4px 4px 0;
-  background: var(--color-duel);
+  background: var(--color-accent);
 }
 
-/* Tracks: labels on the left, stages scroll sideways */
+/* Rewards: a panel per track with its name on the left, stages scroll sideways */
 
-.season-tracks {
-  display: grid;
-  grid-template-columns: 160px minmax(0, 1fr);
+.season-section {
+  min-width: 0;
+}
+
+/* The free panel, the stage line on the page background, then the premium panel */
+.season-board {
+  --season-label-width: 200px;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
 }
 
-.season-track-labels {
+.season-panel {
   display: grid;
-  grid-template-rows: 150px 32px 150px;
-  row-gap: var(--space-3);
+  grid-template-columns: var(--season-label-width) minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 
+/* Track name on top, then a short note or the Premium button, all on one left edge.
+   As tall as the cards, so it centers on them and not on the premium track's scrollbar. */
 .season-track-label {
+  align-self: start;
+  height: var(--season-card-height);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  font-family: var(--font-code);
-  font-weight: 700;
+  gap: var(--space-3);
+  padding: 0 var(--space-4) 0 var(--space-2);
+  border-right: 1px solid var(--color-border);
 }
 
-.season-track-label.is-premium {
-  grid-row: 3;
-  border-color: var(--color-duel);
-  background: var(--color-duel-soft);
+/* Track names use the same bold mono as player names on the leaderboard */
+.season-track-name {
+  font-family: var(--font-code);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text);
+}
+
+.season-panel.is-premium .season-track-name {
+  color: var(--color-duel);
+}
+
+.season-track-note {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+/* Starts where the cards start inside the panels: border, padding, label column and gap */
+.season-stages {
+  padding-left: calc(1px + var(--space-6) + var(--season-label-width) + var(--space-4));
+  padding-right: calc(1px + var(--space-6));
 }
 
 .season-premium-button {
   appearance: none;
-  padding: var(--space-2) var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-duel);
   border-radius: var(--radius);
   background: var(--color-duel);
   color: var(--color-bg);
   font-family: var(--font-code);
-  font-size: 13px;
+  font-size: 17px;
+  white-space: nowrap;
   font-weight: 700;
   cursor: pointer;
+  transition:
+    background-color 200ms ease-out,
+    color 200ms ease-out;
 }
 
+.season-premium-button:hover {
+  background: var(--color-duel-soft);
+  color: var(--color-text);
+}
+
+.season-premium-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-duel);
+}
+
+/* Only the premium track shows a scrollbar; the other two rows follow it */
 .season-scroll {
   overflow-x: auto;
-  padding-bottom: var(--space-2);
+  scrollbar-width: none;
+}
+
+.season-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.season-scroll.has-scrollbar {
+  padding-bottom: var(--space-3);
+  scrollbar-width: auto;
   /* Firefox otherwise draws a light scrollbar on the dark page */
   scrollbar-color: var(--color-border-strong) transparent;
 }
 
-.season-grid {
+.season-scroll.has-scrollbar::-webkit-scrollbar {
+  display: block;
+}
+
+.season-row {
+  position: relative;
+  width: max-content;
   margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
+  grid-auto-rows: var(--season-card-height);
   column-gap: var(--space-3);
 }
 
-.season-column {
-  display: grid;
-  grid-template-rows: 150px 32px 150px;
-  row-gap: var(--space-3);
-  justify-items: center;
+.season-row.is-stages {
+  grid-auto-rows: 36px;
+}
+
+/* The line that runs through the stage numbers */
+.season-row.is-stages::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 17px;
+  height: 2px;
+  background: var(--color-border);
+}
+
+.season-slot {
+  display: flex;
+  justify-content: center;
 }
 
 .season-stage-pill {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: 1px solid var(--color-border-strong);
   border-radius: 999px;
   background: var(--color-bg);
   font-family: var(--font-code);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--color-text-muted);
 }
 
 .season-stage-pill.is-reached {
-  border-color: var(--color-duel);
+  border-color: var(--color-accent);
   color: var(--color-text);
 }
 
 /* Reward cards. PLACEHOLDER art: Buco replaces it. */
 
+/* Cards are see-through so the grid shows behind them. --card-glow is the track color,
+   used for the gradient along the top edge. */
 .season-card {
+  --card-glow: var(--color-accent);
   position: relative;
   width: 100%;
   display: flex;
@@ -273,23 +417,43 @@
   justify-content: center;
   gap: var(--space-1);
   padding: var(--space-3) var(--space-2);
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, var(--color-border-strong) 70%, transparent);
   border-radius: var(--radius);
-  background: var(--color-surface);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--card-glow) 14%, transparent), transparent 55%),
+    color-mix(in srgb, var(--color-bg) 35%, transparent);
   text-align: center;
+  transition: border-color 200ms ease-out;
 }
 
+/* A stage with a reward on only one track leaves the other slot open */
 .season-card.is-empty {
-  border-style: solid;
+  border-color: transparent;
   background: transparent;
 }
 
 .season-card.is-premium {
-  border-color: color-mix(in srgb, var(--color-duel) 45%, var(--color-border));
+  --card-glow: var(--color-duel);
+}
+
+.season-card:not(.is-empty):hover {
+  border-color: color-mix(in srgb, var(--card-glow) 60%, transparent);
 }
 
 .season-card.is-unlocked {
-  border-color: var(--color-success);
+  --card-glow: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 65%, transparent);
+}
+
+/* Ultra rare rewards glow gold, the reward color; the label under the name is gold too */
+.season-card.is-ultra-rare {
+  --card-glow: var(--color-elo);
+  border-color: color-mix(in srgb, var(--color-elo) 70%, transparent);
+}
+
+.season-card.is-ultra-rare .season-card-kind {
+  font-weight: 700;
+  color: var(--color-elo);
 }
 
 .season-card.is-ahead .season-card-art,
@@ -301,12 +465,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
+  margin-bottom: var(--space-2);
   overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-border-strong) 70%, transparent);
   border-radius: var(--radius);
-  background: var(--color-surface-raised);
-  font-size: 28px;
+  background: color-mix(in srgb, var(--color-surface-raised) 60%, transparent);
+  font-size: 32px;
   color: var(--color-text);
 }
 
@@ -317,20 +483,26 @@
 }
 
 .season-card-name {
-  font-size: 13px;
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
   line-height: 1.3;
+  color: var(--color-text);
 }
 
+/* The kind reads like the leaderboard's small tags: bold mono, muted */
 .season-card-kind {
+  font-family: var(--font-code);
   font-size: 12px;
+  font-weight: 700;
   color: var(--color-text-muted);
 }
 
 .season-card-state {
   position: absolute;
-  top: var(--space-1);
-  right: var(--space-1);
-  font-size: 16px;
+  top: var(--space-2);
+  right: var(--space-2);
+  font-size: 18px;
   color: var(--color-text-muted);
 }
 
@@ -338,27 +510,69 @@
   color: var(--color-success);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 960px) {
+  .season-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
   .season-header,
   .season-content {
     padding-left: var(--space-4);
     padding-right: var(--space-4);
   }
 
-  .season-hero {
-    grid-template-columns: minmax(0, 1fr);
+  .season-content {
+    --season-card-width: 128px;
+    --season-card-height: 160px;
+    gap: var(--space-8);
+  }
+
+  .season-panel {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .season-stages {
+    padding-left: calc(1px + var(--space-4) + var(--season-label-width) + var(--space-4));
+    padding-right: calc(1px + var(--space-4));
   }
 
   .season-title {
-    font-size: 28px;
+    font-size: 36px;
   }
 
-  .season-tracks {
-    grid-template-columns: 96px minmax(0, 1fr);
+  .season-stage {
+    font-size: 48px;
+  }
+
+  .season-progress {
+    padding: var(--space-4);
+  }
+
+  /* The XP meter gets its own row under the stage number */
+  .season-meter {
+    grid-column: 1 / -1;
+  }
+
+  .season-board {
+    --season-label-width: 88px;
   }
 
   .season-track-label {
+    padding: 0 var(--space-3) 0 0;
+  }
+
+  .season-track-name {
+    font-size: 17px;
+  }
+
+  .season-track-note {
+    font-size: 12px;
+  }
+
+  .season-premium-button {
+    font-size: 12px;
     padding: var(--space-2);
-    font-size: 13px;
   }
 }

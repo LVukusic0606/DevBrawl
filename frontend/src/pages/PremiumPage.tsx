@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { ApiError } from '../api/client'
 import { activatePremium, getPremium, sendContactForm, type ContactForm, type Premium } from '../api/store'
+import ScrollReveal from '../components/ScrollReveal'
 import './PremiumPage.css'
 
 interface PremiumPageProps {
@@ -33,10 +34,16 @@ function PremiumPage({ onBack, onOpenSeason }: PremiumPageProps) {
       </header>
 
       <div className="premium-content">
-        <div className="premium-heading">
-          <h1 className="premium-title">Premium</h1>
-          <p className="premium-muted">Learning, duels and leaderboards are free for everyone. Premium adds more.</p>
-        </div>
+        {/* Title on the left, the plan card on the right, as on the season pass */}
+        <section className="premium-hero" aria-labelledby="premium-title">
+          <div className="premium-intro">
+            <h1 id="premium-title" className="premium-title">
+              Premium
+            </h1>
+            <p className="premium-lead">Learning, duels and leaderboards are free for everyone. Premium adds more.</p>
+          </div>
+          {premium && <PlanCard premium={premium} />}
+        </section>
 
         {error && <p className="premium-error">{error}</p>}
         {!premium && !error && <p className="premium-muted">Loading your plan…</p>}
@@ -45,6 +52,49 @@ function PremiumPage({ onBack, onOpenSeason }: PremiumPageProps) {
         <SchoolsForm />
       </div>
     </main>
+  )
+}
+
+// The current plan, with this month's AI interviews as a meter, the same layout as the profile's level card
+function PlanCard({ premium }: { premium: Premium }) {
+  const { used, limit } = premium.interviews
+  const share = limit > 0 ? Math.min(used / limit, 1) * 100 : 0
+
+  return (
+    <div className="premium-plan">
+      <span className="premium-plan-label">Your plan</span>
+      <span className="premium-plan-value">
+        {premium.isPremium && <i className="ti ti-crown" aria-hidden="true" />}
+        {premium.isPremium ? 'Premium' : 'Free'}
+      </span>
+      <div className="premium-meter">
+        <div className="premium-meter-labels">
+          <span>AI interviews this month</span>
+          <span>
+            <strong>{used}</strong> of {limit} used
+          </span>
+        </div>
+        <div
+          className="premium-bar"
+          role="progressbar"
+          aria-label="AI interviews used this month"
+          aria-valuemin={0}
+          aria-valuemax={limit}
+          aria-valuenow={used}
+        >
+          <span className="premium-bar-fill" style={{ width: `${share}%` }} />
+        </div>
+      </div>
+      <p className="premium-plan-note">
+        {premium.isPremium ? (
+          <>
+            Premium is active until <strong>{date.format(new Date(premium.premiumUntil!))}</strong>.
+          </>
+        ) : (
+          "You're on the free plan."
+        )}
+      </p>
+    </div>
   )
 }
 
@@ -87,44 +137,40 @@ function Plans({
   ]
 
   return (
-    <section className="premium-plans" aria-label="Plans">
-      <div className="premium-status">
-        {premium.isPremium ? (
-          <p>
-            <i className="ti ti-crown" aria-hidden="true" /> Premium is active until{' '}
-            <strong>{date.format(new Date(premium.premiumUntil!))}</strong>.
-          </p>
-        ) : (
-          <p>You're on the free plan.</p>
-        )}
-        <p className="premium-muted">
-          AI interviews this month: {premium.interviews.used} of {premium.interviews.limit} used.
-        </p>
-      </div>
+    <ScrollReveal>
+      <section className="premium-section" aria-labelledby="plans-title">
+        <div className="premium-section-head">
+          <h2 id="plans-title" className="premium-section-title">
+            Compare plans
+          </h2>
+        </div>
 
-      <div className="premium-panel">
-        <table className="premium-table">
-          <thead>
-            <tr>
-              <th scope="col">
-                <span className="premium-sr-only">Feature</span>
-              </th>
-              <th scope="col">Free</th>
-              <th scope="col" className="is-premium">
-                Premium · {monthly}/month
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.label}>
-                <th scope="row">{row.label}</th>
-                <td>{row.free}</td>
-                <td className="is-premium">{row.premium}</td>
+        <div className="premium-panel">
+          <table className="premium-table">
+            <caption className="premium-sr-only">Free and Premium plans</caption>
+            <thead>
+              <tr>
+                <th scope="col">
+                  <span className="premium-sr-only">Feature</span>
+                </th>
+                <th scope="col">Free</th>
+                <th scope="col" className="is-premium">
+                  Premium
+                  <span className="premium-price">{monthly}/month</span>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.label}>
+                  <th scope="row">{row.label}</th>
+                  <td>{row.free}</td>
+                  <td className="is-premium">{row.premium}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <div className="premium-actions">
           <button
@@ -142,35 +188,35 @@ function Plans({
             See the season pass
           </button>
         </div>
-      </div>
 
-      {/* Demo checkout: there's no payment provider yet */}
-      <dialog
-        ref={checkout}
-        className="premium-dialog"
-        aria-labelledby="checkout-title"
-        onClick={(event) => {
-          if (event.target === event.currentTarget) checkout.current?.close()
-        }}
-      >
-        <h2 id="checkout-title" className="premium-dialog-title">
-          Premium · {monthly}/month
-        </h2>
-        <p className="premium-demo">
-          <i className="ti ti-info-circle" aria-hidden="true" />
-          Demo checkout: no payment is taken. Confirming gives you one month of Premium.
-        </p>
-        {error && <p className="premium-error">{error}</p>}
-        <div className="premium-actions">
-          <button type="button" className="premium-primary" disabled={paying} onClick={confirm}>
-            {paying ? 'Activating…' : 'Confirm'}
-          </button>
-          <button type="button" className="premium-button" disabled={paying} onClick={() => checkout.current?.close()}>
-            Cancel
-          </button>
-        </div>
-      </dialog>
-    </section>
+        {/* Demo checkout: there's no payment provider yet */}
+        <dialog
+          ref={checkout}
+          className="premium-dialog"
+          aria-labelledby="checkout-title"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) checkout.current?.close()
+          }}
+        >
+          <h2 id="checkout-title" className="premium-dialog-title">
+            Premium · {monthly}/month
+          </h2>
+          <p className="premium-demo">
+            <i className="ti ti-info-circle" aria-hidden="true" />
+            Demo checkout: no payment is taken. Confirming gives you one month of Premium.
+          </p>
+          {error && <p className="premium-error">{error}</p>}
+          <div className="premium-actions">
+            <button type="button" className="premium-primary" disabled={paying} onClick={confirm}>
+              {paying ? 'Activating…' : 'Confirm'}
+            </button>
+            <button type="button" className="premium-button" disabled={paying} onClick={() => checkout.current?.close()}>
+              Cancel
+            </button>
+          </div>
+        </dialog>
+      </section>
+    </ScrollReveal>
   )
 }
 
@@ -198,46 +244,50 @@ function SchoolsForm() {
   })
 
   return (
-    <section className="premium-schools" aria-labelledby="schools-title">
-      <div className="premium-heading">
-        <h2 id="schools-title" className="premium-section-title">
-          For schools and universities
-        </h2>
-        <p className="premium-muted">Want DevBrawl for your class? Tell us about it and we'll set something up together.</p>
-      </div>
-
-      <form className="premium-form" onSubmit={submit}>
-        <label className="premium-field">
-          <span>Your name</span>
-          <input className="premium-input" required minLength={2} maxLength={100} autoComplete="name" {...field('name')} />
-        </label>
-        <label className="premium-field">
-          <span>School or university</span>
-          <input className="premium-input" required minLength={2} maxLength={200} autoComplete="organization" {...field('institution')} />
-        </label>
-        <label className="premium-field">
-          <span>Email</span>
-          <input className="premium-input" type="email" required maxLength={254} autoComplete="email" {...field('email')} />
-        </label>
-        <label className="premium-field is-wide">
-          <span>Message</span>
-          <textarea className="premium-input is-textarea" required minLength={10} maxLength={2000} rows={4} {...field('message')} />
-        </label>
-        <div className="premium-form-footer">
-          <button type="submit" className="premium-button" disabled={status === 'sending'}>
-            {status === 'sending' ? 'Sending…' : 'Send'}
-          </button>
-          <p className={`premium-form-status${typeof status === 'object' ? ' is-error' : ''}`} role="status">
-            {status === 'sent' && (
-              <>
-                <i className="ti ti-check" aria-hidden="true" /> Thanks! We'll get back to you by email.
-              </>
-            )}
-            {typeof status === 'object' && status.error}
+    <ScrollReveal>
+      <section className="premium-section" aria-labelledby="schools-title">
+        <div className="premium-section-head">
+          <h2 id="schools-title" className="premium-section-title">
+            For schools and universities
+          </h2>
+          <p className="premium-section-note">
+            Want DevBrawl for your class? Tell us about it and we'll set something up together.
           </p>
         </div>
-      </form>
-    </section>
+
+        <form className="premium-panel premium-form" onSubmit={submit}>
+          <label className="premium-field">
+            <span>Your name</span>
+            <input className="premium-input" required minLength={2} maxLength={100} autoComplete="name" {...field('name')} />
+          </label>
+          <label className="premium-field">
+            <span>School or university</span>
+            <input className="premium-input" required minLength={2} maxLength={200} autoComplete="organization" {...field('institution')} />
+          </label>
+          <label className="premium-field">
+            <span>Email</span>
+            <input className="premium-input" type="email" required maxLength={254} autoComplete="email" {...field('email')} />
+          </label>
+          <label className="premium-field is-wide">
+            <span>Message</span>
+            <textarea className="premium-input is-textarea" required minLength={10} maxLength={2000} rows={4} {...field('message')} />
+          </label>
+          <div className="premium-form-footer">
+            <button type="submit" className="premium-button" disabled={status === 'sending'}>
+              {status === 'sending' ? 'Sending…' : 'Send'}
+            </button>
+            <p className={`premium-form-status${typeof status === 'object' ? ' is-error' : ''}`} role="status">
+              {status === 'sent' && (
+                <>
+                  <i className="ti ti-check" aria-hidden="true" /> Thanks! We'll get back to you by email.
+                </>
+              )}
+              {typeof status === 'object' && status.error}
+            </p>
+          </div>
+        </form>
+      </section>
+    </ScrollReveal>
   )
 }
 

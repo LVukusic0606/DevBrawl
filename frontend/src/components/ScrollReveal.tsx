@@ -14,10 +14,12 @@ function ScrollReveal({ children }: ScrollRevealProps) {
     const element = ref.current
     if (visible || !element) return
 
-    // Reveal once the top edge is in the lower part of the screen or already above it
+    // Reveal once the top edge is in the lower part of the screen or already above it, or once the whole
+    // block is on screen. The second case covers the last block of a page, which can never scroll that high.
     function check() {
       if (!element) return
-      if (element.getBoundingClientRect().top < window.innerHeight * 0.9) setVisible(true)
+      const { top, bottom } = element.getBoundingClientRect()
+      if (top < window.innerHeight * 0.9 || bottom <= window.innerHeight) setVisible(true)
     }
 
     // Checked once after mount, then on every scroll and resize until the block is shown

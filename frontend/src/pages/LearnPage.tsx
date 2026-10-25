@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { getCompletedLessons, markLessonCompleted } from '../api/lessons'
 import {
   CATEGORIES,
   type Category,
@@ -7,10 +8,10 @@ import {
   type LessonBlock,
   type QuizQuestion,
 } from '../learn/content'
-import { LessonBlockView, Reveal } from '../learn/LessonBlocks'
+import ScrollReveal from '../components/ScrollReveal'
+import { LessonBlockView } from '../learn/LessonBlocks'
 import mascotUrl from '../assets/mascot-lightbulb.webp'
 import mascotCategoryUrl from '../assets/mascot-category.webp'
-import { loadCompletedLessons, saveCompletedLesson } from '../learn/progress'
 import { groupLessons } from '../learn/topics'
 import './LearnPage.css'
 
@@ -25,7 +26,29 @@ function LearnPage({ onBack }: LearnPageProps) {
   const category = CATEGORIES.find((item) => item.id === categoryId)
   const lesson = category?.lessons.find((item) => item.id === lessonId)
   const [quizOpen, setQuizOpen] = useState(false)
-  const [completed, setCompleted] = useState<string[]>(loadCompletedLessons)
+  const [completed, setCompleted] = useState<string[]>([])
+  const [saveFailed, setSaveFailed] = useState(false)
+
+  // Finished lessons come from the account, so they're the same on every device.
+  // If they can't load, the list simply shows no Done badges.
+  useEffect(() => {
+    let cancelled = false
+    getCompletedLessons()
+      .then((ids) => {
+        if (!cancelled) setCompleted(ids)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  function completeLesson(id: string) {
+    setSaveFailed(false)
+    markLessonCompleted(id)
+      .then(() => setCompleted((ids) => (ids.includes(id) ? ids : [...ids, id])))
+      .catch(() => setSaveFailed(true))
+  }
 
   if (category && lesson && quizOpen && lesson.quiz) {
     return (
@@ -37,7 +60,8 @@ function LearnPage({ onBack }: LearnPageProps) {
           setQuizOpen(false)
           setLessonId(null)
         }}
-        onComplete={() => setCompleted(saveCompletedLesson(lesson.id, completed))}
+        onComplete={() => completeLesson(lesson.id)}
+        saveFailed={saveFailed}
       />
     )
   }
@@ -247,9 +271,9 @@ function LessonView({ category, lesson, onBack, onStartQuiz }: LessonViewProps) 
         {parts.map((part, partIndex) => (
           <section key={partIndex} className={partIndex % 2 === 0 ? 'lesson-part is-light' : 'lesson-part'}>
             {part.map((block, blockIndex) => (
-              <Reveal key={blockIndex}>
+              <ScrollReveal key={blockIndex}>
                 <LessonBlockView block={block} />
-              </Reveal>
+              </ScrollReveal>
             ))}
           </section>
         ))}
@@ -277,10 +301,12 @@ interface QuizViewProps {
   onBack: () => void
   onExit: () => void
   onComplete: () => void
+  // Saving the completed lesson to the account failed
+  saveFailed: boolean
 }
 
 // One question per step. Each answer is checked right away, with a text label next to the color.
-function QuizView({ lesson, quiz, onBack, onExit, onComplete }: QuizViewProps) {
+function QuizView({ lesson, quiz, onBack, onExit, onComplete, saveFailed }: QuizViewProps) {
   const [answers, setAnswers] = useState<(HttpMethod | null)[]>(() => quiz.map(() => null))
   const [index, setIndex] = useState(0)
 
@@ -326,7 +352,14 @@ function QuizView({ lesson, quiz, onBack, onExit, onComplete }: QuizViewProps) {
             {score === quiz.length ? (
               <>
                 <p className="learn-quiz-congrats">Congratulations!</p>
-                <p className="learn-quiz-scenario">All {quiz.length} answers are right. This lesson is marked as done.</p>
+                <p className="learn-quiz-scenario">
+                  {saveFailed
+                    ? `All ${quiz.length} answers are right.`
+                    : `All ${quiz.length} answers are right. This lesson is marked as done.`}
+                </p>
+                {saveFailed && (
+                  <p className="learn-quiz-save-error">Couldn't save your progress. Check your connection and try again.</p>
+                )}
               </>
             ) : (
               <>

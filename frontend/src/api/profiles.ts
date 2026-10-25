@@ -45,7 +45,9 @@ export interface ProfileDuel {
 }
 
 export interface Profile {
-  user: { id: string; nickname: string; memberSince: string }
+  // avatarId is one of the preset pictures (see profile/avatars); null shows the nickname's first letter
+  // tag is one of the preset tags (see profile/tags); null when the player hasn't picked one
+  user: { id: string; nickname: string; memberSince: string; avatarId: number | null; tag: string | null }
   isYou: boolean
   progress: { level: number; totalXp: number; levelStartXp: number; nextLevelXp: number }
   // Average of the category ratings
@@ -61,7 +63,8 @@ export interface Profile {
   }
   recentDuels: ProfileDuel[]
   // Filled in once the Learn backend exists
-  learning: unknown | null
+  // Slugs of the lessons the player has finished
+  learning: { completedLessonIds: string[] }
 }
 
 // Without a userId: the logged-in player's own profile

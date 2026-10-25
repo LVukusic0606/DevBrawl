@@ -59,15 +59,9 @@ export function RatingDotPlot({ rows }: { rows: DotPlotRow[] }) {
             </span>
             <span className="dotplot-value">
               <strong>{row.rating}</strong>
-              <span>{row.detail}</span>
+              <span className="dotplot-detail">{row.detail}</span>
               {row.badge && (
-                <span className="dotplot-badge">
-                  <i
-                    className={`ti ${row.badge === 'strongest' ? 'ti-trending-up' : 'ti-trending-down'}`}
-                    aria-hidden="true"
-                  />
-                  {row.badge === 'strongest' ? 'Strongest' : 'Weakest'}
-                </span>
+                <span className="dotplot-badge">{row.badge === 'strongest' ? 'Strongest' : 'Weakest'}</span>
               )}
             </span>
           </li>

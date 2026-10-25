@@ -1,9 +1,10 @@
 import type { ChallengeType, RankTier } from '../api/profiles'
 
-const dateTime = new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+const date = new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' })
 const monthYear = new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' })
 
-export const formatDateTime = (iso: string) => dateTime.format(new Date(iso))
+// "Oct 24"
+export const formatDate = (iso: string) => date.format(new Date(iso))
 export const formatMonthYear = (iso: string) => monthYear.format(new Date(iso))
 
 // "+16", "-12", "0"

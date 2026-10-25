@@ -252,6 +252,11 @@
   }
 }
 
+/* On a category page the mascot sits a little further from the title */
+.learn-heading .learn-mascot {
+  left: calc(100% + var(--space-12));
+}
+
 /* On a category page the search field sits right beside the title, so the mascot steps aside on narrower windows */
 @media (max-width: 1200px) {
   .learn-heading .learn-mascot {
@@ -393,7 +398,7 @@
 }
 
 /* The first heading of a part needs no divider, the tint already separates it */
-.lesson-part > .lesson-reveal:first-child > .lesson-section-title {
+.lesson-part > .scroll-reveal:first-child > .lesson-section-title {
   margin-top: 0;
   padding-top: 0;
   border-top: none;
@@ -480,6 +485,13 @@
   font-weight: 700;
   line-height: 1.15;
   color: var(--color-success);
+}
+
+.learn-quiz-save-error {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--color-danger);
 }
 
 .learn-quiz-step {

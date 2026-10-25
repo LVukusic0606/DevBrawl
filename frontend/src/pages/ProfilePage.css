@@ -121,7 +121,7 @@
 
 .profile-hero {
   display: grid;
-  grid-template-columns: auto 1fr minmax(0, 520px);
+  grid-template-columns: auto 1fr minmax(0, 560px);
   align-items: center;
   gap: var(--space-6);
 }
@@ -130,25 +130,65 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 88px;
-  height: 88px;
+  width: 112px;
+  height: 112px;
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   background: var(--color-surface-raised);
   color: var(--color-text);
   font-family: var(--font-code);
-  font-size: 40px;
+  font-size: 48px;
   font-weight: 700;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
 }
 
+.profile-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* On your own profile the avatar is a button that opens the picture picker */
+.profile-avatar.is-editable {
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 200ms ease-out;
+}
+
+.profile-avatar.is-editable:hover {
+  border-color: var(--color-accent);
+}
+
+.profile-avatar.is-editable:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.profile-avatar-edit {
+  position: absolute;
+  right: var(--space-1);
+  bottom: var(--space-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-accent);
+  font-size: 14px;
+}
+
+/* Name on top and the settings button below, together as tall as the avatar beside them */
 .profile-identity {
   min-width: 0;
-}
-
-.profile-eyebrow {
-  margin: 0 0 var(--space-1);
-  font-size: 13px;
-  color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-4);
 }
 
 .profile-title {
@@ -173,19 +213,14 @@
   color: var(--color-duel);
 }
 
-.profile-overall-note {
-  grid-column: 1 / -1;
-  margin-top: var(--space-3);
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
+/* Both stat cards share one layout: the label on top, a large number below it on the left,
+   and in the level card the XP meter beside the number, lined up with its bottom */
 .profile-level {
   display: grid;
-  align-content: start;
-  grid-template-columns: auto 1fr;
-  align-items: baseline;
-  column-gap: var(--space-3);
+  align-content: space-between;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: var(--space-3) var(--space-4);
   padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -193,21 +228,20 @@
 }
 
 .profile-level-label {
+  grid-column: 1 / -1;
   font-size: 13px;
   color: var(--color-text-muted);
 }
 
 .profile-level-value {
-  justify-self: end;
   font-family: var(--font-code);
-  font-size: 32px;
+  font-size: 56px;
   font-weight: 700;
   line-height: 1;
 }
 
 .profile-level .xp {
-  grid-column: 1 / -1;
-  margin-top: var(--space-3);
+  min-width: 0;
 }
 
 .xp-labels {
@@ -245,6 +279,12 @@
   flex-direction: column;
   gap: var(--space-4);
   min-width: 0;
+}
+
+/* Let the content fill the section so side-by-side sections match height */
+.profile-section > .profile-panel,
+.profile-section > .profile-duels {
+  flex: 1;
 }
 
 .profile-section-head {
@@ -295,7 +335,7 @@
 /* Ratings dot plot: label | track | value, the axis above shares the track column */
 
 .dotplot {
-  --dotplot-columns: minmax(140px, 180px) minmax(0, 1fr) 290px;
+  --dotplot-columns: minmax(140px, 180px) minmax(0, 1fr) 340px;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -380,9 +420,16 @@
   display: flex;
   align-items: baseline;
   white-space: nowrap;
-  gap: var(--space-1) var(--space-3);
+  gap: var(--space-1) var(--space-6);
   font-size: 13px;
   color: var(--color-text-muted);
+}
+
+/* Tier and the last change, side by side with their own gap */
+.dotplot-detail {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
 }
 
 .dotplot-value strong {
@@ -394,8 +441,8 @@
 .dotplot-badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  padding: 0 var(--space-2);
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
   border-radius: 999px;
   background: var(--color-field);
   font-size: 12px;
@@ -405,10 +452,6 @@
 .dotplot-row.is-strongest .dotplot-badge {
   background: var(--color-duel-soft);
   color: var(--color-text);
-}
-
-.dotplot-row.is-strongest .dotplot-badge .ti {
-  color: var(--color-duel);
 }
 
 .dotplot-caption {
@@ -430,7 +473,7 @@
 .profile-duel-delta {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-1);
   font-family: var(--font-code);
   font-size: 13px;
   font-weight: 700;
@@ -658,6 +701,11 @@
   background: var(--color-duel);
 }
 
+/* Lesson progress belongs to learning, so its bars use the learning accent */
+.profile-panel.is-learning .bars-fill {
+  background: var(--color-accent);
+}
+
 .bars-value {
   display: inline-flex;
   align-items: baseline;
@@ -675,10 +723,116 @@
   font-size: 12px;
 }
 
+/* Quiet footer line at the end of the profile */
+.profile-joined {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: var(--space-8) 0 0;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.profile-joined .ti {
+  font-size: 18px;
+}
+
+/* Tag: a small pill next to the nickname; on your own profile it opens the tag picker */
+
+.profile-name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  min-width: 0;
+}
+
+.profile-tag {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.profile-tag .ti {
+  font-size: 16px;
+  color: var(--color-accent);
+}
+
+.profile-tag.is-editable {
+  cursor: pointer;
+  transition: border-color 200ms ease-out;
+}
+
+.profile-tag.is-editable:hover {
+  border-color: var(--color-accent);
+}
+
+.profile-tag.is-editable:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.profile-tag.is-empty {
+  border-style: dashed;
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+/* Menu items stack their text in a column; a tag keeps its icon and label on one line */
+.account-menu-item > .tag-option-label {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 15px;
+}
+
+.tag-option-label .ti,
+.tag-option.is-current > .ti {
+  font-size: 18px;
+  color: var(--color-accent);
+}
+
+.tag-option.is-current {
+  border-color: var(--color-accent);
+}
+
+.tag-remove {
+  appearance: none;
+  margin-top: var(--space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tag-remove:hover {
+  color: var(--color-danger);
+}
+
+.tag-remove:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 /* Account settings: a small button under the name, the forms live in a modal */
 
 .profile-identity-actions {
-  margin-top: var(--space-3);
+  display: flex;
 }
 
 .profile-button.is-accent {
@@ -768,6 +922,78 @@
 .account-menu-item:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+/* Profile picture picker: the twelve avatars in a grid, the current one marked */
+
+.avatar-dialog {
+  width: min(560px, calc(100vw - 32px));
+}
+
+.avatar-grid {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.avatar-option {
+  appearance: none;
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--color-surface-raised);
+  cursor: pointer;
+  transition: border-color 200ms ease-out;
+}
+
+.avatar-option img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-option:hover:not(:disabled),
+.avatar-option.is-current {
+  border-color: var(--color-accent);
+}
+
+.avatar-option:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.avatar-option:disabled {
+  cursor: default;
+}
+
+.avatar-option-check {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .avatar-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .account-menu {

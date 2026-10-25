@@ -1,11 +1,14 @@
+import type { User } from '../api/auth'
 import bugDuel from '../assets/bug-duel.webp'
 import bugInterview from '../assets/bug-interview.webp'
 import bugLearn from '../assets/bug-learn.webp'
+import { findAvatar } from '../profile/avatars'
 import './MainPage.css'
 
 export type MainSection = 'learn' | 'duel' | 'interview'
 
 interface MainPageProps {
+  user: User
   onSelect: (section: MainSection) => void
   onLogout: () => void
   onOpenProfile: () => void
@@ -43,7 +46,9 @@ const SECTIONS: {
   },
 ]
 
-function MainPage({ onSelect, onLogout, onOpenProfile, onOpenLeaderboard }: MainPageProps) {
+function MainPage({ user, onSelect, onLogout, onOpenProfile, onOpenLeaderboard }: MainPageProps) {
+  const avatar = findAvatar(user.avatarId ?? null)
+
   return (
     <main className="home">
       <header className="home-header">
@@ -53,13 +58,13 @@ function MainPage({ onSelect, onLogout, onOpenProfile, onOpenLeaderboard }: Main
             <i className="ti ti-trophy" aria-hidden="true" />
             Leaderboard
           </button>
-          <button type="button" className="home-logout" onClick={onOpenProfile}>
-            <i className="ti ti-user" aria-hidden="true" />
-            Profile
-          </button>
           <button type="button" className="home-logout" onClick={onLogout}>
             <i className="ti ti-logout" aria-hidden="true" />
             Log out
+          </button>
+          {/* The player's picture, or the first letter of the nickname, opens their profile */}
+          <button type="button" className="home-avatar" aria-label="Profile" onClick={onOpenProfile}>
+            {avatar ? <img src={avatar.url} alt="" /> : user.nickname.charAt(0).toUpperCase()}
           </button>
         </div>
       </header>

@@ -35,7 +35,7 @@ public sealed record ChangeTagRequest
 
 public sealed record ChangePasswordRequest
 {
-    [Required]
+    // Empty only for an account that signed up with Google and has no password yet; otherwise it must match
     public string CurrentPassword { get; init; } = string.Empty;
 
     // bcrypt only uses the first 72 bytes, so longer passwords are rejected rather than silently truncated

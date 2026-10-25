@@ -31,6 +31,8 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
         services.AddSingleton<ITokenService, TokenService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.Configure<GoogleOptions>(configuration.GetSection(GoogleOptions.SectionName));
+        services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<ILeaderboardService, LeaderboardService>();

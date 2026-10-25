@@ -75,6 +75,10 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                         .HasMaxLength(254)
                         .HasColumnType("character varying(254)");
 
+                    b.Property<string>("GoogleSubject")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
                     b.Property<string>("Nickname")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -92,6 +96,9 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("GoogleSubject")
                         .IsUnique();
 
                     b.HasIndex("Nickname")

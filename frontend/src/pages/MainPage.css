@@ -90,6 +90,17 @@
   font-size: 18px;
 }
 
+/* Log out: a soft red, so it reads as the exit without shouting */
+.home-logout.is-danger {
+  border-color: var(--color-danger-soft);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.home-logout.is-danger:hover {
+  border-color: var(--color-danger);
+}
+
 /* Count of friend requests waiting for an answer */
 .home-badge {
   min-width: 20px;

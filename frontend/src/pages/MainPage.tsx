@@ -106,7 +106,7 @@ function MainPage({
               </span>
             )}
           </button>
-          <button type="button" className="home-logout" onClick={onLogout}>
+          <button type="button" className="home-logout is-danger" onClick={onLogout}>
             <i className="ti ti-logout" aria-hidden="true" />
             Log out
           </button>

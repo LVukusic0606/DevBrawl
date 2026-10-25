@@ -1,0 +1,992 @@
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DevBrawl pitch</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Martian+Mono:wght@700&family=Share+Tech+Mono&display=swap"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+    <style>
+      /* The app's tokens (frontend/src/index.css) */
+      :root {
+        --color-bg: #07111a;
+        --color-surface: #0d1b26;
+        --color-surface-raised: #0f2230;
+        --color-part-light: #0c1d2b;
+        --color-border: #1b3345;
+        --color-border-strong: #2b4b62;
+        --color-text: #e0f2fe;
+        --color-text-muted: #7893a8;
+        --color-accent: #22d3ee;
+        --color-accent-soft: rgba(34, 211, 238, 0.12);
+        --color-duel: #f472b6;
+        --color-duel-soft: rgba(244, 114, 182, 0.12);
+        --color-elo: #f5b83d;
+        --color-elo-soft: rgba(245, 184, 61, 0.12);
+        --color-success: #4ade80;
+        --color-warning: #facc15;
+        --color-grid: rgba(34, 211, 238, 0.07);
+
+        --font-text: 'Share Tech Mono', monospace;
+        --font-code: 'Martian Mono', monospace;
+
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-6: 24px;
+        --space-8: 32px;
+        --space-12: 48px;
+
+        --radius: 8px;
+        --radius-lg: 16px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        overflow: hidden;
+        background-color: var(--color-bg);
+        background-image:
+          linear-gradient(var(--color-grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+        background-size: 36px 36px;
+        color: var(--color-text);
+        font-family: var(--font-text);
+      }
+
+      /* A fixed 1600x900 stage, scaled to fit the window */
+      .stage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 1600px;
+        height: 900px;
+        transform-origin: center;
+      }
+
+      .slide {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 72px 96px 88px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(12px);
+        transition:
+          opacity 300ms ease-out,
+          transform 300ms ease-out,
+          visibility 0s 300ms;
+      }
+
+      .slide.is-active {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        transition:
+          opacity 300ms ease-out,
+          transform 300ms ease-out;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .slide,
+        .slide.is-active {
+          transition: none;
+          transform: none;
+        }
+      }
+
+      .eyebrow {
+        margin: 0 0 var(--space-4);
+        font-family: var(--font-code);
+        font-size: 20px;
+        color: var(--color-accent);
+      }
+
+      .title {
+        margin: 0 0 var(--space-12);
+        font-size: 72px;
+        font-weight: 400;
+        line-height: 1.05;
+      }
+
+      .grid {
+        flex: 1;
+        display: grid;
+        gap: var(--space-8);
+        min-height: 0;
+      }
+
+      .panel {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-6);
+        padding: var(--space-8);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        background: var(--color-surface);
+      }
+
+      .panel-label {
+        font-size: 20px;
+        color: var(--color-text-muted);
+        letter-spacing: 0.04em;
+      }
+
+      /* Bullets: big, short, no sentences */
+      .bullets {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-6);
+        font-size: 40px;
+        line-height: 1.15;
+      }
+
+      .bullets li {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+      }
+
+      .bullets .ti {
+        flex-shrink: 0;
+        font-size: 36px;
+        color: var(--color-accent);
+      }
+
+      .muted {
+        color: var(--color-text-muted);
+      }
+
+      .cyan {
+        color: var(--color-accent);
+      }
+
+      .pink {
+        color: var(--color-duel);
+      }
+
+      .gold {
+        color: var(--color-elo);
+      }
+
+      /* A big number with a short label under it */
+      .stat {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+      }
+
+      .stat-value {
+        font-family: var(--font-code);
+        font-size: 84px;
+        line-height: 1;
+      }
+
+      .stat-label {
+        font-size: 30px;
+        line-height: 1.2;
+      }
+
+      .source {
+        position: absolute;
+        left: 96px;
+        bottom: 40px;
+        font-size: 15px;
+        color: var(--color-text-muted);
+      }
+
+      /* Placeholders the team still has to fill in */
+      .stat-value .todo {
+        font-family: var(--font-text);
+        font-size: 36px;
+      }
+
+      .todo {
+        display: inline-block;
+        padding: 2px 12px;
+        border: 2px dashed var(--color-warning);
+        border-radius: var(--radius);
+        color: var(--color-warning);
+      }
+
+      /* ------------------------------------------------ 1. title */
+
+      .cover {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 560px;
+        align-items: center;
+        gap: var(--space-12);
+      }
+
+      .cover-name {
+        margin: 0;
+        font-size: 168px;
+        font-weight: 400;
+        line-height: 0.95;
+      }
+
+      .cover-tagline {
+        margin: var(--space-8) 0 var(--space-12);
+        font-size: 52px;
+        line-height: 1.2;
+      }
+
+      .modes {
+        display: flex;
+        gap: var(--space-4);
+      }
+
+      .mode {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-6);
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        font-family: var(--font-code);
+        font-size: 24px;
+      }
+
+      .cover-art {
+        position: relative;
+        height: 640px;
+      }
+
+      .cover-art img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: drop-shadow(0 24px 32px rgba(0, 0, 0, 0.5));
+      }
+
+      .cover-team {
+        position: absolute;
+        left: 96px;
+        bottom: 48px;
+        font-size: 24px;
+      }
+
+      /* ------------------------------------------------ 2. problem */
+
+      .problem {
+        grid-template-columns: 1fr 1.25fr;
+      }
+
+      .problem .bullets {
+        font-size: 36px;
+      }
+
+      .problem .stat-value {
+        font-size: 64px;
+      }
+
+      .problem .stat-label {
+        font-size: 28px;
+      }
+
+      /* Where each number comes from, right under it */
+      .stat-source {
+        font-size: 17px;
+        color: var(--color-text-muted);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-rows: repeat(3, auto);
+        align-content: space-between;
+        gap: var(--space-6);
+      }
+
+      /* ------------------------------------------------ 3. duel and interview */
+
+      .modes-grid {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr auto;
+      }
+
+      .feature {
+        position: relative;
+        overflow: hidden;
+        padding-right: 250px;
+      }
+
+      .feature-name {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        font-family: var(--font-code);
+        font-size: 40px;
+        white-space: nowrap;
+      }
+
+      .feature-name .ti {
+        font-size: 48px;
+      }
+
+      .feature .bullets {
+        gap: var(--space-4);
+        font-size: 32px;
+      }
+
+      .feature .bullets .ti {
+        font-size: 30px;
+      }
+
+      .feature img {
+        position: absolute;
+        right: 8px;
+        bottom: 0;
+        height: 80%;
+        width: 250px;
+        object-fit: contain;
+        object-position: bottom right;
+      }
+
+      .feature.is-duel {
+        border-color: var(--color-duel);
+        background: linear-gradient(160deg, var(--color-duel-soft), var(--color-surface) 60%);
+      }
+
+      .feature.is-duel .feature-name,
+      .feature.is-duel .bullets .ti {
+        color: var(--color-duel);
+      }
+
+      .feature.is-interview {
+        border-color: var(--color-elo);
+        background: linear-gradient(160deg, var(--color-elo-soft), var(--color-surface) 60%);
+      }
+
+      .feature.is-interview .feature-name,
+      .feature.is-interview .bullets .ti {
+        color: var(--color-elo);
+      }
+
+      .learn-strip {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: var(--space-6);
+        padding: var(--space-4) var(--space-8);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        background: var(--color-part-light);
+        font-size: 30px;
+      }
+
+      .learn-strip .ti {
+        font-size: 34px;
+        color: var(--color-accent);
+      }
+
+      /* ------------------------------------------------ 4. audience and competitors */
+
+      .market {
+        grid-template-columns: 420px 1fr;
+      }
+
+      .segments {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+      }
+
+      .segment {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        padding: var(--space-4) var(--space-6);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        background: var(--color-surface);
+        font-size: 32px;
+        line-height: 1.1;
+      }
+
+      .segment .ti {
+        font-size: 40px;
+        color: var(--color-accent);
+      }
+
+      .segment small {
+        display: block;
+        margin-top: 4px;
+        font-family: var(--font-code);
+        font-size: 16px;
+        color: var(--color-text-muted);
+      }
+
+      .need {
+        margin-top: auto;
+        padding: var(--space-6);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        background: var(--color-part-light);
+      }
+
+      .need .stat-value {
+        font-size: 64px;
+      }
+
+      .need .stat-label {
+        font-size: 24px;
+      }
+
+      .compare {
+        width: 100%;
+        height: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        background: var(--color-surface);
+        font-size: 30px;
+      }
+
+      .compare th,
+      .compare td {
+        padding: 16px 14px;
+        border-bottom: 1px solid var(--color-border);
+        text-align: center;
+      }
+
+      .compare tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .compare th {
+        font-weight: 400;
+        font-size: 21px;
+        line-height: 1.2;
+        color: var(--color-text-muted);
+      }
+
+      /* The two modes that set DevBrawl apart lead the table in their own colors */
+      .compare th.is-duel {
+        color: var(--color-duel);
+      }
+
+      .compare th.is-interview {
+        color: var(--color-elo);
+      }
+
+      .compare td:first-child,
+      .compare th:first-child {
+        padding-left: 24px;
+        text-align: left;
+      }
+
+      .compare .ti {
+        font-size: 38px;
+      }
+
+      .compare .yes {
+        color: var(--color-success);
+      }
+
+      .compare .part {
+        color: var(--color-warning);
+      }
+
+      .compare .no {
+        color: var(--color-border-strong);
+      }
+
+      .compare tr.is-us td {
+        background: var(--color-accent-soft);
+        font-family: var(--font-code);
+      }
+
+      .compare tr.is-us td:first-child {
+        color: var(--color-accent);
+      }
+
+      .legend {
+        display: flex;
+        gap: var(--space-6);
+        margin-top: var(--space-4);
+        font-size: 19px;
+        color: var(--color-text-muted);
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+
+      .table-wrap {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      /* ------------------------------------------------ 5. pricing */
+
+      .plans {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .plan {
+        padding: var(--space-12);
+      }
+
+      .plan-name {
+        font-size: 40px;
+      }
+
+      .plan-price {
+        font-family: var(--font-code);
+        font-size: 96px;
+        line-height: 1;
+      }
+
+      .plan-price small {
+        font-family: var(--font-text);
+        font-size: 30px;
+        color: var(--color-text-muted);
+      }
+
+      .plan .bullets {
+        gap: var(--space-6);
+        font-size: 36px;
+      }
+
+      .plan.is-premium {
+        border-color: var(--color-duel);
+        background: linear-gradient(160deg, var(--color-duel-soft), var(--color-surface) 60%);
+      }
+
+      .plan.is-premium .bullets .ti,
+      .plan.is-premium .plan-name {
+        color: var(--color-duel);
+      }
+
+      /* ------------------------------------------------ 6. retention */
+
+      .retention {
+        grid-template-columns: 1fr 1.1fr 1fr;
+      }
+
+      .retention .bullets {
+        font-size: 32px;
+        gap: var(--space-4);
+      }
+
+      .retention .bullets .ti {
+        font-size: 30px;
+      }
+
+      .avatars {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: var(--space-3);
+      }
+
+      .avatars img {
+        width: 100%;
+        aspect-ratio: 1;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        object-fit: cover;
+      }
+
+      .counts {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-4);
+      }
+
+      .counts .stat-value {
+        font-size: 56px;
+      }
+
+      .counts .stat-label {
+        font-size: 22px;
+        color: var(--color-text-muted);
+      }
+
+      .retention .stat-value {
+        font-size: 64px;
+      }
+
+      .retention .stat-label {
+        font-size: 24px;
+      }
+
+      /* ------------------------------------------------ navigation */
+
+      .nav {
+        position: fixed;
+        right: 24px;
+        bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        font-family: var(--font-code);
+        font-size: 14px;
+        color: var(--color-text-muted);
+      }
+
+      .nav button {
+        appearance: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius);
+        background: var(--color-surface);
+        color: var(--color-text);
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      .nav button:hover {
+        border-color: var(--color-accent);
+      }
+
+      .nav button:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--color-accent);
+      }
+
+      .progress {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 3px;
+        background: var(--color-accent);
+        transition: width 300ms ease-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress" aria-hidden="true"></div>
+
+    <main class="stage">
+      <!-- 1. Title -->
+      <section class="slide" aria-label="DevBrawl">
+        <p class="eyebrow">&gt; devbrawl --pitch</p>
+        <div class="cover">
+          <div>
+            <h1 class="cover-name">DevBrawl</h1>
+            <p class="cover-tagline">
+              Nauči koncepte.<br />
+              <span class="pink">Dokaži ih u duelu.</span>
+            </p>
+            <div class="modes">
+              <span class="mode pink"><i class="ti ti-swords"></i>Duel</span>
+              <span class="mode gold"><i class="ti ti-messages"></i>AI intervju</span>
+              <span class="mode cyan"><i class="ti ti-book-2"></i>Učenje</span>
+            </div>
+          </div>
+          <div class="cover-art"><img src="assets/mascot.webp" alt="DevBrawl maskota, buba programer" /></div>
+        </div>
+        <p class="cover-team">Claude i prijatelji <span class="muted">·</span> <span class="cyan">Ri-Hack</span> <span class="muted">· 25. 10. 2026.</span></p>
+      </section>
+
+      <!-- 2. Idea and problem -->
+      <section class="slide" aria-label="Ideja i problem">
+        <p class="eyebrow">01 · ideja i problem</p>
+        <h2 class="title">Sintaksa je laka.<br /><span class="cyan">Razumijevanje nije.</span></h2>
+        <div class="grid problem">
+          <div class="panel">
+            <span class="panel-label">IDEJA</span>
+            <ul class="bullets">
+              <li><i class="ti ti-bulb"></i><span class="todo">Naša priča</span></li>
+              <li><i class="ti ti-flame"></i>Navika kao Duolingo</li>
+              <li><i class="ti ti-chess-knight"></i>Rivalstvo kao Chess.com</li>
+              <li><i class="ti ti-arrow-right"></i>Za programske koncepte</li>
+            </ul>
+          </div>
+          <div class="stats">
+            <div class="stat">
+              <span class="stat-value pink">66%</span>
+              <span class="stat-label">anketiranih developera: AI rješenja „gotovo točna, ali ne sasvim“</span>
+              <span class="stat-source">Stack Overflow anketa 2025 · problemi s AI alatima · 31 476 ispitanika · survey.stackoverflow.co/2025/ai</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value pink">45%</span>
+              <span class="stat-label">anketiranih developera: debugiranje AI koda oduzima više vremena</span>
+              <span class="stat-source">ista anketa i pitanje</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value gold">88%</span>
+              <span class="stat-label">studenata koristi AI za ocjenjivane zadatke</span>
+              <span class="stat-source">HEPI anketa 2025 · 1 041 studenata (UK) · 2024.: 53% · hepi.ac.uk</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Duel and interview -->
+      <section class="slide" aria-label="Duel i AI intervju">
+        <p class="eyebrow">02 · rješenje</p>
+        <h2 class="title">Znanje na <span class="pink">testu</span>, ne na papiru</h2>
+        <div class="grid modes-grid">
+          <div class="panel feature is-duel">
+            <span class="feature-name"><i class="ti ti-swords"></i>Duel</span>
+            <ul class="bullets">
+              <li><i class="ti ti-users"></i>1 na 1 uživo</li>
+              <li><i class="ti ti-clock"></i>5 pitanja, tajmer</li>
+              <li><i class="ti ti-chart-line"></i>ELO po temi</li>
+              <li><i class="ti ti-trophy"></i>Rang lista</li>
+            </ul>
+            <img src="assets/bug-duel.webp" alt="" />
+          </div>
+          <div class="panel feature is-interview">
+            <span class="feature-name"><i class="ti ti-messages"></i>AI intervju</span>
+            <ul class="bullets">
+              <li><i class="ti ti-robot"></i>AI intervjuer</li>
+              <li><i class="ti ti-message-question"></i>Otvorena pitanja</li>
+              <li><i class="ti ti-checklist"></i>Ocjena + savjeti</li>
+              <li><i class="ti ti-briefcase"></i>Spreman za posao</li>
+            </ul>
+            <img src="assets/bug-interview.webp" alt="" />
+          </div>
+          <div class="learn-strip">
+            <i class="ti ti-book-2"></i>
+            <span><span class="cyan">Učenje</span> · 6 kategorija · lekcije · kvizovi</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Audience and competitors -->
+      <section class="slide" aria-label="Za koga i zašto mi">
+        <p class="eyebrow">03 · tržište</p>
+        <h2 class="title">Za koga · zašto mi</h2>
+        <div class="grid market">
+          <div class="segments">
+            <div class="segment">
+              <i class="ti ti-school"></i>
+              <span>Studenti informatike<small><span class="todo">dob</span></small></span>
+            </div>
+            <div class="segment">
+              <i class="ti ti-code"></i>
+              <span>Junior developeri<small>0–2 godine iskustva</small></span>
+            </div>
+            <div class="segment">
+              <i class="ti ti-briefcase"></i>
+              <span>Kandidati za posao<small>priprema za intervju</small></span>
+            </div>
+            <div class="need stat">
+              <span class="stat-value cyan">84%</span>
+              <span class="stat-label">developera koristi ili planira AI alate → koncepti &gt; sintaksa</span>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th class="is-duel">Duel 1 na 1</th>
+                  <th class="is-interview">AI intervju</th>
+                  <th>Koncepti, ne sintaksa</th>
+                  <th>ELO po temi</th>
+                  <th>Season pass</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Mimo</td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                </tr>
+                <tr>
+                  <td>Sololearn</td>
+                  <td><i class="ti ti-circle-half-2 part"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                </tr>
+                <tr>
+                  <td>LeetCode</td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-circle-half-2 part"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                </tr>
+                <tr>
+                  <td>Brilliant</td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-circle-half-2 part"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                  <td><i class="ti ti-x no"></i></td>
+                </tr>
+                <tr class="is-us">
+                  <td>DevBrawl</td>
+                  <td><i class="ti ti-check yes"></i></td>
+                  <td><i class="ti ti-check yes"></i></td>
+                  <td><i class="ti ti-check yes"></i></td>
+                  <td><i class="ti ti-check yes"></i></td>
+                  <td><i class="ti ti-check yes"></i></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="legend">
+              <span><i class="ti ti-circle-half-2 gold"></i>djelomično: kvizovi iz sintakse · jedan ukupni rejting · matematika i logika</span>
+            </div>
+          </div>
+        </div>
+        <p class="source">Izvor: Stack Overflow Developer Survey 2025</p>
+      </section>
+
+      <!-- 5. Business model -->
+      <section class="slide" aria-label="Model naplate">
+        <p class="eyebrow">04 · model naplate</p>
+        <h2 class="title">Freemium</h2>
+        <div class="grid plans">
+          <div class="panel plan">
+            <span class="plan-name">Besplatno</span>
+            <span class="plan-price">0 €</span>
+            <ul class="bullets">
+              <li><i class="ti ti-infinity"></i>Neograničeni dueli</li>
+              <li><i class="ti ti-book-2"></i>Sve lekcije</li>
+              <li><i class="ti ti-messages"></i>3 AI intervjua / mj.</li>
+              <li><i class="ti ti-ticket"></i>Besplatni season pass</li>
+            </ul>
+          </div>
+          <div class="panel plan is-premium">
+            <span class="plan-name">Premium</span>
+            <span class="plan-price">4,99 €<small> / mj.</small></span>
+            <ul class="bullets">
+              <li><i class="ti ti-messages"></i>30 AI intervjua / mj.</li>
+              <li><i class="ti ti-crown"></i>Premium season pass</li>
+              <li><i class="ti ti-diamond"></i>Ultra rare skinovi</li>
+              <li><i class="ti ti-palette"></i>Više personalizacije</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Retention and personalization -->
+      <section class="slide" aria-label="Zadržavanje korisnika">
+        <p class="eyebrow">05 · zadržavanje</p>
+        <h2 class="title">Razlog za povratak</h2>
+        <div class="grid retention">
+          <div class="panel">
+            <span class="panel-label">NAVIKA</span>
+            <ul class="bullets">
+              <li><i class="ti ti-flame"></i>Dnevni niz</li>
+              <li><i class="ti ti-ticket"></i>Mjesečni pass</li>
+              <li><i class="ti ti-chart-line"></i>ELO po temi</li>
+              <li><i class="ti ti-trophy"></i>Rang lista</li>
+              <li><i class="ti ti-share"></i>Dijeli rezultat</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <span class="panel-label">TVOJ LIK</span>
+            <div class="avatars">
+              <img src="assets/avatar-26.webp" alt="" />
+              <img src="assets/avatar-27.webp" alt="" />
+              <img src="assets/avatar-23.webp" alt="" />
+              <img src="assets/avatar-29.webp" alt="" />
+              <img src="assets/avatar-36.webp" alt="" />
+              <img src="assets/avatar-28.webp" alt="" />
+              <img src="assets/avatar-24.webp" alt="" />
+              <img src="assets/avatar-34.webp" alt="" />
+              <img src="assets/avatar-15.webp" alt="" />
+              <img src="assets/avatar-31.webp" alt="" />
+            </div>
+            <div class="counts">
+              <div class="stat"><span class="stat-value cyan">36</span><span class="stat-label">avatara</span></div>
+              <div class="stat"><span class="stat-value cyan">16</span><span class="stat-label">tagova</span></div>
+              <div class="stat"><span class="stat-value cyan">3D</span><span class="stat-label">lik</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <span class="panel-label">DOKAZI</span>
+            <div class="stat">
+              <span class="stat-value gold">3,6×</span>
+              <span class="stat-label">više završenih tečajeva uz niz od 7 dana</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value gold">g = 0,82</span>
+              <span class="stat-label">učinak gamifikacije na učenje (41 studija)</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value"><span class="todo">naši podaci</span></span>
+              <span class="stat-label muted">testni korisnici · povratak 7. dan</span>
+            </div>
+          </div>
+        </div>
+        <p class="source">Izvori: Duolingo blog, „How Duolingo streak builds habit“ · Frontiers in Psychology (2023), meta-analiza gamifikacije</p>
+      </section>
+    </main>
+
+    <nav class="nav" aria-label="Slajdovi">
+      <button type="button" data-step="-1" aria-label="Prethodni slajd"><i class="ti ti-arrow-left"></i></button>
+      <span class="counter"></span>
+      <button type="button" data-step="1" aria-label="Sljedeći slajd"><i class="ti ti-arrow-right"></i></button>
+    </nav>
+
+    <script>
+      const stage = document.querySelector('.stage')
+      const slides = [...document.querySelectorAll('.slide')]
+      const counter = document.querySelector('.counter')
+      const progress = document.querySelector('.progress')
+      let current = 0
+
+      function fit() {
+        const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900)
+        stage.style.transform = `translate(-50%, -50%) scale(${scale})`
+      }
+
+      function show(index) {
+        current = Math.min(Math.max(index, 0), slides.length - 1)
+        slides.forEach((slide, i) => slide.classList.toggle('is-active', i === current))
+        counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`
+        history.replaceState(null, '', `#${current + 1}`)
+      }
+
+      const fromHash = () => (Number(location.hash.slice(1)) || 1) - 1
+
+      document.addEventListener('keydown', (event) => {
+        if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(event.key)) show(current + 1)
+        else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(event.key)) show(current - 1)
+        else if (event.key === 'Home') show(0)
+        else if (event.key === 'End') show(slides.length - 1)
+        else return
+        event.preventDefault()
+      })
+      document.querySelectorAll('[data-step]').forEach((button) =>
+        button.addEventListener('click', () => show(current + Number(button.dataset.step))),
+      )
+      // A link like index.html#4 opens that slide
+      window.addEventListener('hashchange', () => show(fromHash()))
+      window.addEventListener('resize', fit)
+      fit()
+      show(fromHash())
+    </script>
+  </body>
+</html>

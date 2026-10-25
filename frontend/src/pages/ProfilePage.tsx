@@ -4,6 +4,8 @@ import { getProfile, type Profile, type ProfileDuel, type ProfileRating } from '
 import { CATEGORIES } from '../learn/content'
 import ScrollReveal from '../components/ScrollReveal'
 import AccountSettings from '../profile/AccountSettings'
+import { drawProfileCard } from '../share/cards'
+import { ShareButton } from '../share/ShareButton'
 import ProfileAvatar from '../profile/ProfileAvatar'
 import ProfileTag from '../profile/ProfileTag'
 import { AccuracyBars, RatingDotPlot, RecordBar, XpMeter } from '../profile/ProfileCharts'
@@ -127,6 +129,13 @@ function ProfileView({ profile, onOpenProfile, onStartDuel, onOpenCharacter, onR
           {profile.isYou && (
             <div className="profile-identity-actions">
               <AccountSettings onNicknameChanged={onReload} />
+              <ShareButton
+                label="Share profile"
+                fileName={`devbrawl-${user.nickname}`}
+                shareText={`My DevBrawl stats: overall rating ${profile.overall.rating}.`}
+                render={() => drawProfileCard(profile)}
+                className="profile-button"
+              />
             </div>
           )}
         </div>

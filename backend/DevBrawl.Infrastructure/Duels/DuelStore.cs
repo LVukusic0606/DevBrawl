@@ -29,6 +29,15 @@ public sealed class DuelStore(IServiceScopeFactory scopeFactory) : IDuelStore
         return await scope.ServiceProvider.GetRequiredService<IDuelScoring>().GetRatingsAsync(userId, cancellationToken);
     }
 
+    public async Task<int?> GetAvatarIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        using var scope = scopeFactory.CreateScope();
+        return await Db(scope).Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.AvatarId)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
     public async Task CreateDuelAsync(DuelMatch duel, CancellationToken cancellationToken = default)
     {
         using var scope = scopeFactory.CreateScope();

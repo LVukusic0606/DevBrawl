@@ -39,7 +39,8 @@ public enum PlayerDuelResult { Won, Lost, Draw }
 // where offset = ServerTime - device time on arrival.
 
 // Ratings: category id → rating
-public sealed record PlayerInfo(Guid Id, string Nickname, IReadOnlyDictionary<int, int> Ratings);
+// AvatarId is the player's picked avatar (as on their profile), null when they haven't picked one
+public sealed record PlayerInfo(Guid Id, string Nickname, int? AvatarId, IReadOnlyDictionary<int, int> Ratings);
 
 public sealed record QueueEvent;
 

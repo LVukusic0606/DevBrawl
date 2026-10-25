@@ -109,6 +109,8 @@ export type Answer = OptionAnswer | PathAnswer | OrderAnswer | LineAnswer
 export interface Player {
   id: string
   nickname: string
+  // Picked avatar (see profile/avatars); null when none
+  avatarId: number | null
   // category id → rating
   ratings: Record<string, number>
 }

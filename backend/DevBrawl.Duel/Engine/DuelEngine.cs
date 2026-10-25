@@ -205,8 +205,10 @@ public sealed class DuelEngine(
 
     private async Task StartDuelAsync(QueuedPlayer first, QueuedPlayer second)
     {
-        var player1 = new DuelPlayer(first.UserId, first.Nickname, await store.GetRatingsAsync(first.UserId));
-        var player2 = new DuelPlayer(second.UserId, second.Nickname, await store.GetRatingsAsync(second.UserId));
+        var player1 = new DuelPlayer(first.UserId, first.Nickname, await store.GetAvatarIdAsync(first.UserId),
+            await store.GetRatingsAsync(first.UserId));
+        var player2 = new DuelPlayer(second.UserId, second.Nickname, await store.GetAvatarIdAsync(second.UserId),
+            await store.GetRatingsAsync(second.UserId));
         var now = DateTime.UtcNow;
         var duel = new ActiveDuel(Guid.CreateVersion7(), player1, player2)
         {

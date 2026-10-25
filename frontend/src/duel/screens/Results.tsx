@@ -1,5 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { getDuel } from '../../api/duels'
+import { loadSession } from '../../api/session'
+import { drawDuelCard } from '../../share/cards'
+import { ShareButton } from '../../share/ShareButton'
 import { ROUND_RESULT_LABELS, roundTypeIcon, roundTypeName } from '../rounds'
 import { formatClock } from '../useCountdown'
 import type { Match } from '../useDuel'
@@ -150,6 +153,26 @@ export function Results({ match, ended, categoryName, onReview, onPlayAgain }: R
           <i className="ti ti-list-check" aria-hidden="true" />
           Review answers
         </button>
+        <ShareButton
+          label="Share result"
+          fileName={`devbrawl-duel-${ended.duelId.slice(0, 8)}`}
+          shareText={`${HEADLINES[ended.result]} ${ended.yourScore}–${ended.opponentScore} in a DevBrawl duel.`}
+          className="duel-secondary is-large"
+          render={() =>
+            drawDuelCard({
+              result: ended.result,
+              you: { nickname: match?.you.nickname ?? loadSession()?.user.nickname ?? 'You', avatarId: match?.you.avatarId },
+              opponent: { nickname: opponentName, avatarId: match?.opponent.avatarId },
+              yourScore: ended.yourScore,
+              opponentScore: ended.opponentScore,
+              correct,
+              rounds: 5,
+              xpGained: ended.xpGained,
+              durationSeconds: duration,
+              ratingChanges: ended.ratingChanges.map((c) => ({ categoryName: categoryName(c.categoryId), delta: c.delta })),
+            })
+          }
+        />
         <button type="button" className="duel-primary is-large" onClick={onPlayAgain}>
           Play again
           <i className="ti ti-swords" aria-hidden="true" />

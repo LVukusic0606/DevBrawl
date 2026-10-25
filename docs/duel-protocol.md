@@ -57,7 +57,7 @@ All times are UTC ISO strings. Enums are camelCase strings. Results are always f
 |---|---|
 | `QueueJoined` | `{}` |
 | `QueueLeft` | `{}` |
-| `MatchFound` | `{ duelId, you, opponent, startsAt }` — `you`/`opponent`: `{ id, nickname, ratings }`, `ratings` maps category id → rating |
+| `MatchFound` | `{ duelId, you, opponent, startsAt }` — `you`/`opponent`: `{ id, nickname, avatarId, ratings }` (`avatarId` null when not picked), `ratings` maps category id → rating |
 | `RoundStarted` | `{ duelId, roundNumber, type, categoryId, challenge, timeLimitSeconds, endsAt }` |
 | `AnswerAccepted` | `{ duelId, roundNumber }` — your answer was recorded |
 | `OpponentAnswered` | `{ duelId, roundNumber }` — never says whether it was correct |

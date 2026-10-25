@@ -4,10 +4,11 @@ using DevBrawl.Duel.Engine.Protocol;
 
 namespace DevBrawl.Duel.Engine;
 
-internal sealed class DuelPlayer(Guid userId, string nickname, IReadOnlyDictionary<int, int> ratings)
+internal sealed class DuelPlayer(Guid userId, string nickname, int? avatarId, IReadOnlyDictionary<int, int> ratings)
 {
     public Guid UserId { get; } = userId;
     public string Nickname { get; } = nickname;
+    public int? AvatarId { get; } = avatarId;
     public IReadOnlyDictionary<int, int> Ratings { get; } = ratings;
     public int Score { get; set; }
 
@@ -16,7 +17,7 @@ internal sealed class DuelPlayer(Guid userId, string nickname, IReadOnlyDictiona
     public bool Correct { get; set; }
     public DateTime? AnsweredAt { get; set; }
 
-    public PlayerInfo Info => new(UserId, Nickname, Ratings);
+    public PlayerInfo Info => new(UserId, Nickname, AvatarId, Ratings);
 
     public RoundAnswerRecord ToRecord() => new(Answer?.GetRawText(), Correct, AnsweredAt);
 

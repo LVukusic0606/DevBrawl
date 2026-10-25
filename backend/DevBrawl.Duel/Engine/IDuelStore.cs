@@ -15,6 +15,9 @@ public interface IDuelStore
 
     Task<IReadOnlyDictionary<int, int>> GetRatingsAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    // The avatar the player picked on their profile; null if none
+    Task<int?> GetAvatarIdAsync(Guid userId, CancellationToken cancellationToken = default);
+
     Task CreateDuelAsync(DuelMatch duel, CancellationToken cancellationToken = default);
 
     Task AddRoundAsync(DuelRound round, CancellationToken cancellationToken = default);

@@ -29,6 +29,9 @@ public interface IInterviewer
 
     // A spoken answer as text, using the interviewer's last message to spell terms right. Empty when there is no speech.
     Task<string> TranscribeAsync(string lastQuestion, byte[] audio, string mimeType, CancellationToken cancellationToken = default);
+
+    // The interviewer's message read aloud, as a WAV file
+    Task<byte[]> SpeakAsync(string text, CancellationToken cancellationToken = default);
 }
 
 public sealed class InterviewerUnavailableException(string message, Exception? innerException = null)

@@ -41,65 +41,97 @@ public sealed class LearnKnowledgeBase
     public string CategoryMaterial(LearnCategory category) =>
         string.Join("\n", category.Lessons.Select(l => _lessons[l.Id].Text));
 
+    // Blocks are read as raw JSON: the frontend keeps adding block types, and an unknown one must never break the interview
     internal static string Render(LearnLesson lesson)
     {
         var text = new StringBuilder($"# {lesson.Title}\n");
         foreach (var block in lesson.Blocks)
         {
             text.Append('\n');
-            switch (block.Type)
+            switch (Str(block, "type"))
             {
                 case "text":
-                    text.Append(block.Text).Append('\n');
+                    text.Append(Str(block, "text")).Append('\n');
+                    break;
+                case "section":
+                    text.Append($"## {Str(block, "title")}\n");
                     break;
                 case "code":
-                    text.Append($"{block.File}:\n```\n{block.Code}\n```\n");
+                    text.Append($"{Str(block, "file")}:\n```\n{Str(block, "code")}\n```\n");
                     break;
                 case "steps":
-                    for (var i = 0; i < block.Steps!.Count; i++)
-                        text.Append($"{i + 1}. {block.Steps[i]}\n");
+                    var number = 1;
+                    foreach (var step in Items(block, "steps"))
+                        text.Append($"{number++}. {Flatten(step)}\n");
+                    break;
+                case "walkthrough":
+                    foreach (var step in Items(block, "steps"))
+                        text.Append($"```\n{Str(step, "code")}\n```\nResult: {Str(step, "result")}\n{Str(step, "note")}\n\n");
                     break;
                 case "table":
-                    text.Append($"| {string.Join(" | ", block.Headers!)} |\n");
-                    text.Append($"|{string.Concat(block.Headers!.Select(_ => " --- |"))}\n");
-                    foreach (var row in block.Rows!)
-                        text.Append($"| {string.Join(" | ", row)} |\n");
+                    var headers = Items(block, "headers").Select(Flatten).ToList();
+                    text.Append($"| {string.Join(" | ", headers)} |\n");
+                    text.Append($"|{string.Concat(headers.Select(_ => " --- |"))}\n");
+                    foreach (var row in Items(block, "rows"))
+                        text.Append($"| {string.Join(" | ", row.EnumerateArray().Select(Flatten))} |\n");
                     break;
                 case "timeline":
-                    foreach (var item in block.Items!.Value.EnumerateArray())
-                        text.Append($"- {item.GetProperty("title").GetString()}: {item.GetProperty("detail").GetString()}\n");
+                    foreach (var item in Items(block, "items"))
+                        text.Append($"- {Str(item, "title")}: {Str(item, "detail")}\n");
                     break;
                 case "mistakes":
                     text.Append("Common mistakes:\n");
-                    foreach (var item in block.Items!.Value.EnumerateArray())
-                        text.Append($"- {item.GetString()}\n");
+                    foreach (var item in Items(block, "items"))
+                        text.Append($"- {Flatten(item)}\n");
                     break;
                 case "takeaway":
-                    text.Append($"Key takeaway: {block.Text}\n");
+                    text.Append($"Key takeaway: {Str(block, "text")}\n");
+                    break;
+                case "method-explorer":
+                    foreach (var method in Items(block, "methods"))
+                        text.Append($"- {Str(method, "method")}: {Str(method, "intent")}. Changes data: {Flatten(method.GetProperty("changesData"))}. "
+                            + $"Safe to repeat: {Str(method, "repeatSafe")}. Example: {Str(method, "request")} -> {Str(method, "response")}. {Str(method, "note")}\n");
                     break;
                 case "visual":
                     // Interactive diagram in the app; the surrounding text explains it
-                    text.Append($"[Interactive diagram: {block.Visual}]\n");
+                    text.Append($"[Interactive diagram: {Str(block, "visual")}]\n");
+                    break;
+                default:
+                    // A block type added to the frontend later: keep whatever text it has, or note the interactive part
+                    var content = Flatten(block, skip: "type");
+                    text.Append(content.Length > 0 ? $"{content}\n" : $"[Interactive {Str(block, "type")}]\n");
                     break;
             }
         }
         return text.ToString();
     }
+
+    private static string Str(JsonElement obj, string name) =>
+        obj.ValueKind == JsonValueKind.Object && obj.TryGetProperty(name, out var value) ? Flatten(value) : string.Empty;
+
+    private static IEnumerable<JsonElement> Items(JsonElement obj, string name) =>
+        obj.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Array ? value.EnumerateArray() : [];
+
+    // Any JSON value as readable text: strings as is, objects as "key: value" pairs, arrays joined
+    private static string Flatten(JsonElement value) => Flatten(value, skip: null);
+
+    private static string Flatten(JsonElement value, string? skip) => value.ValueKind switch
+    {
+        JsonValueKind.String => value.GetString()!,
+        JsonValueKind.True => "yes",
+        JsonValueKind.False => "no",
+        JsonValueKind.Number => value.GetRawText(),
+        JsonValueKind.Array => string.Join("; ", value.EnumerateArray().Select(Flatten).Where(t => t.Length > 0)),
+        JsonValueKind.Object => string.Join(". ", value.EnumerateObject()
+            .Where(p => p.Name != skip)
+            .Select(p => (p.Name, Text: Flatten(p.Value)))
+            .Where(p => p.Text.Length > 0)
+            .Select(p => $"{p.Name}: {p.Text}")),
+        _ => string.Empty
+    };
 }
 
-// Mirrors the types in frontend/src/learn/content.ts
+// Mirrors the categories and lessons in frontend/src/learn/content.ts; blocks stay raw JSON (see Render)
 public sealed record LearnCategory(string Id, string Title, string Description, List<LearnLesson> Lessons);
 
-public sealed record LearnLesson(string Id, string Title, List<LearnBlock> Blocks);
-
-public sealed record LearnBlock(
-    string Type,
-    string? Text,
-    string? File,
-    string? Code,
-    List<string>? Steps,
-    List<string>? Headers,
-    List<List<string>>? Rows,
-    // Timeline: [{ title, detail }]; mistakes: [string]
-    JsonElement? Items,
-    string? Visual);
+public sealed record LearnLesson(string Id, string Title, List<JsonElement> Blocks);

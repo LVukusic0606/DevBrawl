@@ -23,6 +23,9 @@ public interface IInterviewService
     // Ends the interview early, or retries an evaluation that failed
     Task<InterviewResult<InterviewSessionResponse>> FinishAsync(Guid userId, Guid sessionId, CancellationToken cancellationToken = default);
 
+    // An interviewer message read aloud, as WAV
+    Task<InterviewResult<byte[]>> SpeakAsync(Guid userId, Guid sessionId, Guid messageId, CancellationToken cancellationToken = default);
+
     // Turns a recorded answer into text the user can check before sending it
     Task<InterviewResult<TranscriptResponse>> TranscribeAsync(Guid userId, Guid sessionId, byte[] audio, string mimeType,
         CancellationToken cancellationToken = default);

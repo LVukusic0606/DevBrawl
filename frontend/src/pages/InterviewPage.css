@@ -550,3 +550,56 @@
     font-size: 40px;
   }
 }
+
+/* Interviewer voice */
+
+.interview-voice-toggle.is-on {
+  border-color: var(--color-accent);
+}
+
+.interview-voice-toggle .ti {
+  font-size: 18px;
+}
+
+.interview-author {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.interview-listen {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-1);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 150ms ease-out;
+}
+
+.interview-listen:hover {
+  color: var(--color-accent);
+}
+
+.interview-listen:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.interview-listen .ti {
+  font-size: 16px;
+}
+
+.interview-message.is-speaking .interview-bubble {
+  border-color: var(--color-accent);
+}
+
+.interview-message.is-speaking .interview-listen {
+  color: var(--color-accent);
+}

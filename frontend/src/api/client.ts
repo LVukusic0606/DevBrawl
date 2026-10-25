@@ -36,6 +36,10 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   if (response.status === 204) {
     return undefined as T
   }
+  // Files such as audio come back as a Blob; everything else is JSON
+  if (!(response.headers.get('Content-Type') ?? '').includes('json')) {
+    return (await response.blob()) as T
+  }
   return (await response.json()) as T
 }
 

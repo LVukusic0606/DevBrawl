@@ -94,3 +94,8 @@ export async function transcribeAnswer(sessionId: string, recording: Blob) {
   })
   return response.text
 }
+
+// The interviewer's message read aloud, as a WAV file
+export function getInterviewerSpeech(sessionId: string, messageId: string) {
+  return authFetch<Blob>(`/api/interview/sessions/${sessionId}/messages/${messageId}/speech`)
+}

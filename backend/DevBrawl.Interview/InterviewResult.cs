@@ -6,6 +6,7 @@ public enum InterviewError
     LessonNotFound,
     LessonNotInCategory,
     SessionNotFound,
+    MessageNotFound,
     SessionFinished,
     // Another request (e.g. a second tab) added a message at the same time
     SessionChanged,

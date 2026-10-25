@@ -11,6 +11,9 @@ public class GeminiOptions
     // Leave empty to use the model's default (much slower).
     public string? ThinkingLevel { get; set; } = "low";
     public int TimeoutSeconds { get; set; } = 120;
+    // Text-to-speech for the interviewer's voice: one of Gemini's prebuilt voices
+    public string TtsModel { get; set; } = "gemini-3.8-flash-lite-tts";
+    public string Voice { get; set; } = "Charon";
     public string BaseUrl { get; set; } = "https://generativelanguage.googleapis.com/";
 
     public string? ResolveApiKey() =>

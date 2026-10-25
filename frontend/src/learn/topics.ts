@@ -157,9 +157,3 @@ export function groupLessons(category: Category): TopicGroup[] {
 }
 
 // The first sentence of the lesson's introduction, used as its summary on the card
-export function lessonSummary(lesson: Lesson) {
-  const intro = lesson.blocks.find((block) => block.type === 'text')
-  if (!intro || intro.type !== 'text') return ''
-  const end = intro.text.search(/[.?!](\s|$)/)
-  return end === -1 ? intro.text : intro.text.slice(0, end + 1)
-}

@@ -35,7 +35,7 @@
   background: var(--color-surface);
   color: var(--color-text);
   font-family: var(--font-code);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition: border-color 200ms ease-out;
@@ -53,16 +53,16 @@
 .learn-content {
   flex: 1;
   width: 100%;
-  padding: var(--space-6) var(--space-8) var(--space-8);
+  padding: var(--space-16) var(--space-8) var(--space-8);
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-12);
 }
 
 .learn-title {
   margin: 0;
   font-family: var(--font-text);
-  font-size: 48px;
+  font-size: 52px;
   font-weight: 400;
   line-height: 1.1;
   color: var(--color-text);
@@ -164,30 +164,28 @@
 
 .learn-heading {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-16);
 }
 
 .learn-topic {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--space-8) + var(--space-2));
+  gap: var(--space-12);
 }
 
 .learn-topic + .learn-topic {
-  margin-top: calc(var(--space-8) * 1.5);
+  margin-top: var(--space-16);
 }
 
 .learn-topic-header {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  padding: var(--space-6) var(--space-8);
-  border: 1px solid var(--color-topic-border);
-  border-radius: var(--radius-md);
-  /* Opaque, so the page grid doesn't show through the header */
-  background: var(--color-topic-surface);
+  padding: 0 0 var(--space-6);
 }
 
 .learn-topic-icon {
@@ -195,12 +193,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: var(--radius);
   background: var(--color-topic);
   color: var(--color-bg);
-  font-size: 22px;
+  font-size: 26px;
 }
 
 .learn-topic-text {
@@ -211,24 +209,101 @@
 .learn-topic-name {
   margin: 0;
   font-family: var(--font-text);
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 400;
   line-height: 1.2;
-  color: var(--color-topic);
+  color: var(--color-text);
 }
 
 .learn-topic-desc {
   margin: var(--space-2) 0 0;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 17px;
   color: var(--color-text);
 }
 
 .learn-topic-count {
-  font-family: var(--font-text);
-  font-size: 14px;
-  color: var(--color-topic);
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-muted);
   white-space: nowrap;
+}
+
+/* The title row only as wide as the title, so the mascot can sit just to its right, hanging into the empty space above the tiles without pushing them down */
+.learn-title-row {
+  position: relative;
+  align-self: flex-start;
+  display: flex;
+}
+
+.learn-mascot {
+  position: absolute;
+  bottom: 0;
+  left: calc(100% + var(--space-8));
+  height: 124px;
+  width: auto;
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .learn-mascot {
+    display: none;
+  }
+}
+
+/* On a category page the search field sits right beside the title, so the mascot steps aside on narrower windows */
+@media (max-width: 1200px) {
+  .learn-heading .learn-mascot {
+    display: none;
+  }
+}
+
+/* Search field beside the category title: short, filled, fully rounded and without an icon */
+.learn-search {
+  flex: 0 1 420px;
+  min-width: 0;
+  height: 48px;
+  padding: 0 var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  background: var(--color-field);
+  font-family: var(--font-body);
+  font-size: 17px;
+  color: var(--color-text);
+}
+
+.learn-search::placeholder {
+  color: var(--color-text-muted);
+}
+
+.learn-search:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: var(--focus-ring);
+}
+
+.learn-search-empty {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--color-text-muted);
+}
+
+/* Small badge after the title of a lesson the learner has finished with a perfect quiz */
+.learn-lesson-done {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: var(--space-4);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-success);
+  border-radius: 999px;
+  vertical-align: middle;
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-success);
 }
 
 /* Lessons stack as wide bars: title and summary on the left, the arrow on the right */
@@ -249,7 +324,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   column-gap: var(--space-6);
-  row-gap: var(--space-3);
+  row-gap: var(--space-6);
   padding: var(--space-8);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -274,24 +349,17 @@
 .learn-lesson-card-title {
   grid-column: 1;
   font-family: var(--font-code);
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1.35;
   color: var(--color-text);
 }
 
-.learn-lesson-card-summary {
-  grid-column: 1;
-  font-family: var(--font-body);
-  font-size: 17px;
-  line-height: 1.5;
-  color: var(--color-text-muted);
-}
 
 .learn-lesson-card-arrow {
   grid-column: 2;
   grid-row: 1 / span 2;
-  font-size: 24px;
+  font-size: 26px;
   color: var(--color-text-muted);
   transition: transform 200ms ease-out, color 200ms ease-out;
 }
@@ -303,34 +371,274 @@
 
 .learn-lesson {
   width: 100%;
-  max-width: 720px;
+  max-width: none;
   margin: 0 auto;
-  padding: var(--space-6) var(--space-8) var(--space-8);
+  padding: var(--space-8) var(--space-8) var(--space-8);
   display: flex;
   flex-direction: column;
+  gap: var(--space-16);
+}
+
+/* Every other part of a lesson gets a lighter blue, so the parts read apart */
+.lesson-part {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-8);
+  border-radius: var(--radius-md);
+}
+
+.lesson-part.is-light {
+  background: var(--color-part-light);
+}
+
+/* The first heading of a part needs no divider, the tint already separates it */
+.lesson-part > .lesson-reveal:first-child > .lesson-section-title {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* Primary buttons: the button that starts the quiz, and the buttons that move through it */
+.learn-quiz-start,
+.learn-quiz-next {
+  appearance: none;
+  align-self: flex-start;
+  min-height: 56px;
+  padding: var(--space-3) var(--space-8);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius);
+  background: var(--color-accent);
+  color: var(--color-bg);
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 200ms ease-out;
+}
+
+/* The quiz button is the big, distinct action at the end of a lesson: gold, full width, large type */
+.learn-quiz-start {
+  align-self: center;
+  width: min(100%, 720px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: var(--space-4);
+  min-height: 72px;
+  margin-top: var(--space-16);
+  padding: var(--space-4) var(--space-12);
+  border-color: var(--color-elo);
+  background: var(--color-elo);
+  color: var(--color-bg);
+  font-size: 20px;
+}
+
+.learn-quiz-start:hover,
+.learn-quiz-next:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.learn-quiz-start:focus-visible,
+.learn-quiz-next:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.learn-quiz-next:disabled {
+  cursor: default;
+  background: transparent;
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+}
+
+/* Quiz screen */
+
+.learn-quiz {
+  flex: 1;
+  width: 100%;
+  padding: var(--space-12) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.learn-quiz-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.learn-quiz-congrats {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--color-success);
+}
+
+.learn-quiz-step {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.learn-quiz-progress {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.learn-quiz-scenario {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 28px;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.learn-quiz-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.learn-quiz-choice {
+  min-width: 120px;
+  min-height: 56px;
+  padding: var(--space-3) var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-field);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 200ms ease-out, color 200ms ease-out;
+}
+
+.learn-quiz-choice:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.learn-quiz-choice:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.learn-quiz-choice:disabled {
+  cursor: default;
+  color: var(--color-text-muted);
+}
+
+.learn-quiz-choice.is-correct {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.learn-quiz-choice.is-wrong {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.learn-quiz-feedback {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+.learn-quiz-feedback.is-correct .learn-quiz-verdict,
+.learn-quiz-feedback.is-correct .ti {
+  color: var(--color-success);
+}
+
+.learn-quiz-feedback.is-wrong .learn-quiz-verdict,
+.learn-quiz-feedback.is-wrong .ti {
+  color: var(--color-danger);
+}
+
+.learn-quiz-verdict {
+  font-family: var(--font-code);
+  font-weight: 700;
+}
+
+.learn-quiz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+/* Always visible in the lower right corner of a lesson */
+.learn-to-top {
+  position: fixed;
+  right: var(--space-8);
+  bottom: var(--space-8);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-accent);
+  font-size: 20px;
+  cursor: pointer;
+  transition: border-color 200ms ease-out, background-color 200ms ease-out;
+}
+
+.learn-to-top:hover {
+  border-color: var(--color-accent);
+  background: var(--color-field);
+}
+
+.learn-to-top:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .learn-lesson-category {
   margin: 0;
   font-family: var(--font-text);
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
   color: var(--color-accent);
 }
 
 .learn-lesson-title {
-  margin: 0 0 var(--space-4);
+  margin: 0 0 var(--space-6);
   font-family: var(--font-text);
-  font-size: 40px;
-  font-weight: 400;
+  font-size: 48px;
+  font-weight: 700;
   line-height: 1.15;
+  text-align: center;
   color: var(--color-text);
 }
 
 .learn-lesson-text {
   margin: 0;
   font-family: var(--font-body);
-  font-size: 17px;
+  font-size: 20px;
   line-height: 1.6;
   color: var(--color-text);
 }
@@ -387,10 +695,6 @@
 
   .learn-lesson-card-title {
     font-size: 18px;
-  }
-
-  .learn-lesson-card-summary {
-    font-size: 15px;
   }
 
   .learn-grid {

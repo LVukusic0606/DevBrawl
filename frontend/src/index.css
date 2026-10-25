@@ -7,6 +7,11 @@
   --color-text-muted: #7893a8;
   --color-accent: #22d3ee;
   --color-accent-soft: rgba(34, 211, 238, 0.12);
+  --color-part-light: #0c1d2b;
+  --color-code-bg: #0a1822;
+  --color-code-border: #1b3345;
+  --color-code-text: #d4e4ee;
+  --color-code-muted: #7893a8;
   --color-field: #12293a;
   --color-surface-glass: rgba(13, 27, 38, 0.72);
   --color-surface-raised: #0f2230;
@@ -48,6 +53,8 @@
   --space-4: 16px;
   --space-6: 24px;
   --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
 
   --radius: 8px;
   --radius-md: 12px;

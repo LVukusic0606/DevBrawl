@@ -11,6 +11,8 @@ export interface CodeBlock {
   type: 'code'
   file: string
   code: string
+  // Highlight.js language name, such as 'typescript' or 'http'; without it the code shows as plain text
+  language?: string
 }
 
 export interface StepsBlock {
@@ -44,6 +46,41 @@ export interface TakeawayBlock {
   text: string
 }
 
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+
+export type Trait = 'yes' | 'no' | 'depends'
+
+// Tap a method to see its facts, one request and its response
+export interface MethodExplorerBlock {
+  type: 'method-explorer'
+  methods: {
+    method: HttpMethod
+    intent: string
+    changesData: boolean
+    repeatSafe: Trait
+    request: string
+    response: string
+    note: string
+  }[]
+}
+
+// Learner presses buttons and watches the server state change
+export interface RetryDemoBlock {
+  type: 'retry-demo'
+}
+
+// Heading that splits a long lesson into parts
+export interface SectionBlock {
+  type: 'section'
+  title: string
+}
+
+// Learner types "next step" to reveal the next call; each one animates in and shows its result
+export interface WalkthroughBlock {
+  type: 'walkthrough'
+  steps: { code: string; result: string; note: string }[]
+}
+
 export type LessonBlock =
   | TextBlock
   | CodeBlock
@@ -51,13 +88,26 @@ export type LessonBlock =
   | TableBlock
   | TimelineBlock
   | VisualBlock
+  | MethodExplorerBlock
+  | RetryDemoBlock
+  | SectionBlock
+  | WalkthroughBlock
   | MistakesBlock
   | TakeawayBlock
+
+// Asks the learner to pick the HTTP method that fits a scenario
+export interface QuizQuestion {
+  scenario: string
+  answer: HttpMethod
+  explanation: string
+}
 
 export interface Lesson {
   id: string
   title: string
   blocks: LessonBlock[]
+  // Optional: lessons with a quiz get a button at the bottom that opens the quiz screen
+  quiz?: QuizQuestion[]
 }
 
 // The six categories match the ELO categories in spec.md (section 2) and the files in backend/Questions
@@ -126,42 +176,243 @@ const BASE_CATEGORIES: Category[] = [
       {
         id: 'http-methods',
         title: 'HTTP methods: GET, POST, PUT, PATCH and DELETE',
+        quiz: [
+          {
+            scenario: 'Show the list of lessons on the screen.',
+            answer: 'GET',
+            explanation: 'Reading changes nothing, so it is a GET.',
+          },
+          {
+            scenario: 'Add a new comment under lesson 12.',
+            answer: 'POST',
+            explanation: 'The comment does not exist yet. The server creates it and picks its address.',
+          },
+          {
+            scenario: 'Fix one typo in the title of lesson 12.',
+            answer: 'PATCH',
+            explanation: 'Only one field changes, so PATCH fits better than sending the whole lesson.',
+          },
+          {
+            scenario: 'Save the full lesson 12 from the editor, replacing the old copy.',
+            answer: 'PUT',
+            explanation: 'The complete copy replaces the old one. Sending it twice gives the same result.',
+          },
+          {
+            scenario: 'Remove duel 45 from the history.',
+            answer: 'DELETE',
+            explanation: 'The intent is to remove something, and it stays removed.',
+          },
+        ],
         blocks: [
           {
-            type: 'text',
-            text: 'A method tells the server what the client wants to do. The same address can accept different methods, and each one means something different.',
+            type: 'section',
+            title: 'Terms',
           },
           {
             type: 'table',
-            headers: ['Method', 'Intent', 'Changes data?'],
+            headers: ['Term', 'Meaning'],
             rows: [
-              ['GET', 'Read something', 'No'],
-              ['POST', 'Create something new', 'Yes'],
-              ['PUT', 'Replace something', 'Yes'],
-              ['PATCH', 'Change part of something', 'Yes'],
-              ['DELETE', 'Remove something', 'Yes'],
+              ['Resource', 'A thing the API manages, with its own address, such as a lesson'],
+              ['Method', 'The verb: what to do with the resource'],
+              ['Body', 'The content sent or returned, usually JSON'],
+              ['Safe', 'The request never changes data'],
+              ['Idempotent (safe to repeat)', 'Sending it once or many times leaves the same result'],
+              ['Status code', 'The three-digit answer that says how it went'],
+            ],
+          },
+          {
+            type: 'section',
+            title: 'General explanation',
+          },
+          {
+            type: 'text',
+            text: 'A method tells the server what the client wants to do. The same address can accept several methods, and each one means something different.',
+          },
+          {
+            type: 'text',
+            text: 'Every request has the same parts: a method, an address, headers and, sometimes, a body. The server reads the method first.',
+          },
+          {
+            type: 'code',
+            file: 'anatomy of a request',
+            language: 'http',
+            code: [
+              'PATCH /api/lessons/12           method + address',
+              'Host: devbrawl.io               where to send it',
+              'Content-Type: application/json  how the body is written',
+              'Authorization: Bearer eyJhbGc…  who is asking',
+              '',
+              '{ "title": "HTTP verbs" }        body: the change itself',
+            ].join('\n'),
+          },
+          {
+            type: 'section',
+            title: 'Usage examples',
+          },
+          {
+            type: 'method-explorer',
+            methods: [
+              {
+                method: 'GET',
+                intent: 'Read something',
+                changesData: false,
+                repeatSafe: 'yes',
+                request: 'GET /lessons/12',
+                response: '200 OK\n{ "id": 12, "title": "HTTP methods" }',
+                note: 'The server only reads. Nothing changes, so you can send the same GET as often as you like.',
+              },
+              {
+                method: 'POST',
+                intent: 'Create something new',
+                changesData: true,
+                repeatSafe: 'no',
+                request: 'POST /lessons',
+                response: '201 Created\nLocation: /lessons/13',
+                note: 'The server picks the new address. Every repeat creates another lesson.',
+              },
+              {
+                method: 'PUT',
+                intent: 'Replace the whole thing',
+                changesData: true,
+                repeatSafe: 'yes',
+                request: 'PUT /lessons/12',
+                response: '200 OK\n{ "id": 12, "title": "HTTP methods", "body": "..." }',
+                note: 'The client sends the complete lesson. Sending the same copy twice leaves the same result.',
+              },
+              {
+                method: 'PATCH',
+                intent: 'Change part of it',
+                changesData: true,
+                repeatSafe: 'depends',
+                request: 'PATCH /lessons/12\n{ "title": "HTTP verbs" }',
+                response: '200 OK\n{ "id": 12, "title": "HTTP verbs" }',
+                note: 'Only the sent fields change. Setting a title is safe to repeat. Adding 1 to a view counter is not.',
+              },
+              {
+                method: 'DELETE',
+                intent: 'Remove something',
+                changesData: true,
+                repeatSafe: 'yes',
+                request: 'DELETE /lessons/12',
+                response: '204 No Content',
+                note: 'The first call removes lesson 12. Repeating it returns 404 Not Found, but the lesson is still gone.',
+              },
+            ],
+          },
+          {
+            type: 'text',
+            text: 'The address is the noun and the method is the verb. One address, four verbs: GET reads, PUT replaces, PATCH changes a part, DELETE removes.',
+          },
+          {
+            type: 'table',
+            headers: ['Method', 'Changes data?', 'Safe to repeat?'],
+            rows: [
+              ['GET', 'No', 'Yes'],
+              ['POST', 'Yes', 'No'],
+              ['PUT', 'Yes', 'Yes'],
+              ['PATCH', 'Yes', 'Depends on the change'],
+              ['DELETE', 'Yes', 'Yes'],
+            ],
+          },
+          {
+            type: 'text',
+            text: 'Safe means nothing changes on the server. Safe to repeat means sending the same request again leaves the same result.',
+          },
+          {
+            type: 'text',
+            text: 'A plain HTML form sends only GET and POST. Other methods need JavaScript, such as fetch.',
+          },
+          {
+            type: 'code',
+            file: 'a delete button, in the browser',
+            language: 'typescript',
+            code: [
+              "await fetch('/api/lessons/12', {",
+              "  method: 'DELETE',",
+              '  headers: { Authorization: `Bearer ${token}` },',
+              '})',
+            ].join('\n'),
+          },
+          {
+            type: 'timeline',
+            items: [
+              { title: 'POST /lessons', detail: '201 Created. The new lesson gets id 13, and a Location header points at it.' },
+              { title: 'GET /lessons/13', detail: '200 OK. The client reads the lesson back to show it.' },
+              { title: 'PATCH /lessons/13', detail: '200 OK. Only the title changes; the rest of the lesson stays.' },
+              { title: 'PUT /lessons/13', detail: '200 OK. The full lesson from the editor replaces the old copy.' },
+              { title: 'DELETE /lessons/13', detail: '204 No Content. The lesson is gone. Repeating the call gives 404.' },
+            ],
+          },
+          {
+            type: 'text',
+            text: 'Responses get lost, so clients often repeat a request. Whether a repeat is harmless depends on the method. Try it below.',
+          },
+          {
+            type: 'retry-demo',
+          },
+          {
+            type: 'text',
+            text: 'The method says what was asked. The status code says what happened.',
+          },
+          {
+            type: 'table',
+            headers: ['Situation', 'Response', 'What it means'],
+            rows: [
+              ['Deleted, nothing to send back', '204 No Content', 'DELETE worked and there is no body'],
+              ['A new item was created', '201 Created', 'POST made a resource; Location says where'],
+              ['The address has no such item', '404 Not Found', 'There is no lesson 12 to read or change'],
+              ['The address does not accept this method', '405 Method Not Allowed', 'The response lists the methods it does accept'],
+              ['The change clashes with current data', '409 Conflict', 'Two people edited the same lesson'],
             ],
           },
           {
             type: 'code',
-            file: 'the same address, different intent',
-            code: [
-              'GET     /lessons/12    read lesson 12',
-              'DELETE  /lessons/12    remove lesson 12',
-              'POST    /lessons       create a new lesson',
-            ].join('\n'),
+            file: 'the same address, a method it does not accept',
+            language: 'http',
+            code: ['POST /lessons/12', '', '405 Method Not Allowed', 'Allow: GET, PUT, PATCH, DELETE'].join('\n'),
           },
           {
-            type: 'mistakes',
-            items: [
-              'Changing data in a GET request, so a page refresh or a link preview changes things.',
-              'Retrying a failed POST automatically and creating the same item twice.',
-              'Using POST for everything, which hides what each request actually does.',
+            type: 'section',
+            title: 'Walkthrough',
+          },
+          {
+            type: 'text',
+            text: 'One lesson’s life, from creation to deletion. Press Next to write each call into the file.',
+          },
+          {
+            type: 'walkthrough',
+            steps: [
+              {
+                code: "const lesson = await fetch('/api/lessons/12')",
+                result: '200 OK   { "id": 12, "title": "HTTP methods" }',
+                note: 'GET reads the lesson. The server changes nothing.',
+              },
+              {
+                code: "const created = await fetch('/api/lessons', {\n  method: 'POST',\n  body: JSON.stringify({ title: 'Verbs' }),\n})",
+                result: '201 Created   Location: /api/lessons/13',
+                note: 'POST creates a new item. The server picks its address.',
+              },
+              {
+                code: "await fetch('/api/lessons/13', {\n  method: 'PATCH',\n  body: JSON.stringify({ title: 'HTTP verbs' }),\n})",
+                result: '200 OK   only the title changed',
+                note: 'PATCH sends just the field that changes.',
+              },
+              {
+                code: "await fetch('/api/lessons/13', {\n  method: 'PUT',\n  body: JSON.stringify(fullLesson),\n})",
+                result: '200 OK   the old copy is replaced',
+                note: 'PUT sends the whole item. A field you leave out is lost.',
+              },
+              {
+                code: "await fetch('/api/lessons/13', { method: 'DELETE' })",
+                result: '204 No Content',
+                note: 'DELETE removes the lesson. There is nothing to send back.',
+              },
+              {
+                code: "await fetch('/api/lessons/13', { method: 'DELETE' })",
+                result: '404 Not Found   already gone',
+                note: 'Repeating DELETE is harmless. The server only reports the state.',
+              },
             ],
-          },
-          {
-            type: 'takeaway',
-            text: 'Repeating a GET is safe because it changes nothing. Repeating a POST may create a second item, so pick the method that matches the intent.',
           },
         ],
       },

@@ -19,15 +19,17 @@ This document is the source of truth for the frontend visual style. Every new co
 | `--color-text-muted` | `#7893a8` | Secondary text, labels, placeholders |
 | `--color-accent` | `#22d3ee` | Learning: primary actions, active states, focus |
 | `--color-duel` | `#f472b6` | Duel: actions, timer, active states inside duel |
-| `--color-topic` | `#f5b83d` | Learn: category icons and topic headers that group lessons |
+| `--color-topic` | `#f5b83d` | Learn: category icons, topic icons and lesson section headings |
 | `--color-elo` | `#f5b83d` | Rewards: the overall ELO, new ratings, XP and level on the results screen |
 | `--color-success` | `#4ade80` | Correct answer, progress |
 | `--color-danger` | `#f87171` | Wrong answer, errors |
 | `--color-warning` | `#facc15` | Warnings, approaching deadlines |
+| `--color-part-light` | `#0c1d2b` | Lighter blue background for every other part of a lesson; the rest sit on the page background |
+| `--color-code-bg` / `--color-code-border` / `--color-code-text` / `--color-code-muted` | `#0a1822` / `#1b3345` / `#d4e4ee` / `#7893a8` | Code blocks in lessons: a dark blue surface with the page's border color, so the syntax colors stay calm |
 
 Color rules:
 - Cyan belongs to learning, magenta to duel. Do not mix them within the same action.
-- Gold (`--color-topic`) only marks Learn categories and topics: the category tile icons and the topic headers in lesson lists, so sections read apart from the lessons. It is never used for actions.
+- Gold (`--color-topic`) only marks Learn categories and topics: the category tile icons, the topic icons and the section headings in lessons. Topic names stay in the text color, so no long gold bars appear. It is never used for actions.
 - Use the accent sparingly: at most one accent action per screen.
 - Text always uses `--color-text` or `--color-text-muted`, never pure white or a gray from another palette.
 
@@ -48,7 +50,7 @@ Code shown in duels is colored like VS Code's Dark+ theme, through `--code-*` to
 ## Density and spacing
 
 - Medium density. Enough room to read, enough data on screen.
-- Spacing scale in 4px steps: 4, 8, 12, 16, 24, 32.
+- Spacing scale in 4px steps: 4, 8, 12, 16, 24, 32. Long reading screens (lessons) may use 48 between blocks and 64 between sections, so the page breathes.
 - Card inner padding: 16px. Gap between cards: 12px.
 
 ## Radius and borders
@@ -67,7 +69,7 @@ Code shown in duels is colored like VS Code's Dark+ theme, through `--code-*` to
 
 - Key screens use the full screen with a bold composition, not a small centered card.
 - Headings are large (40 to 48px on key screens). Hierarchy comes from scale.
-- Inputs are filled (`--color-field`), 52px tall, without leading icons. The focus state is a 1px accent ring.
+- Inputs are filled (`--color-field`), 52px tall, without leading icons. The focus state is a 1px accent ring. The Learn search field is the exception: 48px tall, fully rounded (24px radius), and placed beside the category title.
 - Switching between related views (log in / sign up) uses an inline text link, not segmented tabs. The link is bold accent text with a trailing arrow icon that nudges right on hover, never a plain underline.
 - Primary button labels use Martian Mono Bold so they read as solid and confident. Share Tech Mono is too thin for buttons.
 - Checkboxes are custom: a 22px filled box with a 1px `--color-border-strong` border that turns solid accent with a dark Tabler check when checked. Never the browser default.

@@ -2,6 +2,7 @@ import hljs from 'highlight.js/lib/core'
 import bash from 'highlight.js/lib/languages/bash'
 import csharp from 'highlight.js/lib/languages/csharp'
 import dockerfile from 'highlight.js/lib/languages/dockerfile'
+import http from 'highlight.js/lib/languages/http'
 import ini from 'highlight.js/lib/languages/ini'
 import nginx from 'highlight.js/lib/languages/nginx'
 import python from 'highlight.js/lib/languages/python'
@@ -9,10 +10,11 @@ import sql from 'highlight.js/lib/languages/sql'
 import typescript from 'highlight.js/lib/languages/typescript'
 import yaml from 'highlight.js/lib/languages/yaml'
 
-// Only the languages the duel challenges use (see backend/Questions), to keep the bundle small
+// Only the languages the duel challenges and the lessons use (see backend/Questions), to keep the bundle small
 hljs.registerLanguage('bash', bash)
 hljs.registerLanguage('csharp', csharp)
 hljs.registerLanguage('dockerfile', dockerfile)
+hljs.registerLanguage('http', http)
 hljs.registerLanguage('ini', ini)
 hljs.registerLanguage('nginx', nginx)
 hljs.registerLanguage('python', python)

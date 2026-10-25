@@ -9,7 +9,7 @@ namespace DevBrawl.Infrastructure.Leaderboard;
 
 // Computed in memory on every request: fine for a hackathon-sized player base,
 // and it uses OverallRating so the numbers always match the profile
-public class LeaderboardService(AppDbContext db) : ILeaderboardService
+public class LeaderboardService(AppDbContext db, ILearningStreakService streaks) : ILeaderboardService
 {
     public async Task<LeaderboardResponse> GetOverallAsync(Guid requesterId, int limit, CancellationToken cancellationToken = default)
     {
@@ -45,6 +45,8 @@ public class LeaderboardService(AppDbContext db) : ILeaderboardService
             .Where(p => userIds.Contains(p.UserId))
             .ToDictionaryAsync(p => p.UserId, p => p.TotalXp, cancellationToken);
 
+        var streakByUser = await streaks.GetCurrentAsync(userIds, cancellationToken);
+
         var ranked = userIds
             .Where(users.ContainsKey)
             .Select(id => new
@@ -68,7 +70,8 @@ public class LeaderboardService(AppDbContext db) : ILeaderboardService
             var position = i > 0 && player.Rating == ranked[i - 1].Rating ? entries[i - 1].Position : i + 1;
             entries.Add(new LeaderboardEntryResponse(position, player.Id, player.Nickname, player.AvatarId, player.Tag, player.Rating,
                 RankTiers.FromRating(player.Rating), player.Stats.Duels, player.Stats.Wins,
-                Levels.FromTotalXp(totalXp.GetValueOrDefault(player.Id)), player.Id == requesterId));
+                Levels.FromTotalXp(totalXp.GetValueOrDefault(player.Id)), streakByUser.GetValueOrDefault(player.Id),
+                player.Id == requesterId));
         }
 
         var top = entries.Take(limit).ToList();

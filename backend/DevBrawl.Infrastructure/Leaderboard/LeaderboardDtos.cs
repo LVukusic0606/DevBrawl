@@ -24,4 +24,6 @@ public sealed record LeaderboardEntryResponse(
     int Wins,
     // From the player's total XP, the same level the profile shows
     int Level,
+    // Days in a row with a newly completed lesson
+    int Streak,
     bool IsYou);

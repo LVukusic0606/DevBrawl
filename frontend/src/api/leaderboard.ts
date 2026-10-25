@@ -16,6 +16,8 @@ export interface LeaderboardEntry {
   wins: number
   // From total XP, the same level the profile shows
   level: number
+  // Days in a row with a newly completed lesson
+  streak: number
   isYou: boolean
 }
 

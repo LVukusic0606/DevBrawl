@@ -1,3 +1,4 @@
+using DevBrawl.Common.Progression;
 using DevBrawl.Duel.Contracts;
 using DevBrawl.Duel.Dtos;
 using DevBrawl.Duel.Engine.Protocol;
@@ -22,7 +23,9 @@ public sealed record ProfileResponse(
     ProfileAccuracyResponse Accuracy,
     // Finished duels, newest first
     IReadOnlyList<ProfileDuelResponse> RecentDuels,
-    ProfileLearningResponse Learning);
+    ProfileLearningResponse Learning,
+    // Days in a row with a newly completed lesson
+    Streak Streak);
 
 // Lessons the player has finished, as slugs. The lesson catalog lives in the frontend, which turns these into totals.
 public sealed record ProfileLearningResponse(IReadOnlyList<string> CompletedLessonIds);

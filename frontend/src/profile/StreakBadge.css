@@ -1,0 +1,52 @@
+/* Learning streak flame. Classes start with "streak-" because CSS is global in this app.
+   The flame is the one small warm accent next to the mascot; it uses the warning token. */
+
+.streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.streak-badge .ti {
+  font-size: 18px;
+}
+
+.streak-badge-count {
+  font-family: var(--font-code);
+  font-weight: 700;
+}
+
+.streak-badge.is-lit .ti {
+  color: var(--color-warning);
+}
+
+.streak-badge.is-lit .streak-badge-count {
+  color: var(--color-text);
+}
+
+/* Alive, but today's lesson is still missing: the flame dims until then */
+.streak-badge.is-at-risk .ti {
+  opacity: 0.55;
+}
+
+.streak-badge.is-full {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 13px;
+}
+
+.streak-badge.is-full .ti {
+  font-size: 16px;
+}
+
+.streak-badge-text {
+  color: var(--color-text-muted);
+}
+
+.streak-badge.is-compact {
+  font-size: 15px;
+}

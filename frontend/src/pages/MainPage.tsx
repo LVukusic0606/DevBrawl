@@ -1,9 +1,12 @@
+import { useEffect, useState } from 'react'
 import type { User } from '../api/auth'
+import { getStreak, type Streak } from '../api/streak'
 import bugDuel from '../assets/bug-duel.webp'
 import bugInterview from '../assets/bug-interview.webp'
 import bugLearn from '../assets/bug-learn.webp'
 import { AvatarPicture } from '../profile/AvatarPicture'
 import { findAvatar } from '../profile/avatars'
+import { StreakBadge } from '../profile/StreakBadge'
 import './MainPage.css'
 
 export type MainSection = 'learn' | 'duel' | 'interview'
@@ -50,6 +53,15 @@ const SECTIONS: {
 ]
 
 function MainPage({ user, onSelect, onLogout, onOpenProfile, onOpenLeaderboard, onOpenSeason, onOpenPremium }: MainPageProps) {
+  const [streak, setStreak] = useState<Streak | null>(null)
+
+  // Loads once per visit to the main page; the header simply hides the flame if it fails
+  useEffect(() => {
+    getStreak()
+      .then(setStreak)
+      .catch(() => {})
+  }, [])
+
   const avatar = findAvatar(user.avatarId ?? null)
 
   return (
@@ -73,6 +85,7 @@ function MainPage({ user, onSelect, onLogout, onOpenProfile, onOpenLeaderboard, 
             <i className="ti ti-logout" aria-hidden="true" />
             Log out
           </button>
+          {streak && <StreakBadge current={streak.current} activeToday={streak.activeToday} variant="compact" />}
           {/* The player's picture, or the first letter of the nickname, opens their profile */}
           <button type="button" className="home-avatar" aria-label="Profile" onClick={onOpenProfile}>
             <AvatarPicture avatar={avatar} nickname={user.nickname} />

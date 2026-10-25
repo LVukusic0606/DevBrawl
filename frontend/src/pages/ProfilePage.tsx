@@ -8,6 +8,7 @@ import { drawProfileCard } from '../share/cards'
 import { ShareButton } from '../share/ShareButton'
 import ProfileAvatar from '../profile/ProfileAvatar'
 import ProfileTag from '../profile/ProfileTag'
+import { StreakBadge } from '../profile/StreakBadge'
 import { AccuracyBars, RatingDotPlot, RecordBar, XpMeter } from '../profile/ProfileCharts'
 import {
   CHALLENGE_TYPE_LABELS,
@@ -125,6 +126,12 @@ function ProfileView({ profile, onOpenProfile, onStartDuel, onOpenCharacter, onR
               {user.nickname}
             </h1>
             <ProfileTag tag={user.tag} editable={profile.isYou} onChanged={onReload} />
+            <StreakBadge
+              current={profile.streak.current}
+              best={profile.streak.best}
+              // Other players don't need the "today is missing" hint
+              activeToday={profile.isYou ? profile.streak.activeToday : true}
+            />
           </div>
           {profile.isYou && (
             <div className="profile-identity-actions">

@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevBrawl.Infrastructure.Profiles;
 
-public class ProfileService(AppDbContext db, ILessonProgressService lessons) : IProfileService
+public class ProfileService(AppDbContext db, ILessonProgressService lessons, ILearningStreakService streaks) : IProfileService
 {
     private const int RecentDuelCount = 10;
 
@@ -37,7 +37,8 @@ public class ProfileService(AppDbContext db, ILessonProgressService lessons) : I
             await DuelStatsAsync(userId, cancellationToken),
             await AccuracyAsync(userId, categories.Select(c => c.Id).ToList(), cancellationToken),
             await RecentDuelsAsync(userId, cancellationToken),
-            new ProfileLearningResponse(await lessons.GetCompletedAsync(userId, cancellationToken)));
+            new ProfileLearningResponse(await lessons.GetCompletedAsync(userId, cancellationToken)),
+            await streaks.GetAsync(userId, cancellationToken));
     }
 
     private async Task<ProfileProgressResponse> ProgressAsync(Guid userId, CancellationToken cancellationToken)

@@ -65,6 +65,8 @@ export interface Profile {
   // Filled in once the Learn backend exists
   // Slugs of the lessons the player has finished
   learning: { completedLessonIds: string[] }
+  // Days in a row with a newly completed lesson
+  streak: { current: number; best: number; activeToday: boolean }
 }
 
 // Without a userId: the logged-in player's own profile

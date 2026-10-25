@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<ILeaderboardService, LeaderboardService>();
         services.AddScoped<ISeasonService, SeasonService>();
+        services.AddScoped<ILearningStreakService, LearningStreakService>();
         services.AddScoped<IPremiumService, PremiumService>();
         services.AddScoped<ILessonProgressService, LessonProgressService>();
 

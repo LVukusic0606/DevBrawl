@@ -5,6 +5,7 @@ import ScrollReveal from '../components/ScrollReveal'
 import { AvatarPicture } from '../profile/AvatarPicture'
 import { findAvatar } from '../profile/avatars'
 import { findTag } from '../profile/tags'
+import { StreakBadge } from '../profile/StreakBadge'
 import './LeaderboardPage.css'
 
 interface LeaderboardPageProps {
@@ -107,6 +108,10 @@ function Board({ board, onOpenProfile }: { board: Leaderboard; onOpenProfile: (u
                   Level
                 </th>
                 <th scope="col" className="is-number">
+                  <span className="leaderboard-sr-only">Learning streak</span>
+                  <i className="ti ti-flame" aria-hidden="true" />
+                </th>
+                <th scope="col" className="is-number">
                   Duels
                 </th>
                 <th scope="col" className="is-number">
@@ -177,6 +182,9 @@ function Row({ entry, onOpenProfile }: { entry: LeaderboardEntry; onOpenProfile:
       </td>
       <td className="is-number leaderboard-rating">{entry.rating}</td>
       <td className="is-number leaderboard-level">{entry.level}</td>
+      <td className="is-number">
+        <StreakBadge current={entry.streak} variant="compact" />
+      </td>
       <td className="is-number">{entry.duelsPlayed}</td>
       <td className="is-number">{entry.wins}</td>
     </tr>

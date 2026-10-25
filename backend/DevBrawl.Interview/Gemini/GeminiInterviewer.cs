@@ -153,6 +153,10 @@ public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> o
         var detail = Truncate(body);
         switch (status)
         {
+            // A daily quota (the free tier's requests per day) won't clear by retrying soon, unlike a per-minute limit
+            case HttpStatusCode.TooManyRequests when body.Contains("PerDay"):
+                logger.LogWarning("Gemini's daily quota for {Model} is used up: {Body}", model, detail);
+                return new InterviewerQuotaExceededException("Gemini daily quota reached", RetryDelayOf(body));
             case HttpStatusCode.TooManyRequests:
                 logger.LogWarning("Gemini rate limit or quota reached: {Body}", detail);
                 return new("Gemini is busy");
@@ -169,6 +173,28 @@ public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> o
             default:
                 logger.LogError("Gemini API rejected the request with {Status}: {Body}", (int)status, detail);
                 return new("Gemini rejected the request");
+        }
+    }
+
+    // Gemini's RetryInfo detail, e.g. "retryDelay": "16012s"; null when it's missing or unreadable
+    internal static TimeSpan? RetryDelayOf(string body)
+    {
+        try
+        {
+            using var error = JsonDocument.Parse(body);
+            if (!error.RootElement.TryGetProperty("error", out var details) || !details.TryGetProperty("details", out var items))
+                return null;
+            foreach (var item in items.EnumerateArray())
+            {
+                if (item.TryGetProperty("retryDelay", out var delay)
+                    && double.TryParse(delay.GetString()?.TrimEnd('s'), System.Globalization.CultureInfo.InvariantCulture, out var seconds))
+                    return TimeSpan.FromSeconds(seconds);
+            }
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
         }
     }
 

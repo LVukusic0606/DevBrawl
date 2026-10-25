@@ -92,6 +92,33 @@ public class GeminiInterviewerTests
     }
 
     [Fact]
+    public async Task Used_up_daily_quota_says_when_it_resets()
+    {
+        // Shortened from a real free-tier reply for the TTS model
+        const string body = """
+            {"error":{"code":429,"status":"RESOURCE_EXHAUSTED","message":"You exceeded your current quota.","details":[
+              {"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaValue":"10"}]},
+              {"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"16012s"}]}}
+            """;
+
+        var error = await Assert.ThrowsAsync<InterviewerQuotaExceededException>(() =>
+            Interviewer(new FakeHandler(HttpStatusCode.TooManyRequests, body)).SpeakAsync("Hi"));
+
+        Assert.Equal(TimeSpan.FromSeconds(16012), error.RetryAfter);
+    }
+
+    [Fact]
+    public async Task Per_minute_rate_limit_is_only_busy()
+    {
+        const string body = """{"error":{"code":429,"details":[{"violations":[{"quotaId":"GenerateRequestsPerMinutePerProjectPerModel-FreeTier"}]}]}}""";
+
+        var error = await Assert.ThrowsAsync<InterviewerUnavailableException>(() =>
+            Interviewer(new FakeHandler(HttpStatusCode.TooManyRequests, body)).SpeakAsync("Hi"));
+
+        Assert.Equal("Gemini is busy", error.Message);
+    }
+
+    [Fact]
     public async Task Parses_an_evaluation_and_skips_thought_parts()
     {
         var reply = JsonSerializer.Serialize(new

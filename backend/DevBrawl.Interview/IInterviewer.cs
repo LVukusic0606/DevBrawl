@@ -34,5 +34,12 @@ public interface IInterviewer
     Task<byte[]> SpeakAsync(string text, CancellationToken cancellationToken = default);
 }
 
-public sealed class InterviewerUnavailableException(string message, Exception? innerException = null)
+public class InterviewerUnavailableException(string message, Exception? innerException = null)
     : Exception(message, innerException);
+
+// The AI provider's quota for a model is used up (e.g. the free tier's requests per day); RetryAfter is when it resets
+public sealed class InterviewerQuotaExceededException(string message, TimeSpan? retryAfter)
+    : InterviewerUnavailableException(message)
+{
+    public TimeSpan? RetryAfter { get; } = retryAfter;
+}

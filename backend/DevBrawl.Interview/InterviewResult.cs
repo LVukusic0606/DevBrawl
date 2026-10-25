@@ -12,12 +12,14 @@ public enum InterviewError
     SessionChanged,
     // The AI couldn't be reached, declined, or returned something unusable
     InterviewerUnavailable,
+    // The voice model's daily quota is used up; the result's RetryAfter says when it resets
+    VoiceQuotaExceeded,
     // The player started all the interviews their plan allows this month (Free or Premium)
     MonthlyLimitReached
 }
 
-public sealed record InterviewResult<T>(T? Value, InterviewError? Error)
+public sealed record InterviewResult<T>(T? Value, InterviewError? Error, TimeSpan? RetryAfter = null)
 {
     public static InterviewResult<T> Ok(T value) => new(value, null);
-    public static InterviewResult<T> Fail(InterviewError error) => new(default, error);
+    public static InterviewResult<T> Fail(InterviewError error, TimeSpan? retryAfter = null) => new(default, error, retryAfter);
 }

@@ -15,6 +15,7 @@ import {
   type InterviewSession,
   type InterviewSummary,
 } from '../api/interview'
+import bugInterview from '../assets/bug-interview.webp'
 import { useInterviewerVoice, type VoiceState } from '../hooks/useInterviewerVoice'
 import { canRecord, useWavRecorder } from '../hooks/useWavRecorder'
 import './InterviewPage.css'
@@ -39,18 +40,40 @@ function loadVoiceSetting() {
   }
 }
 
+// When the voice runs out (the server answers 429), it stays off until this time, even after a reload
+const VOICE_PAUSE = 'devbrawl.interview.voicePausedUntil'
+// Used when the server doesn't say how long to wait
+const DEFAULT_VOICE_PAUSE_SECONDS = 60 * 60
+
+function loadVoicePause(): number | null {
+  try {
+    const until = Number(localStorage.getItem(VOICE_PAUSE))
+    return until > Date.now() ? until : null
+  } catch {
+    return null
+  }
+}
+
+function saveVoicePause(until: number | null) {
+  try {
+    if (until === null) localStorage.removeItem(VOICE_PAUSE)
+    else localStorage.setItem(VOICE_PAUSE, String(until))
+  } catch {
+    // The pause just won't survive a reload
+  }
+}
+
 function InterviewPage({ onBack }: InterviewPageProps) {
   const [topics, setTopics] = useState<InterviewCategory[]>([])
   const [topic, setTopic] = useState<TopicChoice>('')
   const [history, setHistory] = useState<InterviewSummary[]>([])
   const [session, setSession] = useState<InterviewSession | null>(null)
-  // The answer being sent, shown in the thread until the server confirms it
-  const [pending, setPending] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState<'starting' | 'sending' | 'finishing' | 'opening' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [voiceOn, setVoiceOn] = useState(loadVoiceSetting)
-  const threadEnd = useRef<HTMLDivElement>(null)
+  const [voicePausedUntil, setVoicePausedUntil] = useState(loadVoicePause)
+  const feedback = useRef<HTMLDivElement>(null)
   const composer = useRef<HTMLTextAreaElement>(null)
   const voice = useInterviewerVoice()
 
@@ -59,10 +82,10 @@ function InterviewPage({ onBack }: InterviewPageProps) {
     listInterviews().then(setHistory).catch(() => {})
   }, [])
 
-  // Keep the newest message in view
+  // Bring the feedback into view once the interview ends
   useEffect(() => {
-    threadEnd.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }, [session?.messages.length, pending, busy])
+    if (session?.status === 'finished') feedback.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [session?.status, session?.evaluation])
 
   // Grow the composer with its text, up to the max height set in CSS
   useEffect(() => {
@@ -97,20 +120,39 @@ function InterviewPage({ onBack }: InterviewPageProps) {
   }
 
   function speak(sessionId: string, message: InterviewMessage) {
-    voice.play(message.id, () => getInterviewerSpeech(sessionId, message.id)).catch(() => {
+    voice.play(message.id, () => getInterviewerSpeech(sessionId, message.id)).catch((e) => {
+      if (e instanceof ApiError && e.status === 429) {
+        // The voice is used up (e.g. the AI's daily quota), so stop asking until it resets instead of failing on every message
+        const until = Date.now() + (e.retryAfter ?? DEFAULT_VOICE_PAUSE_SECONDS) * 1000
+        setPause(until)
+        setError(`The interviewer's voice is used up for now, so it's off until ${formatClock(until)}. You can still read the messages.`)
+        return
+      }
       setError("The interviewer's voice isn't available right now. You can still read the messages.")
     })
   }
 
-  // Reads the interviewer's newest message aloud when the voice is on
-  function speakLatest(updated: InterviewSession) {
-    const latest = updated.messages.at(-1)
-    if (voiceOn && latest?.role === 'interviewer') speak(updated.id, latest)
+  function setPause(until: number | null) {
+    setVoicePausedUntil(until)
+    saveVoicePause(until)
   }
 
+  // Reads the interviewer's newest message aloud when the voice is on and not paused
+  function speakLatest(updated: InterviewSession) {
+    const latest = updated.messages.at(-1)
+    if (!voiceOn || latest?.role !== 'interviewer') return
+    if (voicePausedUntil !== null) {
+      if (voicePausedUntil > Date.now()) return
+      setPause(null)
+    }
+    speak(updated.id, latest)
+  }
+
+  // Turning the voice on also lifts a pause, so the user can try again before it ends
   function toggleVoice() {
-    const next = !voiceOn
+    const next = !voiceShownOn
     setVoiceOn(next)
+    setPause(null)
     if (!next) voice.stop()
     try {
       localStorage.setItem(VOICE_SETTING, next ? 'on' : 'off')
@@ -157,7 +199,6 @@ function InterviewPage({ onBack }: InterviewPageProps) {
     if (!session || !answer || busy) return
     voice.stop()
     voice.unlock()
-    setPending(answer)
     setDraft('')
     setBusy('sending')
     setError(null)
@@ -171,7 +212,6 @@ function InterviewPage({ onBack }: InterviewPageProps) {
       setDraft(answer)
       setError(messageOf(e))
     } finally {
-      setPending(null)
       setBusy(null)
     }
   }
@@ -212,9 +252,26 @@ function InterviewPage({ onBack }: InterviewPageProps) {
   }
 
   const active = session?.status === 'active'
+  const voiceShownOn = voiceOn && voicePausedUntil === null
   const recording = recorder.status === 'recording'
   const transcribing = recorder.status === 'processing'
   const answered = session?.messages.some((m) => m.role === 'candidate') ?? false
+  const lastAnswer = busy === 'sending' && session !== null && session.answersGiven + 1 >= session.maxAnswers
+  const latestQuestion = session?.messages.findLast((m) => m.role === 'interviewer') ?? null
+
+  // What the bug's speech bubble says: a waiting line while the server works, otherwise the interviewer's newest message
+  const stageLine: StageLine =
+    busy === 'starting'
+      ? { waiting: 'Getting my questions ready' }
+      : busy === 'finishing' || lastAnswer
+        ? { waiting: 'Writing your feedback' }
+        : busy === 'sending'
+          ? { waiting: 'Thinking about your answer' }
+          : session && latestQuestion
+            ? { message: latestQuestion }
+            : {
+                text: "Hi, I'm Dev_Bug. Pick a topic and I'll ask you a few questions about it. Answer in your own words, by typing or speaking, and I'll give you feedback at the end.",
+              }
 
   return (
     <main className={`interview${session ? ' has-session' : ''}`}>
@@ -268,13 +325,19 @@ function InterviewPage({ onBack }: InterviewPageProps) {
           </div>
           <button
             type="button"
-            className={`interview-secondary interview-voice-toggle${voiceOn ? ' is-on' : ''}`}
+            className={`interview-secondary interview-voice-toggle${voiceShownOn ? ' is-on' : ''}`}
             onClick={toggleVoice}
-            aria-pressed={voiceOn}
-            title={voiceOn ? 'The interviewer reads its messages aloud' : 'The interviewer is muted'}
+            aria-pressed={voiceShownOn}
+            title={
+              voicePausedUntil !== null
+                ? `The voice is used up until ${formatClock(voicePausedUntil)}. Press to try again now.`
+                : voiceOn
+                  ? 'The interviewer reads its messages aloud'
+                  : 'The interviewer is muted'
+            }
           >
-            <i className={`ti ${voiceOn ? 'ti-volume' : 'ti-volume-off'}`} aria-hidden="true" />
-            {voiceOn ? 'Voice on' : 'Voice off'}
+            <i className={`ti ${voiceShownOn ? 'ti-volume' : 'ti-volume-off'}`} aria-hidden="true" />
+            {voiceShownOn ? 'Voice on' : 'Voice off'}
           </button>
           {active && (
             <button type="button" className="interview-secondary" onClick={finish} disabled={busy !== null || recording}>
@@ -283,65 +346,47 @@ function InterviewPage({ onBack }: InterviewPageProps) {
           )}
         </header>
 
-        {!session ? (
-          <div className="interview-start">
-            <h1 className="interview-title">Interview</h1>
-            <p className="interview-lead">
-              Talk through a topic with an AI interviewer. Answer in your own words, by typing or speaking, and get feedback at
-              the end.
-            </p>
-            <label className="interview-label" htmlFor="interview-topic">
-              Category
-            </label>
-            <select
-              id="interview-topic"
-              className="interview-select"
-              value={topic}
-              onChange={(event) => setTopic(event.target.value)}
-              disabled={busy !== null}
-            >
-              <option value="">Surprise me</option>
-              {topics.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.title}
-                </option>
-              ))}
-            </select>
-            <button type="button" className="interview-primary" onClick={start} disabled={busy !== null}>
-              {busy === 'starting' ? 'Starting the interview…' : 'Start interview'}
-            </button>
-            {error && (
-              <p className="interview-error" role="alert">
-                {error}
-              </p>
-            )}
-          </div>
-        ) : (
-          <>
-            <div className="interview-thread" aria-live="polite">
-              {session.messages.map((message) => (
-                <Message
-                  key={message.id}
-                  message={message}
-                  voice={voice.state}
-                  onPlay={() => {
-                    voice.unlock()
-                    speak(session.id, message)
-                  }}
-                  onStop={voice.stop}
-                />
-              ))}
-              {pending && <Message message={{ id: 'pending', role: 'candidate', content: pending, createdAt: '' }} />}
-              {(busy === 'sending' || busy === 'finishing') && (
-                <p className="interview-typing">
-                  {busy === 'finishing' || (pending && session.answersGiven + 1 >= session.maxAnswers)
-                    ? 'Writing your feedback…'
-                    : 'Interviewer is typing…'}
-                </p>
-              )}
+        <div className="interview-stage-scroll">
+          <div className="interview-stage">
+            <InterviewerSpeech
+              line={stageLine}
+              voice={voice.state}
+              onPlay={(message) => {
+                if (!session) return
+                voice.unlock()
+                speak(session.id, message)
+              }}
+              onStop={voice.stop}
+            />
 
-              {session.status === 'finished' &&
-                (session.evaluation ? (
+            {!session && (
+              <div className="interview-start">
+                <label className="interview-label" htmlFor="interview-topic">
+                  Category
+                </label>
+                <select
+                  id="interview-topic"
+                  className="interview-select"
+                  value={topic}
+                  onChange={(event) => setTopic(event.target.value)}
+                  disabled={busy !== null}
+                >
+                  <option value="">Surprise me</option>
+                  {topics.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.title}
+                    </option>
+                  ))}
+                </select>
+                <button type="button" className="interview-primary" onClick={start} disabled={busy !== null}>
+                  {busy === 'starting' ? 'Starting the interview…' : 'Start interview'}
+                </button>
+              </div>
+            )}
+
+            {session?.status === 'finished' && (
+              <div ref={feedback} className="interview-feedback">
+                {session.evaluation ? (
                   <EvaluationCard evaluation={session.evaluation} onNew={newInterview} />
                 ) : (
                   <div className="interview-card">
@@ -359,111 +404,119 @@ function InterviewPage({ onBack }: InterviewPageProps) {
                       </button>
                     </div>
                   </div>
-                ))}
-              <div ref={threadEnd} />
-            </div>
-
-            {error && (
-              <p className="interview-error interview-error-bar" role="alert">
-                {error}
-              </p>
-            )}
-
-            {active && (recording || transcribing) && (
-              <p className={`interview-voice-status${recording ? ' is-recording' : ''}`} role="status">
-                {recording ? (
-                  <>
-                    <i className="ti ti-point-filled" aria-hidden="true" />
-                    Recording {formatTime(recorder.seconds)}. Speak your answer, then press Stop.
-                  </>
-                ) : (
-                  'Turning your speech into text…'
                 )}
-              </p>
-            )}
-
-            {active && (
-              <div className="interview-composer">
-                <textarea
-                  ref={composer}
-                  className="interview-input"
-                  aria-label="Your answer"
-                  placeholder={canRecord ? 'Type your answer, or press Speak' : 'Type your answer'}
-                  value={draft}
-                  maxLength={MAX_ANSWER_LENGTH}
-                  rows={1}
-                  disabled={busy !== null || recording || transcribing}
-                  onChange={(event) => setDraft(event.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
-                <button
-                  type="button"
-                  className={`interview-voice${recording ? ' is-recording' : ''}`}
-                  onClick={
-                    recording
-                      ? recorder.stop
-                      : () => {
-                          // The microphone shouldn't pick up the interviewer
-                          voice.stop()
-                          recorder.start()
-                        }
-                  }
-                  disabled={!canRecord || busy !== null || transcribing}
-                  aria-pressed={recording}
-                  title={
-                    canRecord
-                      ? 'Answer by voice: your speech is turned into text you can check before sending'
-                      : 'Voice input needs microphone access, which browsers only allow on https or localhost'
-                  }
-                >
-                  <i className={`ti ${recording ? 'ti-player-stop' : 'ti-microphone'}`} aria-hidden="true" />
-                  {recording ? 'Stop' : 'Speak'}
-                </button>
-                <button
-                  type="button"
-                  className="interview-send"
-                  onClick={send}
-                  disabled={!draft.trim() || busy !== null || recording || transcribing}
-                  aria-label="Send answer"
-                >
-                  <i className="ti ti-send" aria-hidden="true" />
-                </button>
               </div>
             )}
-          </>
+          </div>
+        </div>
+
+        {error && (
+          <p className="interview-error interview-error-bar" role="alert">
+            {error}
+          </p>
+        )}
+
+        {active && (recording || transcribing) && (
+          <p className={`interview-voice-status${recording ? ' is-recording' : ''}`} role="status">
+            {recording ? (
+              <>
+                <i className="ti ti-point-filled" aria-hidden="true" />
+                Recording {formatTime(recorder.seconds)}. Speak your answer, then press Stop.
+              </>
+            ) : (
+              'Turning your speech into text…'
+            )}
+          </p>
+        )}
+
+        {active && (
+          <div className="interview-composer">
+            <textarea
+              ref={composer}
+              className="interview-input"
+              aria-label="Your answer"
+              placeholder={canRecord ? 'Type your answer, or press Speak' : 'Type your answer'}
+              value={draft}
+              maxLength={MAX_ANSWER_LENGTH}
+              rows={1}
+              disabled={busy !== null || recording || transcribing}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <button
+              type="button"
+              className={`interview-voice${recording ? ' is-recording' : ''}`}
+              onClick={
+                recording
+                  ? recorder.stop
+                  : () => {
+                      // The microphone shouldn't pick up the interviewer
+                      voice.stop()
+                      recorder.start()
+                    }
+              }
+              disabled={!canRecord || busy !== null || transcribing}
+              aria-pressed={recording}
+              title={
+                canRecord
+                  ? 'Answer by voice: your speech is turned into text you can check before sending'
+                  : 'Voice input needs microphone access, which browsers only allow on https or localhost'
+              }
+            >
+              <i className={`ti ${recording ? 'ti-player-stop' : 'ti-microphone'}`} aria-hidden="true" />
+              {recording ? 'Stop' : 'Speak'}
+            </button>
+            <button
+              type="button"
+              className="interview-send"
+              onClick={send}
+              disabled={!draft.trim() || busy !== null || recording || transcribing}
+              aria-label="Send answer"
+            >
+              <i className="ti ti-send" aria-hidden="true" />
+            </button>
+          </div>
         )}
       </section>
     </main>
   )
 }
 
-interface MessageProps {
-  message: InterviewMessage
-  voice?: VoiceState | null
-  onPlay?: () => void
-  onStop?: () => void
+type StageLine = { message: InterviewMessage } | { text: string } | { waiting: string }
+
+interface InterviewerSpeechProps {
+  line: StageLine
+  voice: VoiceState | null
+  onPlay: (message: InterviewMessage) => void
+  onStop: () => void
 }
 
-function Message({ message, voice, onPlay, onStop }: MessageProps) {
-  const mine = message.role === 'candidate'
-  const phase = voice?.id === message.id ? voice.phase : null
+// Dev_Bug in his interview suit with one speech bubble: his current line is the whole conversation on screen
+function InterviewerSpeech({ line, voice, onPlay, onStop }: InterviewerSpeechProps) {
+  const message = 'message' in line ? line.message : null
+  const phase = message && voice?.id === message.id ? voice.phase : null
+  const text = 'message' in line ? line.message.content : 'text' in line ? line.text : `${line.waiting}…`
+
   return (
-    <div className={`interview-message${mine ? ' is-mine' : ''}${phase === 'playing' ? ' is-speaking' : ''}`}>
-      <span className="interview-author">
-        {mine ? 'You' : 'Interviewer'}
-        {!mine && onPlay && (
-          <button
-            type="button"
-            className="interview-listen"
-            onClick={phase ? onStop : onPlay}
-            aria-label={phase ? 'Stop reading aloud' : 'Read this message aloud'}
-          >
-            <i className={`ti ${phase ? 'ti-player-stop' : 'ti-volume'}`} aria-hidden="true" />
-            {phase === 'loading' ? 'Loading voice…' : phase === 'playing' ? 'Speaking…' : null}
-          </button>
-        )}
-      </span>
-      <p className="interview-bubble">{message.content}</p>
+    <div className={`interview-speaker${phase === 'playing' ? ' is-speaking' : ''}`} aria-live="polite">
+      <div key={message?.id ?? text} className="interview-speech">
+        <span className="interview-author">
+          Dev_Bug
+          {message && (
+            <button
+              type="button"
+              className="interview-listen"
+              onClick={phase ? onStop : () => onPlay(message)}
+              aria-label={phase ? 'Stop reading aloud' : 'Read this message aloud'}
+            >
+              <i className={`ti ${phase ? 'ti-player-stop' : 'ti-volume'}`} aria-hidden="true" />
+              {phase === 'loading' ? 'Loading voice…' : phase === 'playing' ? 'Speaking…' : null}
+            </button>
+          )}
+        </span>
+        <p className={`interview-speech-text${'waiting' in line ? ' is-waiting' : ''}`}>{text}</p>
+      </div>
+      <img className="interview-bug" src={bugInterview} alt="" />
     </div>
   )
 }
@@ -520,6 +573,10 @@ function EvaluationCard({ evaluation, onNew }: { evaluation: InterviewEvaluation
 
 function formatTime(seconds: number) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+}
+
+function formatClock(time: number) {
+  return new Date(time).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 }
 
 function formatDate(iso: string) {

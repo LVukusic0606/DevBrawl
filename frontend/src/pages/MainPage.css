@@ -90,6 +90,20 @@
   font-size: 18px;
 }
 
+/* Count of friend requests waiting for an answer */
+.home-badge {
+  min-width: 20px;
+  padding: 0 var(--space-1);
+  border-radius: 999px;
+  background: var(--color-duel);
+  color: var(--color-bg);
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+
 .home-logo {
   font-family: var(--font-text);
   font-size: 24px;

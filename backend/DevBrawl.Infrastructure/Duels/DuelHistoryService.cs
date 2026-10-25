@@ -78,6 +78,7 @@ public class DuelHistoryService(AppDbContext db) : IDuelHistoryService
         return new DuelSummaryResponse(
             duel.Id,
             duel.Status,
+            duel.IsFriendly,
             new DuelOpponentResponse(opponentId, nicknames.GetValueOrDefault(opponentId, "Unknown player")),
             duel.Status == DuelStatus.Finished ? RoundRules.ForPlayer(yourScore, opponentScore) : null,
             yourScore,

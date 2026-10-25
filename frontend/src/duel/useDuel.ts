@@ -6,6 +6,8 @@ import type {
   Answer,
   DuelAbortedEvent,
   DuelEndedEvent,
+  DuelInvite,
+  DuelInviteClosedEvent,
   DuelStateEvent,
   MatchFoundEvent,
   Player,
@@ -26,6 +28,8 @@ export interface Match {
   duelId: string
   you: Player
   opponent: Player
+  // Against a friend: no ELO or XP
+  friendly: boolean
   yourScore: number
   opponentScore: number
   opponentConnected: boolean
@@ -46,8 +50,11 @@ export interface RoundState {
 export type DuelView =
   | { phase: 'connecting' }
   | { phase: 'connectionFailed' }
-  | { phase: 'lobby'; error: string | null }
+  // notice: what happened to your last invite, e.g. the friend declined
+  | { phase: 'lobby'; error: string | null; notice: string | null }
   | { phase: 'queue'; since: number }
+  // Waiting for a friend to accept a friendly duel
+  | { phase: 'inviting'; invite: DuelInvite }
   | { phase: 'countdown'; match: Match; startsAt: string }
   | { phase: 'round'; match: Match; current: RoundState }
   | {
@@ -67,7 +74,9 @@ type Action =
   | { type: 'connecting' }
   | { type: 'queueJoined' }
   | { type: 'queueLeft' }
-  | { type: 'queueError'; message: string }
+  | { type: 'lobbyError'; message: string }
+  | { type: 'inviteSent'; invite: DuelInvite }
+  | { type: 'inviteClosed'; event: DuelInviteClosedEvent }
   | { type: 'matchFound'; event: MatchFoundEvent }
   | { type: 'roundStarted'; event: RoundStartedEvent }
   | { type: 'answerAccepted'; event: RoundAnswerEvent }
@@ -95,6 +104,24 @@ function newRound(round: RoundStartedEvent): RoundState {
   return { round, answer: null, youAnswered: false, opponentAnswered: false, submitting: false, error: null }
 }
 
+const LOBBY: Extract<DuelView, { phase: 'lobby' }> = { phase: 'lobby', error: null, notice: null }
+
+// Phases where a duel is on screen; invite events never replace them
+const PLAYING: DuelView['phase'][] = ['countdown', 'round', 'reveal']
+
+function inviteNotice(event: DuelInviteClosedEvent, friend: string) {
+  switch (event.reason) {
+    case 'declined':
+      return `${friend} declined the duel.`
+    case 'expired':
+      return `${friend} didn't answer in time.`
+    case 'unavailable':
+      return `${friend} can't play right now.`
+    default:
+      return null
+  }
+}
+
 function reducer(view: DuelView, action: Action): DuelView {
   switch (action.type) {
     case 'connecting':
@@ -102,7 +129,7 @@ function reducer(view: DuelView, action: Action): DuelView {
 
     case 'connected':
       // DuelState may already have rebuilt a running duel before start() resolved
-      return view.phase === 'connecting' ? { phase: 'lobby', error: null } : view
+      return view.phase === 'connecting' ? LOBBY : view
 
     case 'connectionFailed':
       return view.phase === 'results' ? view : { phase: 'connectionFailed' }
@@ -111,10 +138,21 @@ function reducer(view: DuelView, action: Action): DuelView {
       return { phase: 'queue', since: Date.now() }
 
     case 'queueLeft':
-      return view.phase === 'queue' ? { phase: 'lobby', error: null } : view
+      return view.phase === 'queue' ? LOBBY : view
 
-    case 'queueError':
-      return { phase: 'lobby', error: action.message }
+    case 'lobbyError':
+      return { ...LOBBY, error: action.message }
+
+    case 'inviteSent':
+      return PLAYING.includes(view.phase) ? view : { phase: 'inviting', invite: action.invite }
+
+    case 'inviteClosed': {
+      const { event } = action
+      if (view.phase !== 'inviting' || view.invite.inviteId !== event.inviteId) return view
+      // MatchFound follows right away
+      if (event.reason === 'accepted') return view
+      return { ...LOBBY, notice: inviteNotice(event, view.invite.to.nickname) }
+    }
 
     case 'matchFound': {
       const { event } = action
@@ -125,6 +163,7 @@ function reducer(view: DuelView, action: Action): DuelView {
           duelId: event.duelId,
           you: event.you,
           opponent: event.opponent,
+          friendly: event.friendly,
           yourScore: 0,
           opponentScore: 0,
           opponentConnected: true,
@@ -193,6 +232,7 @@ function reducer(view: DuelView, action: Action): DuelView {
         duelId: event.duelId,
         you: event.you,
         opponent: event.opponent,
+        friendly: event.friendly,
         yourScore: event.yourScore,
         opponentScore: event.opponentScore,
         opponentConnected: previous?.opponentConnected ?? true,
@@ -250,13 +290,15 @@ function reducer(view: DuelView, action: Action): DuelView {
     }
 
     case 'backToLobby':
-      return { phase: 'lobby', error: null }
+      return LOBBY
   }
 }
 
 export function useDuel() {
   const [view, dispatch] = useReducer(reducer, { phase: 'connecting' })
   const [reconnecting, setReconnecting] = useState(false)
+  // Friendly duel invites from friends, oldest first
+  const [incoming, setIncoming] = useState<DuelInvite[]>([])
   const [attempt, setAttempt] = useState(0)
   const connectionRef = useRef<HubConnection | null>(null)
 
@@ -295,9 +337,25 @@ export function useDuel() {
       dispatch({ type: 'opponentConnection', duelId: event.duelId, connected: true }),
     )
     connection.on('DuelAborted', (event: DuelAbortedEvent) => dispatch({ type: 'duelAborted', event }))
+    connection.on('DuelInviteSent', (invite: DuelInvite) => {
+      syncServerClock(invite.serverTime)
+      dispatch({ type: 'inviteSent', invite })
+    })
+    // Pending invites are sent again on every (re)connect, so the same one can arrive twice
+    connection.on('DuelInviteReceived', (invite: DuelInvite) => {
+      syncServerClock(invite.serverTime)
+      setIncoming((list) => [...list.filter((item) => item.inviteId !== invite.inviteId), invite])
+    })
+    connection.on('DuelInviteClosed', (event: DuelInviteClosedEvent) => {
+      setIncoming((list) => list.filter((item) => item.inviteId !== event.inviteId))
+      dispatch({ type: 'inviteClosed', event })
+    })
 
     connection.onreconnecting(() => {
-      if (!stopped) setReconnecting(true)
+      if (stopped) return
+      setReconnecting(true)
+      // The server resends the invites that are still pending once the connection is back
+      setIncoming([])
     })
     connection.onreconnected(() => {
       if (!stopped) setReconnecting(false)
@@ -320,6 +378,7 @@ export function useDuel() {
 
     return () => {
       stopped = true
+      setIncoming([])
       connectionRef.current = null
       connection.stop().catch(() => {})
     }
@@ -328,7 +387,7 @@ export function useDuel() {
   const joinQueue = useCallback(() => {
     connectionRef.current
       ?.invoke('JoinQueue')
-      .catch(() => dispatch({ type: 'queueError', message: "Couldn't join the queue. Try again." }))
+      .catch(() => dispatch({ type: 'lobbyError', message: "Couldn't join the queue. Try again." }))
   }, [])
 
   const leaveQueue = useCallback(() => {
@@ -347,6 +406,25 @@ export function useDuel() {
       )
   }, [])
 
+  const inviteFriend = useCallback((friendId: string) => {
+    connectionRef.current
+      ?.invoke('InviteFriend', friendId)
+      .catch((error: unknown) => dispatch({ type: 'lobbyError', message: hubErrorMessage(error, "Couldn't send the invite. Try again.") }))
+  }, [])
+
+  const acceptInvite = useCallback((inviteId: string) => {
+    connectionRef.current?.invoke('AcceptInvite', inviteId).catch((error: unknown) => {
+      setIncoming((list) => list.filter((item) => item.inviteId !== inviteId))
+      dispatch({ type: 'lobbyError', message: hubErrorMessage(error, "Couldn't accept the invite. Try again.") })
+    })
+  }, [])
+
+  // Declines an invite you received or withdraws the one you sent
+  const dismissInvite = useCallback((inviteId: string) => {
+    setIncoming((list) => list.filter((item) => item.inviteId !== inviteId))
+    connectionRef.current?.invoke('DismissInvite', inviteId).catch(() => {})
+  }, [])
+
   const backToLobby = useCallback(() => dispatch({ type: 'backToLobby' }), [])
 
   const retry = useCallback(() => {
@@ -354,5 +432,26 @@ export function useDuel() {
     setAttempt((value) => value + 1)
   }, [])
 
-  return { view, reconnecting, joinQueue, leaveQueue, submitAnswer, backToLobby, retry }
+  return {
+    view,
+    reconnecting,
+    incoming,
+    joinQueue,
+    leaveQueue,
+    inviteFriend,
+    acceptInvite,
+    dismissInvite,
+    submitAnswer,
+    backToLobby,
+    retry,
+  }
+}
+
+// A rule the server refused (a HubException) arrives as "An unexpected error occurred invoking 'X' on the server.
+// HubException: <message>"; only the message is meant for the player
+function hubErrorMessage(error: unknown, fallback: string) {
+  const text = error instanceof Error ? error.message : ''
+  const marker = 'HubException: '
+  const index = text.indexOf(marker)
+  return index >= 0 ? text.slice(index + marker.length) : fallback
 }

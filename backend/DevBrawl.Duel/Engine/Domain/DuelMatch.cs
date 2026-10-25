@@ -14,6 +14,8 @@ public class DuelMatch
     public Guid Id { get; set; }
     public Guid Player1Id { get; set; }
     public Guid Player2Id { get; set; }
+    // A duel between friends: no ELO or XP, and it doesn't count toward profile stats or the leaderboard
+    public bool IsFriendly { get; set; }
     public DuelStatus Status { get; set; }
     public DateTime StartedAt { get; set; }
     public DateTime? FinishedAt { get; set; }

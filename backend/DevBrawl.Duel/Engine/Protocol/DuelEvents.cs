@@ -19,6 +19,9 @@ public static class DuelEvents
     public const string OpponentDisconnected = "OpponentDisconnected";
     public const string OpponentReconnected = "OpponentReconnected";
     public const string DuelAborted = "DuelAborted";
+    public const string DuelInviteSent = "DuelInviteSent";
+    public const string DuelInviteReceived = "DuelInviteReceived";
+    public const string DuelInviteClosed = "DuelInviteClosed";
 }
 
 public enum DuelPhase
@@ -34,6 +37,18 @@ public enum PlayerRoundResult { Won, Lost, Draw, NoWinner }
 
 public enum PlayerDuelResult { Won, Lost, Draw }
 
+public enum DuelInviteClosedReason
+{
+    // The friend accepted; MatchFound follows
+    Accepted,
+    Declined,
+    // The inviter withdrew it, sent a new one, joined the queue or left the arena
+    Canceled,
+    Expired,
+    // One of the players started another duel or they are no longer friends
+    Unavailable
+}
+
 // Events with a deadline also carry ServerTime, the server's clock when the event was sent.
 // Device clocks can be minutes off, so clients count down on the server's clock: deadline - (now + offset),
 // where offset = ServerTime - device time on arrival.
@@ -46,7 +61,9 @@ public sealed record QueueEvent;
 
 public sealed record DuelEvent(Guid DuelId);
 
-public sealed record MatchFoundEvent(Guid DuelId, PlayerInfo You, PlayerInfo Opponent, DateTime StartsAt, DateTime ServerTime);
+// Friendly: a duel between friends, which changes no ELO or XP
+public sealed record MatchFoundEvent(Guid DuelId, PlayerInfo You, PlayerInfo Opponent, bool Friendly, DateTime StartsAt,
+    DateTime ServerTime);
 
 public sealed record RoundStartedEvent(
     Guid DuelId,
@@ -80,6 +97,8 @@ public sealed record DuelEndedEvent(
     PlayerDuelResult Result,
     int YourScore,
     int OpponentScore,
+    bool Friendly,
+    // Empty for a friendly duel
     IReadOnlyList<RatingChange> RatingChanges,
     int XpGained,
     int TotalXp,
@@ -90,6 +109,7 @@ public sealed record DuelStateEvent(
     Guid DuelId,
     PlayerInfo You,
     PlayerInfo Opponent,
+    bool Friendly,
     DuelPhase Phase,
     int RoundNumber,
     DateTime PhaseEndsAt,
@@ -104,3 +124,12 @@ public sealed record DuelStateEvent(
     DateTime ServerTime);
 
 public sealed record DuelAbortedEvent(Guid DuelId, string Reason);
+
+public sealed record InvitePlayer(Guid Id, string Nickname);
+
+// Sent to both players: DuelInviteSent to the inviter, DuelInviteReceived to the friend.
+// Pending invites are sent again when a player connects.
+public sealed record DuelInviteEvent(Guid InviteId, InvitePlayer From, InvitePlayer To, DateTime ExpiresAt, DateTime ServerTime);
+
+// Sent to both players when an invite stops being pending
+public sealed record DuelInviteClosedEvent(Guid InviteId, DuelInviteClosedReason Reason);

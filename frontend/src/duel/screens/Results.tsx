@@ -6,7 +6,7 @@ import { ShareButton } from '../../share/ShareButton'
 import { ROUND_RESULT_LABELS, roundTypeIcon, roundTypeName } from '../rounds'
 import { formatClock } from '../useCountdown'
 import type { Match } from '../useDuel'
-import type { DuelDetails, DuelEndedEvent, DuelResult, DuelRoundReview } from '../types'
+import type { DuelDetails, DuelEndedEvent, DuelResult, DuelRoundReview, RatingChange } from '../types'
 
 const HEADLINES: Record<DuelResult, string> = {
   won: 'You won.',
@@ -20,9 +20,11 @@ interface ResultsProps {
   categoryName: (id: number) => string
   onReview: (details: DuelDetails) => void
   onPlayAgain: () => void
+  // Invites the same friend again; only offered after a friendly duel
+  onRematch: (friendId: string) => void
 }
 
-export function Results({ match, ended, categoryName, onReview, onPlayAgain }: ResultsProps) {
+export function Results({ match, ended, categoryName, onReview, onPlayAgain, onRematch }: ResultsProps) {
   const [details, setDetails] = useState<DuelDetails | null>(null)
   const [failed, setFailed] = useState(false)
 
@@ -45,6 +47,12 @@ export function Results({ match, ended, categoryName, onReview, onPlayAgain }: R
     ? rounds.filter((round) => round.youCorrect).length
     : Object.values(match?.outcomes ?? {}).filter((outcome) => outcome.youCorrect).length
   const opponentName = details?.summary.opponent.nickname ?? match?.opponent.nickname ?? 'Opponent'
+  const opponentId = details?.summary.opponent.id ?? match?.opponent.id ?? null
+  const { friendly } = ended
+  // A friendly duel changes no ratings, so its rows come from the rounds played, in round order
+  const rows: { categoryId: number; change: RatingChange | null }[] = friendly
+    ? [...new Set(rounds.map((round) => round.categoryId))].map((categoryId) => ({ categoryId, change: null }))
+    : ended.ratingChanges.map((change) => ({ categoryId: change.categoryId, change }))
   const duration = details?.summary.finishedAt
     ? Math.round(
         (new Date(details.summary.finishedAt).getTime() - new Date(details.summary.startedAt).getTime()) / 1000,
@@ -54,7 +62,7 @@ export function Results({ match, ended, categoryName, onReview, onPlayAgain }: R
   return (
     <div className="duel-results">
       <section className={`duel-results-hero is-${ended.result}`} aria-labelledby="results-title">
-        <p className="duel-eyebrow">Duel over</p>
+        <p className="duel-eyebrow">{friendly ? 'Friendly duel over' : 'Duel over'}</p>
         <h1 id="results-title" className="duel-hero-title">
           {HEADLINES[ended.result]}
         </h1>
@@ -78,15 +86,22 @@ export function Results({ match, ended, categoryName, onReview, onPlayAgain }: R
           <dt>Time taken</dt>
           <dd>{duration !== null ? formatClock(duration) : '–'}</dd>
         </div>
-        <div className="duel-stat">
-          <dt>XP earned</dt>
-          <dd className="is-reward">+{ended.xpGained}</dd>
-        </div>
+        {friendly ? (
+          <div className="duel-stat">
+            <dt>No ELO or XP changes</dt>
+            <dd>Friendly</dd>
+          </div>
+        ) : (
+          <div className="duel-stat">
+            <dt>XP earned</dt>
+            <dd className="is-reward">+{ended.xpGained}</dd>
+          </div>
+        )}
       </dl>
 
       <section className="duel-panel" aria-labelledby="ratings-title">
         <h2 id="ratings-title" className="duel-section-title">
-          Rating by category
+          {friendly ? 'Rounds by category' : 'Rating by category'}
         </h2>
         <table className="duel-table">
           <thead>
@@ -96,17 +111,17 @@ export function Results({ match, ended, categoryName, onReview, onPlayAgain }: R
               <th scope="col">You</th>
               <th scope="col">{opponentName}</th>
               <th scope="col">Round</th>
-              <th scope="col">Rating</th>
-              <th scope="col">Change</th>
+              {!friendly && <th scope="col">Rating</th>}
+              {!friendly && <th scope="col">Change</th>}
             </tr>
           </thead>
           <tbody>
-            {ended.ratingChanges.map((change) => {
+            {rows.map(({ categoryId, change }) => {
               // A category can come up in more than one round; each round gets its own line in the cell
-              const inCategory = rounds.filter((round) => round.categoryId === change.categoryId)
+              const inCategory = rounds.filter((round) => round.categoryId === categoryId)
               return (
-                <tr key={change.categoryId}>
-                  <td>{categoryName(change.categoryId)}</td>
+                <tr key={categoryId}>
+                  <td>{categoryName(categoryId)}</td>
                   <td>
                     <RoundLines rounds={inCategory}>
                       {(round) => (
@@ -133,18 +148,26 @@ export function Results({ match, ended, categoryName, onReview, onPlayAgain }: R
                       )}
                     </RoundLines>
                   </td>
-                  <td className="duel-table-number">
-                    {change.before} → <span className="duel-rating-after">{change.after}</span>
-                  </td>
-                  <td className={`duel-table-number duel-delta ${deltaTone(change.delta)}`}>
-                    {change.delta > 0 ? `+${change.delta}` : change.delta}
-                  </td>
+                  {change && (
+                    <td className="duel-table-number">
+                      {change.before} → <span className="duel-rating-after">{change.after}</span>
+                    </td>
+                  )}
+                  {change && (
+                    <td className={`duel-table-number duel-delta ${deltaTone(change.delta)}`}>
+                      {change.delta > 0 ? `+${change.delta}` : change.delta}
+                    </td>
+                  )}
                 </tr>
               )
             })}
           </tbody>
         </table>
-        {failed && <p className="duel-error">Couldn't load the rounds. The ratings above are saved.</p>}
+        {failed && (
+          <p className="duel-error">
+            {friendly ? "Couldn't load the rounds." : "Couldn't load the rounds. The ratings above are saved."}
+          </p>
+        )}
         {!failed && !details && <p className="duel-muted">Loading the rounds…</p>}
       </section>
 
@@ -173,10 +196,22 @@ export function Results({ match, ended, categoryName, onReview, onPlayAgain }: R
             })
           }
         />
-        <button type="button" className="duel-primary is-large" onClick={onPlayAgain}>
-          Play again
-          <i className="ti ti-swords" aria-hidden="true" />
-        </button>
+        {friendly && opponentId ? (
+          <>
+            <button type="button" className="duel-secondary is-large" onClick={onPlayAgain}>
+              Back to lobby
+            </button>
+            <button type="button" className="duel-primary is-large" onClick={() => onRematch(opponentId)}>
+              Rematch
+              <i className="ti ti-swords" aria-hidden="true" />
+            </button>
+          </>
+        ) : (
+          <button type="button" className="duel-primary is-large" onClick={onPlayAgain}>
+            Play again
+            <i className="ti ti-swords" aria-hidden="true" />
+          </button>
+        )}
       </div>
     </div>
   )

@@ -20,10 +20,11 @@ export function MatchIntro({ match, startsAt, categoryName }: MatchIntroProps) {
       <PlayerCard label="You" player={match.you} categoryName={categoryName} />
 
       <div className="duel-intro-center" aria-live="polite">
-        <p className="duel-intro-label">Match found</p>
+        <p className="duel-intro-label">{match.friendly ? 'Friendly duel' : 'Match found'}</p>
         <p className="duel-intro-vs">vs</p>
         <p className="duel-big-number is-duel">{seconds > 0 ? seconds : 'Go'}</p>
         <p className="duel-intro-status">{seconds > 0 ? 'Round 1 starts soon.' : 'Starting.'}</p>
+        {match.friendly && <p className="duel-muted">No ELO or XP changes.</p>}
       </div>
 
       <PlayerCard label="Opponent" player={match.opponent} categoryName={categoryName} />

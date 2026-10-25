@@ -1,4 +1,5 @@
 import { authFetch } from './auth'
+import type { FriendshipState } from './friends'
 
 export type RankTier =
   | 'beginner'
@@ -67,6 +68,8 @@ export interface Profile {
   learning: { completedLessonIds: string[] }
   // Days in a row with a newly completed lesson
   streak: { current: number; best: number; activeToday: boolean }
+  // How you relate to this player; null on your own profile. requestId is set while a request is pending.
+  friendship: { state: FriendshipState; requestId: string | null } | null
 }
 
 // Without a userId: the logged-in player's own profile

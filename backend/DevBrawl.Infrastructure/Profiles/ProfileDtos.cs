@@ -3,6 +3,7 @@ using DevBrawl.Duel.Contracts;
 using DevBrawl.Duel.Dtos;
 using DevBrawl.Duel.Engine.Protocol;
 using DevBrawl.Duel.Scoring;
+using DevBrawl.Infrastructure.Friends;
 
 namespace DevBrawl.Infrastructure.Profiles;
 
@@ -21,11 +22,13 @@ public sealed record ProfileResponse(
     int? WeakestCategoryId,
     ProfileDuelStatsResponse Duels,
     ProfileAccuracyResponse Accuracy,
-    // Finished duels, newest first
+    // Finished ranked duels, newest first
     IReadOnlyList<ProfileDuelResponse> RecentDuels,
     ProfileLearningResponse Learning,
     // Days in a row with a newly completed lesson
-    Streak Streak);
+    Streak Streak,
+    // How the requester relates to this player; null on their own profile
+    ProfileFriendshipResponse? Friendship);
 
 // Lessons the player has finished, as slugs. The lesson catalog lives in the frontend, which turns these into totals.
 public sealed record ProfileLearningResponse(IReadOnlyList<string> CompletedLessonIds);
@@ -47,6 +50,7 @@ public sealed record ProfileRatingResponse(
     // Change in the most recent duel that changed this category; null if no duel has changed it yet
     int? LastDelta);
 
+// Ranked duels only
 public sealed record ProfileDuelStatsResponse(int Played, int Wins, int Losses, int Draws);
 
 public sealed record AccuracyResponse(int Correct, int Total);
@@ -55,7 +59,7 @@ public sealed record CategoryAccuracyResponse(int CategoryId, int Correct, int T
 
 public sealed record TypeAccuracyResponse(ChallengeType Type, int Correct, int Total);
 
-// Rounds of finished duels; an unanswered round counts as incorrect
+// Rounds of finished ranked duels; an unanswered round counts as incorrect
 public sealed record ProfileAccuracyResponse(
     AccuracyResponse Overall,
     // All categories and all types, in display order, including ones with Total = 0

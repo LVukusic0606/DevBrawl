@@ -10,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DevBrawl.Infrastructure.Profiles;
 
-public class ProfileService(AppDbContext db, ILessonProgressService lessons, ILearningStreakService streaks) : IProfileService
+public class ProfileService(AppDbContext db, ILessonProgressService lessons, ILearningStreakService streaks,
+    IFriendService friends) : IProfileService
 {
     private const int RecentDuelCount = 10;
 
@@ -38,7 +39,8 @@ public class ProfileService(AppDbContext db, ILessonProgressService lessons, ILe
             await AccuracyAsync(userId, categories.Select(c => c.Id).ToList(), cancellationToken),
             await RecentDuelsAsync(userId, cancellationToken),
             new ProfileLearningResponse(await lessons.GetCompletedAsync(userId, cancellationToken)),
-            await streaks.GetAsync(userId, cancellationToken));
+            await streaks.GetAsync(userId, cancellationToken),
+            userId == requesterId ? null : await friends.GetRelationAsync(requesterId, userId, cancellationToken));
     }
 
     private async Task<ProfileProgressResponse> ProgressAsync(Guid userId, CancellationToken cancellationToken)
@@ -89,8 +91,9 @@ public class ProfileService(AppDbContext db, ILessonProgressService lessons, ILe
 
     private async Task<ProfileDuelStatsResponse> DuelStatsAsync(Guid userId, CancellationToken cancellationToken)
     {
+        // Ranked duels only: friendly duels with friends don't count toward the record
         var finished = db.Duels.AsNoTracking()
-            .Where(d => d.Status == DuelStatus.Finished && (d.Player1Id == userId || d.Player2Id == userId));
+            .Where(d => d.Status == DuelStatus.Finished && !d.IsFriendly && (d.Player1Id == userId || d.Player2Id == userId));
 
         var played = await finished.CountAsync(cancellationToken);
         var wins = await finished.CountAsync(d => d.WinnerId == userId, cancellationToken);
@@ -103,7 +106,7 @@ public class ProfileService(AppDbContext db, ILessonProgressService lessons, ILe
         var rounds = await (
                 from round in db.DuelRounds.AsNoTracking()
                 join duel in db.Duels.AsNoTracking() on round.DuelId equals duel.Id
-                where duel.Status == DuelStatus.Finished && (duel.Player1Id == userId || duel.Player2Id == userId)
+                where duel.Status == DuelStatus.Finished && !duel.IsFriendly && (duel.Player1Id == userId || duel.Player2Id == userId)
                 select new
                 {
                     round.CategoryId,
@@ -129,7 +132,7 @@ public class ProfileService(AppDbContext db, ILessonProgressService lessons, ILe
     private async Task<List<ProfileDuelResponse>> RecentDuelsAsync(Guid userId, CancellationToken cancellationToken)
     {
         var duels = await db.Duels.AsNoTracking()
-            .Where(d => d.Status == DuelStatus.Finished && (d.Player1Id == userId || d.Player2Id == userId))
+            .Where(d => d.Status == DuelStatus.Finished && !d.IsFriendly && (d.Player1Id == userId || d.Player2Id == userId))
             .OrderByDescending(d => d.FinishedAt)
             .Take(RecentDuelCount)
             .ToListAsync(cancellationToken);

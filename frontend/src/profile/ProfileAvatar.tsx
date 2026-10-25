@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { changeAvatar } from '../api/account'
 import { ApiError } from '../api/client'
+import { getOwnedCosmetics } from '../api/store'
+import { AvatarPicture } from './AvatarPicture'
 import { AVATARS, findAvatar } from './avatars'
 
 interface ProfileAvatarProps {
@@ -17,9 +19,11 @@ function ProfileAvatar({ nickname, avatarId, editable, onChanged }: ProfileAvata
   const dialog = useRef<HTMLDialogElement>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Avatars the player may pick; season avatars stay locked until they're unlocked in the season pass
+  const [owned, setOwned] = useState<Set<number> | null>(null)
 
   const avatar = findAvatar(avatarId)
-  const picture = avatar ? <img src={avatar.url} alt="" /> : nickname.charAt(0).toUpperCase()
+  const picture = <AvatarPicture avatar={avatar} nickname={nickname} />
 
   if (!editable) {
     return (
@@ -52,6 +56,9 @@ function ProfileAvatar({ nickname, avatarId, editable, onChanged }: ProfileAvata
         onClick={() => {
           setError(null)
           dialog.current?.showModal()
+          getOwnedCosmetics()
+            .then((cosmetics) => setOwned(new Set(cosmetics.avatarIds)))
+            .catch(() => {})
         }}
       >
         {picture}
@@ -82,18 +89,21 @@ function ProfileAvatar({ nickname, avatarId, editable, onChanged }: ProfileAvata
         <ul className="avatar-grid">
           {AVATARS.map((option) => {
             const current = option.id === avatarId
+            // Until the list arrives, only season avatars count as locked
+            const locked = option.season && !owned?.has(option.id)
             return (
               <li key={option.id}>
                 <button
                   type="button"
-                  className={`avatar-option${current ? ' is-current' : ''}`}
-                  aria-label={option.label}
+                  className={`avatar-option${current ? ' is-current' : ''}${locked ? ' is-locked' : ''}`}
+                  aria-label={locked ? `${option.label}, locked: unlock it in the season pass` : option.label}
                   aria-pressed={current}
-                  disabled={saving}
+                  disabled={saving || locked}
                   onClick={() => pick(option.id)}
                 >
-                  <img src={option.url} alt="" />
+                  <AvatarPicture avatar={option} nickname="" />
                   {current && <i className="ti ti-check avatar-option-check" aria-hidden="true" />}
+                  {locked && <i className="ti ti-lock avatar-option-lock" aria-hidden="true" />}
                 </button>
               </li>
             )

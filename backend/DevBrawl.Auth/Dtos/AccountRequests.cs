@@ -22,14 +22,15 @@ public sealed record ChangeEmailRequest
 
 public sealed record ChangeAvatarRequest
 {
-    // A missing value stays 0 and fails the range check
-    [Range(1, User.AvatarCount)]
+    // A missing value stays 0 and fails the range check. Whether the player may use it
+    // (a starter avatar or one unlocked in the season pass) is checked in the controller.
+    [Range(1, int.MaxValue)]
     public int AvatarId { get; init; }
 }
 
 public sealed record ChangeTagRequest
 {
-    // One of UserTags.All, or null to remove the tag; checked in the controller
+    // A starter tag (UserTags.All) or one unlocked in the season pass, or null to remove it; checked in the controller
     public string? Tag { get; init; }
 }
 

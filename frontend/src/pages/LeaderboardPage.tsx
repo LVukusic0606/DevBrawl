@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from '../api/client'
 import { getLeaderboard, type Leaderboard, type LeaderboardEntry } from '../api/leaderboard'
-import { TIER_LABELS } from '../profile/format'
+import ScrollReveal from '../components/ScrollReveal'
+import { AvatarPicture } from '../profile/AvatarPicture'
+import { findAvatar } from '../profile/avatars'
+import { findTag } from '../profile/tags'
 import './LeaderboardPage.css'
 
 interface LeaderboardPageProps {
@@ -46,13 +49,7 @@ function LeaderboardPage({ onBack, onOpenProfile, onStartDuel }: LeaderboardPage
       </header>
 
       <div className="leaderboard-content">
-        <div className="leaderboard-heading">
-          <h1 className="leaderboard-title">Leaderboard</h1>
-          <p className="leaderboard-note">
-            Ranked by overall rating: the average of each player's ratings in all categories. Only players who finished a
-            duel are listed.
-          </p>
-        </div>
+        <h1 className="leaderboard-title">Leaderboard</h1>
 
         {state.status === 'loading' && <p className="leaderboard-muted">Loading leaderboard…</p>}
 
@@ -83,73 +80,103 @@ function LeaderboardPage({ onBack, onOpenProfile, onStartDuel }: LeaderboardPage
         )}
 
         {state.status === 'ready' && state.board.entries.length > 0 && (
-          <BoardTable board={state.board} onOpenProfile={onOpenProfile} />
+          <Board board={state.board} onOpenProfile={onOpenProfile} />
         )}
       </div>
     </main>
   )
 }
 
-function BoardTable({ board, onOpenProfile }: { board: Leaderboard; onOpenProfile: (userId: string) => void }) {
+function Board({ board, onOpenProfile }: { board: Leaderboard; onOpenProfile: (userId: string) => void }) {
   return (
-    <div className="leaderboard-panel">
-      <table className="leaderboard-table">
-        <caption className="leaderboard-sr-only">Overall leaderboard</caption>
-        <thead>
-          <tr>
-            <th scope="col" className="is-position">
-              #
-            </th>
-            <th scope="col">Player</th>
-            <th scope="col" className="is-number">
-              Rating
-            </th>
-            <th scope="col">Tier</th>
-            <th scope="col" className="is-number">
-              Duels
-            </th>
-            <th scope="col" className="is-number">
-              Wins
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {board.entries.map((entry) => (
-            <Row key={entry.userId} entry={entry} onOpenProfile={onOpenProfile} />
-          ))}
-        </tbody>
-        {board.you && (
-          // Your own place when you're below the shown rows
-          <tbody className="leaderboard-you">
-            <Row entry={board.you} onOpenProfile={onOpenProfile} />
-          </tbody>
-        )}
-      </table>
+    <>
+      <ScrollReveal>
+        <div className="leaderboard-panel">
+          <table className="leaderboard-table">
+            <caption className="leaderboard-sr-only">Overall leaderboard</caption>
+            <thead>
+              <tr>
+                <th scope="col" className="is-position">
+                  #
+                </th>
+                <th scope="col">Player</th>
+                <th scope="col" className="is-number">
+                  Rating
+                </th>
+                <th scope="col" className="is-number">
+                  Level
+                </th>
+                <th scope="col" className="is-number">
+                  Duels
+                </th>
+                <th scope="col" className="is-number">
+                  Wins
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {board.entries.map((entry) => (
+                <Row key={entry.userId} entry={entry} onOpenProfile={onOpenProfile} />
+              ))}
+            </tbody>
+            {board.you && (
+              // Your own place when you're below the shown rows
+              <tbody className="leaderboard-you">
+                <Row entry={board.you} onOpenProfile={onOpenProfile} />
+              </tbody>
+            )}
+          </table>
+        </div>
+      </ScrollReveal>
+
       <p className="leaderboard-count">
         {board.totalPlayers} {board.totalPlayers === 1 ? 'player' : 'players'} ranked
       </p>
-    </div>
+    </>
+  )
+}
+
+// The player's preset avatar, or the first letter of the nickname
+function Avatar({ entry }: { entry: LeaderboardEntry }) {
+  return (
+    <span className="leaderboard-avatar" aria-hidden="true">
+      <AvatarPicture avatar={findAvatar(entry.avatarId)} nickname={entry.nickname} />
+    </span>
+  )
+}
+
+function Tag({ id }: { id: string | null }) {
+  const tag = findTag(id)
+  if (!tag) return null
+  return (
+    <span className="leaderboard-tag">
+      <i className={`ti ${tag.icon}`} aria-hidden="true" />
+      {tag.label}
+    </span>
   )
 }
 
 function Row({ entry, onOpenProfile }: { entry: LeaderboardEntry; onOpenProfile: (userId: string) => void }) {
   const podium = entry.position <= 3
   return (
-    <tr className={`${entry.isYou ? 'is-you' : ''}${podium ? ' is-podium' : ''}`}>
+    <tr className={`${entry.isYou ? 'is-you' : ''}${podium ? ' is-podium' : ''}${entry.position === 1 ? ' is-first' : ''}`}>
       <td className="is-position">
         <span className="leaderboard-position">
-          {podium && <i className="ti ti-trophy" aria-hidden="true" />}
+          {/* The top three get a small mark: a gold crown for first, a trophy for second and third */}
+          {podium && <i className={`ti ${entry.position === 1 ? 'ti-crown' : 'ti-trophy'}`} aria-hidden="true" />}
           {entry.position}
         </span>
       </td>
       <td>
         <button type="button" className="leaderboard-player" onClick={() => onOpenProfile(entry.userId)}>
-          {entry.nickname}
+          <Avatar entry={entry} />
+          <span className="leaderboard-player-name">{entry.nickname}</span>
+          {entry.isYou && <span className="leaderboard-you-tag">You</span>}
+          <Tag id={entry.tag} />
         </button>
-        {entry.isYou && <span className="leaderboard-you-tag">You</span>}
       </td>
       <td className="is-number leaderboard-rating">{entry.rating}</td>
-      <td className="leaderboard-tier">{TIER_LABELS[entry.tier]}</td>
+      <td className="is-number leaderboard-level">{entry.level}</td>
       <td className="is-number">{entry.duelsPlayed}</td>
       <td className="is-number">{entry.wins}</td>
     </tr>

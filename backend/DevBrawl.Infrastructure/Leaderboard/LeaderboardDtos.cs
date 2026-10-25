@@ -15,8 +15,13 @@ public sealed record LeaderboardEntryResponse(
     int Position,
     Guid UserId,
     string Nickname,
+    // The player's preset avatar and tag, as on their profile; null when not picked
+    int? AvatarId,
+    string? Tag,
     int Rating,
     RankTier Tier,
     int DuelsPlayed,
     int Wins,
+    // From the player's total XP, the same level the profile shows
+    int Level,
     bool IsYou);

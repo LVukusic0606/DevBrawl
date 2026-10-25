@@ -13,7 +13,9 @@ public enum InterviewError
     // The AI couldn't be reached, declined, or returned something unusable
     InterviewerUnavailable,
     // The voice model's daily quota is used up; the result's RetryAfter says when it resets
-    VoiceQuotaExceeded
+    VoiceQuotaExceeded,
+    // The player started all the interviews their plan allows this month (Free or Premium)
+    MonthlyLimitReached
 }
 
 public sealed record InterviewResult<T>(T? Value, InterviewError? Error, TimeSpan? RetryAfter = null)

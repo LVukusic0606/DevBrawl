@@ -152,6 +152,8 @@ public class InterviewController(IInterviewService interviewService) : Controlle
         InterviewError.VoiceQuotaExceeded => Problem(
             "The interviewer's voice is used up for today. You can still read the messages.",
             statusCode: StatusCodes.Status429TooManyRequests),
+        InterviewError.MonthlyLimitReached => Problem(
+            "You've used all your AI interviews for this month. Premium includes more.", statusCode: StatusCodes.Status403Forbidden),
         _ => throw new UnreachableException()
     };
 }

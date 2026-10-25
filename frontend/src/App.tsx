@@ -1,20 +1,34 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { getMe, googleLogin, login, logout, signup, type User } from './api/auth'
 import { clearSession, loadSession, startSession } from './api/session'
 import AuthPage, { type GoogleOutcome, type LoginValues, type SignupValues } from './pages/AuthPage'
 import InterviewPage from './pages/InterviewPage'
 import DuelPage from './pages/DuelPage'
 import LeaderboardPage from './pages/LeaderboardPage'
+import PremiumPage from './pages/PremiumPage'
+import SeasonPage from './pages/SeasonPage'
 import LearnPage from './pages/LearnPage'
 import MainPage, { type MainSection } from './pages/MainPage'
 import ProfilePage from './pages/ProfilePage'
+
+// three.js is large, so the 3D character page loads only when it's opened
+const CharacterPage = lazy(() => import('./pages/CharacterPage'))
 
 type AuthState =
   | { status: 'checking' }
   | { status: 'signedOut' }
   | { status: 'signedIn'; user: User }
 
-type Screen = 'main' | 'learn' | 'interview' | 'duel' | 'profile' | 'leaderboard'
+type Screen =
+  | 'main'
+  | 'learn'
+  | 'interview'
+  | 'duel'
+  | 'profile'
+  | 'leaderboard'
+  | 'character'
+  | 'season'
+  | 'premium'
 
 function App() {
   const [auth, setAuth] = useState<AuthState>(() =>
@@ -124,7 +138,16 @@ function App() {
         onBack={leaveProfile}
         onOpenProfile={openProfile}
         onStartDuel={() => handleSelect('duel')}
+        onOpenCharacter={() => setScreen('character')}
       />
+    )
+  }
+
+  if (screen === 'character') {
+    return (
+      <Suspense fallback={null}>
+        <CharacterPage onBack={() => setScreen('profile')} />
+      </Suspense>
     )
   }
 
@@ -138,6 +161,14 @@ function App() {
     )
   }
 
+  if (screen === 'season') {
+    return <SeasonPage onBack={() => setScreen('main')} onOpenPremium={() => setScreen('premium')} />
+  }
+
+  if (screen === 'premium') {
+    return <PremiumPage onBack={() => setScreen('main')} onOpenSeason={() => setScreen('season')} />
+  }
+
   return (
     <MainPage
       user={auth.user}
@@ -145,6 +176,8 @@ function App() {
       onLogout={handleLogout}
       onOpenProfile={() => openProfile()}
       onOpenLeaderboard={() => setScreen('leaderboard')}
+      onOpenSeason={() => setScreen('season')}
+      onOpenPremium={() => setScreen('premium')}
     />
   )
 }

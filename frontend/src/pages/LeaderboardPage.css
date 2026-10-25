@@ -46,7 +46,7 @@
   background: var(--color-surface);
   color: var(--color-text);
   font-family: var(--font-code);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition: border-color 200ms ease-out;
@@ -58,13 +58,14 @@
 
 .leaderboard-primary {
   appearance: none;
-  padding: var(--space-3) var(--space-4);
+  min-height: 48px;
+  padding: var(--space-3) var(--space-6);
   border: 1px solid var(--color-duel);
   border-radius: var(--radius);
   background: var(--color-duel);
   color: var(--color-bg);
   font-family: var(--font-code);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: background-color 200ms ease-out, color 200ms ease-out;
@@ -86,15 +87,16 @@
   box-shadow: 0 0 0 2px var(--color-duel);
 }
 
+/* Same width and rhythm as the profile: a big title, then generous gaps between blocks */
 .leaderboard-content {
   flex: 1;
   width: 100%;
-  max-width: 880px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: var(--space-4) var(--space-8) var(--space-8);
+  padding: var(--space-8) var(--space-8) var(--space-12);
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-12);
   animation: leaderboard-enter 250ms ease-out;
 }
 
@@ -105,26 +107,24 @@
   }
 }
 
-.leaderboard-heading {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
 .leaderboard-title {
   margin: 0;
   font-family: var(--font-text);
-  font-size: 48px;
+  font-size: 52px;
   font-weight: 400;
   line-height: 1.1;
+  color: var(--color-text);
 }
 
-.leaderboard-note,
 .leaderboard-muted,
 .leaderboard-count {
   margin: 0;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--color-text-muted);
+}
+
+.leaderboard-count {
+  text-align: center;
 }
 
 .leaderboard-status {
@@ -143,26 +143,86 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-6) var(--space-4);
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-6);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: 17px;
   color: var(--color-text-muted);
 }
 
 .leaderboard-empty .ti {
-  font-size: 20px;
+  font-size: 24px;
+  color: var(--color-duel);
 }
 
 .leaderboard-empty p {
   margin: 0;
 }
 
+/* Avatar: the chosen preset picture, or the first letter of the nickname */
+
+.leaderboard-avatar {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.leaderboard-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Tag: the same small pill as next to the name on a profile */
+
+.leaderboard-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.leaderboard-tag .ti {
+  font-size: 14px;
+  color: var(--color-accent);
+}
+
+.leaderboard-you-tag {
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  background: var(--color-duel-soft);
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* The table of all ranked players */
+
 .leaderboard-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-4) var(--space-4);
+  padding: var(--space-2) var(--space-6) var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
@@ -172,22 +232,26 @@
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .leaderboard-table th {
-  padding: var(--space-3) var(--space-2);
+  padding: var(--space-4) var(--space-3);
   border-bottom: 1px solid var(--color-border);
   font-weight: 400;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--color-text-muted);
   text-align: left;
 }
 
 .leaderboard-table td {
-  padding: var(--space-3) var(--space-2);
+  padding: var(--space-4) var(--space-3);
   border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
+}
+
+.leaderboard-table tbody:last-of-type tr:last-child td {
+  border-bottom: 0;
 }
 
 .leaderboard-table .is-number {
@@ -196,61 +260,66 @@
 }
 
 .leaderboard-table .is-position {
-  width: 56px;
+  width: 80px;
 }
 
 .leaderboard-position {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   font-family: var(--font-code);
+  font-size: 18px;
   font-weight: 700;
   color: var(--color-text-muted);
 }
 
-/* The top three stand out by size and the duel accent on the trophy, nothing more */
-.leaderboard-table tr.is-podium .leaderboard-position {
+/* The top three stand out by a small mark and brighter text, nothing more; first place in the gold reward color */
+.leaderboard-position .ti {
   font-size: 18px;
+  color: var(--color-duel);
+}
+
+.leaderboard-table tr.is-podium .leaderboard-position {
   color: var(--color-text);
 }
 
-.leaderboard-position .ti {
-  font-size: 16px;
-  color: var(--color-duel);
+.leaderboard-table tr.is-first .leaderboard-position,
+.leaderboard-table tr.is-first .leaderboard-position .ti {
+  color: var(--color-elo);
 }
 
 .leaderboard-player {
   appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
   padding: 0;
   border: 0;
-  border-radius: 2px;
+  border-radius: var(--radius);
   background: none;
   color: var(--color-text);
   font: inherit;
   cursor: pointer;
 }
 
-.leaderboard-player:hover {
-  color: var(--color-duel);
-}
-
-.leaderboard-you-tag {
-  margin-left: var(--space-2);
-  padding: 0 var(--space-2);
-  border-radius: 999px;
-  background: var(--color-duel-soft);
-  font-size: 12px;
-  color: var(--color-text);
-}
-
-.leaderboard-rating {
+.leaderboard-player-name {
   font-family: var(--font-code);
   font-weight: 700;
 }
 
-.leaderboard-tier {
-  font-size: 13px;
-  color: var(--color-text-muted);
+.leaderboard-player:hover .leaderboard-player-name {
+  color: var(--color-duel);
+}
+
+.leaderboard-rating {
+  font-family: var(--font-code);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.leaderboard-level {
+  font-family: var(--font-code);
+  font-weight: 700;
 }
 
 .leaderboard-table tr.is-you td {
@@ -270,14 +339,18 @@
   }
 
   .leaderboard-title {
-    font-size: 32px;
+    font-size: 36px;
   }
 
-  /* Wins and tier hide on small screens; rating and duels stay */
+  /* Level and wins hide on small screens; rating and duels stay */
   .leaderboard-table th:nth-child(4),
   .leaderboard-table td:nth-child(4),
   .leaderboard-table th:nth-child(6),
   .leaderboard-table td:nth-child(6) {
+    display: none;
+  }
+
+  .leaderboard-player .leaderboard-tag {
     display: none;
   }
 }

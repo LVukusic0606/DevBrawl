@@ -7,6 +7,7 @@ using DevBrawl.Infrastructure.Repositories;
 using DevBrawl.Infrastructure.Repositories.Contracts;
 using DevBrawl.Infrastructure.Services;
 using DevBrawl.Infrastructure.Services.Contracts;
+using DevBrawl.Infrastructure.Store;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -36,6 +37,8 @@ public static class DependencyInjection
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<ILeaderboardService, LeaderboardService>();
+        services.AddScoped<ISeasonService, SeasonService>();
+        services.AddScoped<IPremiumService, PremiumService>();
         services.AddScoped<ILessonProgressService, LessonProgressService>();
 
         services.AddDuelContent(configuration);

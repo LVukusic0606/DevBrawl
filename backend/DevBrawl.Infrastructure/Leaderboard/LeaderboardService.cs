@@ -1,3 +1,4 @@
+using DevBrawl.Common.Progression;
 using DevBrawl.Duel.Engine.Domain;
 using DevBrawl.Duel.Scoring;
 using DevBrawl.Infrastructure.Data;
@@ -36,16 +37,22 @@ public class LeaderboardService(AppDbContext db) : ILeaderboardService
                 .ToListAsync(cancellationToken))
             .GroupBy(r => r.UserId)
             .ToDictionary(g => g.Key, g => (IReadOnlyDictionary<int, int>)g.ToDictionary(r => r.CategoryId, r => r.Rating));
-        var nicknames = await db.Users.AsNoTracking()
+        var users = await db.Users.AsNoTracking()
             .Where(u => userIds.Contains(u.Id))
-            .ToDictionaryAsync(u => u.Id, u => u.Nickname, cancellationToken);
+            .Select(u => new { u.Id, u.Nickname, u.AvatarId, u.Tag })
+            .ToDictionaryAsync(u => u.Id, cancellationToken);
+        var totalXp = await db.PlayerProgress.AsNoTracking()
+            .Where(p => userIds.Contains(p.UserId))
+            .ToDictionaryAsync(p => p.UserId, p => p.TotalXp, cancellationToken);
 
         var ranked = userIds
-            .Where(nicknames.ContainsKey)
+            .Where(users.ContainsKey)
             .Select(id => new
             {
                 Id = id,
-                Nickname = nicknames[id],
+                users[id].Nickname,
+                users[id].AvatarId,
+                users[id].Tag,
                 Rating = OverallRating.FromCategories(categoryIds, ratings.GetValueOrDefault(id, new Dictionary<int, int>())),
                 Stats = played[id]
             })
@@ -59,8 +66,9 @@ public class LeaderboardService(AppDbContext db) : ILeaderboardService
         {
             var player = ranked[i];
             var position = i > 0 && player.Rating == ranked[i - 1].Rating ? entries[i - 1].Position : i + 1;
-            entries.Add(new LeaderboardEntryResponse(position, player.Id, player.Nickname, player.Rating,
-                RankTiers.FromRating(player.Rating), player.Stats.Duels, player.Stats.Wins, player.Id == requesterId));
+            entries.Add(new LeaderboardEntryResponse(position, player.Id, player.Nickname, player.AvatarId, player.Tag, player.Rating,
+                RankTiers.FromRating(player.Rating), player.Stats.Duels, player.Stats.Wins,
+                Levels.FromTotalXp(totalXp.GetValueOrDefault(player.Id)), player.Id == requesterId));
         }
 
         var top = entries.Take(limit).ToList();

@@ -137,18 +137,6 @@ function ProfileView({ profile, onOpenProfile, onStartDuel, onOpenCharacter, onC
               activeToday={profile.isYou ? profile.streak.activeToday : true}
             />
           </div>
-          {profile.isYou && (
-            <div className="profile-identity-actions">
-              <AccountSettings onNicknameChanged={onReload} />
-              <ShareButton
-                label="Share profile"
-                fileName={`devbrawl-${user.nickname}`}
-                shareText={`My DevBrawl stats: overall rating ${profile.overall.rating}.`}
-                render={() => drawProfileCard(profile)}
-                className="profile-button"
-              />
-            </div>
-          )}
           {!profile.isYou && profile.friendship && (
             <div className="profile-identity-actions">
               <FriendButton

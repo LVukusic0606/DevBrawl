@@ -54,6 +54,44 @@ public class GeminiInterviewerTests
     }
 
     [Fact]
+    public async Task Speech_request_uses_the_tts_model_and_returns_wav()
+    {
+        var wav = Wav.FromPcm16([1, 0, 2, 0], 24000);
+        var handler = new FakeHandler(HttpStatusCode.OK, AudioReply("audio/wav", wav));
+
+        var audio = await Interviewer(handler).SpeakAsync("Hi there!");
+
+        Assert.Equal(wav, audio);
+        Assert.Equal("https://gemini.test/v1beta/models/gemini-3.8-flash-lite-tts:generateContent", handler.Request!.RequestUri!.ToString());
+        var body = JsonNode.Parse(handler.Body!)!;
+        // Exactly the message, so nothing else can end up being read aloud
+        Assert.Equal("Hi there!", (string)body["contents"]![0]!["parts"]![0]!["text"]!);
+        Assert.Equal("AUDIO", (string)body["generationConfig"]!["responseModalities"]![0]!);
+        Assert.Equal("Charon", (string)body["generationConfig"]!["speechConfig"]!["voiceConfig"]!["prebuiltVoiceConfig"]!["voiceName"]!);
+    }
+
+    [Fact]
+    public async Task Raw_pcm_speech_is_wrapped_in_a_wav_header()
+    {
+        byte[] pcm = [1, 0, 2, 0, 3, 0];
+        var audio = await Interviewer(new FakeHandler(HttpStatusCode.OK, AudioReply("audio/L16;codec=pcm;rate=16000", pcm))).SpeakAsync("Hi");
+
+        Assert.True(Wav.IsWav(audio));
+        Assert.Equal(44 + pcm.Length, audio.Length);
+        Assert.Equal(16000, BitConverter.ToInt32(audio, 24));
+        Assert.Equal(pcm, audio[44..]);
+    }
+
+    [Fact]
+    public async Task Speech_without_audio_makes_the_interviewer_unavailable()
+    {
+        var error = await Assert.ThrowsAsync<InterviewerUnavailableException>(() =>
+            Interviewer(new FakeHandler(HttpStatusCode.OK, Reply("{}"))).SpeakAsync("Hi"));
+
+        Assert.Equal("Gemini returned no audio", error.Message);
+    }
+
+    [Fact]
     public async Task Parses_an_evaluation_and_skips_thought_parts()
     {
         var reply = JsonSerializer.Serialize(new
@@ -120,6 +158,14 @@ public class GeminiInterviewerTests
         new(new HttpClient(handler) { BaseAddress = new Uri("https://gemini.test/") },
             Options.Create(new GeminiOptions { ApiKey = DummyKey }),
             NullLogger<GeminiInterviewer>.Instance);
+
+    private static string AudioReply(string mimeType, byte[] audio) => JsonSerializer.Serialize(new
+    {
+        candidates = new[]
+        {
+            new { finishReason = "STOP", content = new { parts = new[] { new { inlineData = new { mimeType, data = Convert.ToBase64String(audio) } } } } }
+        }
+    });
 
     private static string Reply(string json) => JsonSerializer.Serialize(new
     {

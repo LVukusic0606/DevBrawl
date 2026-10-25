@@ -49,16 +49,46 @@ public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> o
         return output.Transcript?.Trim() ?? string.Empty;
     }
 
+    public async Task<byte[]> SpeakAsync(string text, CancellationToken cancellationToken = default)
+    {
+        var body = new JsonObject
+        {
+            // Only the words to say: the speech model sometimes reads instructions in the text out loud,
+            // so the voice is chosen in speechConfig instead
+            ["contents"] = new JsonArray(new JsonObject
+            {
+                ["role"] = "user",
+                ["parts"] = new JsonArray(new JsonObject { ["text"] = text })
+            }),
+            ["generationConfig"] = new JsonObject
+            {
+                ["responseModalities"] = new JsonArray("AUDIO"),
+                ["speechConfig"] = new JsonObject
+                {
+                    ["voiceConfig"] = new JsonObject
+                    {
+                        ["prebuiltVoiceConfig"] = new JsonObject { ["voiceName"] = _options.Voice }
+                    }
+                }
+            }
+        };
+
+        using var reply = JsonDocument.Parse(await PostAsync(_options.TtsModel, body, cancellationToken));
+        var audio = reply.RootElement.TryGetProperty("candidates", out var candidates) && candidates.GetArrayLength() > 0
+            && candidates[0].TryGetProperty("content", out var content) && content.TryGetProperty("parts", out var parts)
+            ? parts.EnumerateArray().Select(p => p.TryGetProperty("inlineData", out var data) ? data : (JsonElement?)null).FirstOrDefault(d => d is not null)
+            : null;
+        if (audio is null)
+            throw new InterviewerUnavailableException("Gemini returned no audio");
+
+        var bytes = Convert.FromBase64String(audio.Value.GetProperty("data").GetString()!);
+        var mimeType = audio.Value.TryGetProperty("mimeType", out var type) ? type.GetString() ?? "" : "";
+        return Wav.IsWav(bytes) ? bytes : Wav.FromPcm16(bytes, Wav.SampleRateOf(mimeType) ?? 24000);
+    }
+
     private async Task<T> AskAsync<T>(string system, string request, JsonObject schema, CancellationToken cancellationToken,
         JsonObject? attachment = null)
     {
-        var apiKey = _options.ResolveApiKey();
-        if (apiKey is null)
-        {
-            logger.LogError("Gemini API key is missing: set Gemini:ApiKey in user secrets or GEMINI_API_KEY");
-            throw new InterviewerUnavailableException("Gemini API key is missing");
-        }
-
         var body = new JsonObject
         {
             ["systemInstruction"] = new JsonObject { ["parts"] = new JsonArray(new JsonObject { ["text"] = system }) },
@@ -78,7 +108,20 @@ public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> o
         if (!string.IsNullOrWhiteSpace(_options.ThinkingLevel))
             body["generationConfig"]!["thinkingConfig"] = new JsonObject { ["thinkingLevel"] = _options.ThinkingLevel };
 
-        using var message = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/{Uri.EscapeDataString(_options.Model)}:generateContent")
+        return ParseReply<T>(await PostAsync(_options.Model, body, cancellationToken));
+    }
+
+    // Sends a generateContent request and returns the reply JSON; failures become InterviewerUnavailableException
+    private async Task<string> PostAsync(string model, JsonObject body, CancellationToken cancellationToken)
+    {
+        var apiKey = _options.ResolveApiKey();
+        if (apiKey is null)
+        {
+            logger.LogError("Gemini API key is missing: set Gemini:ApiKey in user secrets or GEMINI_API_KEY");
+            throw new InterviewerUnavailableException("Gemini API key is missing");
+        }
+
+        using var message = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/{Uri.EscapeDataString(model)}:generateContent")
         {
             Content = JsonContent.Create(body)
         };
@@ -100,12 +143,12 @@ public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> o
         {
             var json = await response.Content.ReadAsStringAsync(cancellationToken);
             if (!response.IsSuccessStatusCode)
-                throw Failure(response.StatusCode, json);
-            return ParseReply<T>(json);
+                throw Failure(response.StatusCode, json, model);
+            return json;
         }
     }
 
-    private InterviewerUnavailableException Failure(HttpStatusCode status, string body)
+    private InterviewerUnavailableException Failure(HttpStatusCode status, string body, string model)
     {
         var detail = Truncate(body);
         switch (status)
@@ -118,7 +161,7 @@ public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> o
                 logger.LogError("Gemini API key is invalid or not allowed: {Body}", detail);
                 return new("Gemini API key is invalid");
             case HttpStatusCode.NotFound:
-                logger.LogError("Gemini model {Model} wasn't found; set Gemini:Model to an available model: {Body}", _options.Model, detail);
+                logger.LogError("Gemini model {Model} wasn't found; change it in the Gemini section of appsettings.json: {Body}", model, detail);
                 return new("Gemini model not found");
             case >= HttpStatusCode.InternalServerError:
                 logger.LogWarning("Gemini API server error {Status}: {Body}", (int)status, detail);

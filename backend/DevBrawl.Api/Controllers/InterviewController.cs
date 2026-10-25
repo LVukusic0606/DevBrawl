@@ -85,6 +85,20 @@ public class InterviewController(IInterviewService interviewService) : Controlle
         return result.Error is null ? Ok(result.Value) : ToProblem(result.Error.Value);
     }
 
+    // The interviewer's message as speech (WAV). Has its own rate limit, so voice doesn't use up the interview budget.
+    [HttpGet("sessions/{sessionId:guid}/messages/{messageId:guid}/speech")]
+    [EnableRateLimiting(InterviewRateLimit.VoicePolicyName)]
+    [ProducesResponseType<FileContentResult>(StatusCodes.Status200OK, "audio/wav")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> Speech(Guid sessionId, Guid messageId, CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId)) return Unauthorized();
+        var result = await interviewService.SpeakAsync(userId, sessionId, messageId, cancellationToken);
+        return result.Error is null ? File(result.Value!, "audio/wav") : ToProblem(result.Error.Value);
+    }
+
     [HttpPost("sessions/{sessionId:guid}/transcribe")]
     [EnableRateLimiting(InterviewRateLimit.PolicyName)]
     [Consumes("multipart/form-data")]
@@ -126,6 +140,7 @@ public class InterviewController(IInterviewService interviewService) : Controlle
             "This lesson belongs to a different category. Send only the lessonId; its category is found automatically.",
             statusCode: StatusCodes.Status400BadRequest),
         InterviewError.SessionNotFound => Problem("This interview doesn't exist.", statusCode: StatusCodes.Status404NotFound),
+        InterviewError.MessageNotFound => Problem("This interviewer message doesn't exist.", statusCode: StatusCodes.Status404NotFound),
         InterviewError.SessionFinished => Problem("This interview has ended. Start a new one.", statusCode: StatusCodes.Status409Conflict),
         InterviewError.SessionChanged => Problem(
             "This interview changed in another tab. Reload it and try again.", statusCode: StatusCodes.Status409Conflict),

@@ -6,14 +6,21 @@ using DevBrawl.Interview.Domain;
 using DevBrawl.Interview.Dtos;
 using DevBrawl.Interview.Knowledge;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace DevBrawl.Infrastructure.Services;
 
-public class InterviewService(AppDbContext db, LearnKnowledgeBase knowledge, IInterviewer interviewer, IOptions<InterviewOptions> options)
-    : IInterviewService
+public class InterviewService(
+    AppDbContext db,
+    LearnKnowledgeBase knowledge,
+    IInterviewer interviewer,
+    IOptions<InterviewOptions> options,
+    IMemoryCache cache) : IInterviewService
 {
     private const int HistoryShown = 20;
+    // Replaying a message reuses the audio instead of paying for speech again
+    private static readonly TimeSpan SpeechCacheTime = TimeSpan.FromMinutes(30);
     private readonly int _maxAnswers = Math.Max(1, options.Value.MaxAnswers);
 
     public InterviewTopicsResponse GetTopics() => new(knowledge.Categories
@@ -161,6 +168,33 @@ public class InterviewService(AppDbContext db, LearnKnowledgeBase knowledge, IIn
         }
         await db.SaveChangesAsync(cancellationToken);
         return InterviewResult<InterviewSessionResponse>.Ok(ToResponse(session));
+    }
+
+    public async Task<InterviewResult<byte[]>> SpeakAsync(Guid userId, Guid sessionId, Guid messageId,
+        CancellationToken cancellationToken = default)
+    {
+        var message = await db.InterviewMessages
+            .AsNoTracking()
+            .Where(m => m.Id == messageId && m.SessionId == sessionId && m.Role == MessageRole.Interviewer)
+            .Where(m => db.InterviewSessions.Any(s => s.Id == m.SessionId && s.UserId == userId))
+            .SingleOrDefaultAsync(cancellationToken);
+        if (message is null)
+            return InterviewResult<byte[]>.Fail(InterviewError.MessageNotFound);
+
+        var key = $"interview-speech:{message.Id}";
+        if (cache.TryGetValue(key, out byte[]? cached) && cached is not null)
+            return InterviewResult<byte[]>.Ok(cached);
+
+        try
+        {
+            var audio = await interviewer.SpeakAsync(message.Content, cancellationToken);
+            cache.Set(key, audio, SpeechCacheTime);
+            return InterviewResult<byte[]>.Ok(audio);
+        }
+        catch (InterviewerUnavailableException)
+        {
+            return InterviewResult<byte[]>.Fail(InterviewError.InterviewerUnavailable);
+        }
     }
 
     public async Task<InterviewResult<TranscriptResponse>> TranscribeAsync(Guid userId, Guid sessionId, byte[] audio, string mimeType,

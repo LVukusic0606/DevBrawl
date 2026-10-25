@@ -47,9 +47,39 @@ public class LearnKnowledgeBaseTests
         Assert.Contains("api/:\n```\napi/\n├── controllers/", request);
         Assert.Contains("Common mistakes:\n- Expecting the server to remember the previous request", request);
         Assert.Contains("Key takeaway: A request travels through layers in order", request);
-        Assert.Contains("| Method | Intent | Changes data? |\n| --- | --- | --- |\n| GET | Read something | No |", methods);
+        Assert.Contains("| Term | Meaning |\n| --- | --- |\n| Resource | A thing the API manages", methods);
         Assert.Contains("- Reproduce: Follow the steps until the bug appears on your machine.", reproduce);
         Assert.Contains("[Interactive diagram: branches]", ciCd);
+    }
+
+    [Fact]
+    public void Renders_the_interactive_blocks_as_text()
+    {
+        var methods = _knowledge.FindLesson("http-methods")!.Text;
+
+        Assert.Contains("## Terms", methods);
+        Assert.Contains("- GET: Read something. Changes data: no. Safe to repeat: yes. Example: GET /lessons/12 ->", methods);
+        Assert.Contains("```\nconst lesson = await fetch('/api/lessons/12')\n```\nResult: 200 OK", methods);
+        Assert.Contains("GET reads the lesson. The server changes nothing.", methods);
+    }
+
+    [Fact]
+    public void Unknown_block_types_never_break_loading()
+    {
+        var path = Path.Combine(Directory.CreateTempSubdirectory().FullName, "learn-content.json");
+        File.WriteAllText(path, """
+            [{ "id": "c", "title": "C", "description": "", "lessons": [{ "id": "l", "title": "L", "blocks": [
+              { "type": "quiz-card", "question": "Why?", "choices": [{ "label": "Because", "correct": true }] },
+              { "type": "confetti" },
+              { "type": "steps", "steps": [{ "title": "First", "detail": "Do it" }] }
+            ] }] }]
+            """);
+
+        var text = LearnKnowledgeBase.Load(path).FindLesson("l")!.Text;
+
+        Assert.Contains("question: Why?. choices: label: Because. correct: yes", text);
+        Assert.Contains("[Interactive confetti]", text);
+        Assert.Contains("1. title: First. detail: Do it", text);
     }
 
     [Fact]

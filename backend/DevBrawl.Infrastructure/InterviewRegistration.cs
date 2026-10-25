@@ -32,6 +32,7 @@ public static class InterviewRegistration
             http.Timeout = TimeSpan.FromSeconds(geminiOptions.TimeoutSeconds);
         });
 
+        services.AddMemoryCache();
         services.AddScoped<IInterviewService, InterviewService>();
         return services;
     }

@@ -26,7 +26,7 @@ interface InterviewPageProps {
 const MAX_ANSWER_LENGTH = 2000
 const MAX_RECORDING_SECONDS = 120
 
-// Select values: "" for a random category, "category:<id>" or "lesson:<id>"
+// Select value: a category id, or "" for a random category. The interviewer picks the lessons within it.
 type TopicChoice = string
 
 const VOICE_SETTING = 'devbrawl.interview.voice'
@@ -125,8 +125,7 @@ function InterviewPage({ onBack }: InterviewPageProps) {
     setBusy('starting')
     setError(null)
     try {
-      const [kind, id] = topic.split(':')
-      const started = await startInterview(kind === 'lesson' ? { lessonId: id } : kind === 'category' ? { categoryId: id } : {})
+      const started = await startInterview(topic ? { categoryId: topic } : {})
       setSession(started)
       setDraft('')
       refreshHistory()
@@ -292,7 +291,7 @@ function InterviewPage({ onBack }: InterviewPageProps) {
               the end.
             </p>
             <label className="interview-label" htmlFor="interview-topic">
-              Topic
+              Category
             </label>
             <select
               id="interview-topic"
@@ -303,14 +302,9 @@ function InterviewPage({ onBack }: InterviewPageProps) {
             >
               <option value="">Surprise me</option>
               {topics.map((category) => (
-                <optgroup key={category.id} label={category.title}>
-                  <option value={`category:${category.id}`}>All of {category.title}</option>
-                  {category.lessons.map((lesson) => (
-                    <option key={lesson.id} value={`lesson:${lesson.id}`}>
-                      {lesson.title}
-                    </option>
-                  ))}
-                </optgroup>
+                <option key={category.id} value={category.id}>
+                  {category.title}
+                </option>
               ))}
             </select>
             <button type="button" className="interview-primary" onClick={start} disabled={busy !== null}>

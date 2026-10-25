@@ -1,11 +1,14 @@
 // Error with a message that is safe to show to the user
 export class ApiError extends Error {
   readonly status: number
+  // Seconds from the Retry-After header, when the server sent one (e.g. with a 429)
+  readonly retryAfter: number | null
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, retryAfter: number | null = null) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.retryAfter = retryAfter
   }
 }
 
@@ -31,7 +34,8 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   }
 
   if (!response.ok) {
-    throw new ApiError(response.status, await readErrorMessage(response))
+    const retryAfter = Number(response.headers.get('Retry-After'))
+    throw new ApiError(response.status, await readErrorMessage(response), retryAfter > 0 ? retryAfter : null)
   }
   if (response.status === 204) {
     return undefined as T

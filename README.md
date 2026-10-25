@@ -80,7 +80,7 @@ dotnet user-secrets set "Gemini:ApiKey" "<your Gemini key>"   # or export GEMINI
 
 Never put a key in `appsettings.json` (it's committed). A `.env` file isn't read by .NET.
 
-An interview is a chat: the interviewer opens with a question, reacts to each answer (sometimes with one follow-up), and after `Interview:MaxAnswers` answers (default 6) closes the interview and gives overall feedback. All endpoints need the `Authorization: Bearer` header:
+An interview is a chat: the interviewer opens with a question, reacts to each answer (sometimes with one follow-up), and after `Interview:MaxAnswers` answers (default 3) closes the interview and gives overall feedback. All endpoints need the `Authorization: Bearer` header:
 
 - `GET /api/interview/topics`: categories and lessons to interview about.
 - `GET /api/interview/sessions`: your last 20 interviews, `[{ id, title, status, score, createdAt }]`.
@@ -96,7 +96,7 @@ Settings in the `Gemini` section of `appsettings.json`: `Model` (default `gemini
 
 In the app, open **Interview** on the main page, pick a topic and start. Answer in the chat box (Enter sends, Shift+Enter adds a line) or press the microphone: the browser records, converts to WAV and sends it to `transcribe`, and the text lands in the box to check before sending. Past interviews are in the history on the left.
 
-Starting, every answer, the final feedback and every transcription are one AI call each (a full interview is about 8), so they share a per-user rate limit: 30 per hour by default (`Interview:RateLimit:RequestsPerHour`). Past the limit they return 429 with a `Retry-After` header; a user gets one request back every 60 / limit minutes.
+Starting, every answer, the final feedback and every transcription are one AI call each (a full interview is about 5), so they share a per-user rate limit: 30 per hour by default (`Interview:RateLimit:RequestsPerHour`). Past the limit they return 429 with a `Retry-After` header; a user gets one request back every 60 / limit minutes.
 
 ## Google sign-in
 

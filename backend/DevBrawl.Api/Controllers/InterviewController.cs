@@ -96,6 +96,9 @@ public class InterviewController(IInterviewService interviewService) : Controlle
     {
         if (!TryGetUserId(out var userId)) return Unauthorized();
         var result = await interviewService.SpeakAsync(userId, sessionId, messageId, cancellationToken);
+        // Tells the frontend how long to keep the voice off
+        if (result.RetryAfter is { } wait)
+            Response.Headers.RetryAfter = ((int)Math.Ceiling(wait.TotalSeconds)).ToString();
         return result.Error is null ? File(result.Value!, "audio/wav") : ToProblem(result.Error.Value);
     }
 
@@ -146,6 +149,9 @@ public class InterviewController(IInterviewService interviewService) : Controlle
             "This interview changed in another tab. Reload it and try again.", statusCode: StatusCodes.Status409Conflict),
         InterviewError.InterviewerUnavailable => Problem(
             "The interviewer isn't available right now. Try again in a moment.", statusCode: StatusCodes.Status503ServiceUnavailable),
+        InterviewError.VoiceQuotaExceeded => Problem(
+            "The interviewer's voice is used up for today. You can still read the messages.",
+            statusCode: StatusCodes.Status429TooManyRequests),
         _ => throw new UnreachableException()
     };
 }

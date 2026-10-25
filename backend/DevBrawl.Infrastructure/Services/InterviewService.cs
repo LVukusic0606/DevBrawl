@@ -191,6 +191,10 @@ public class InterviewService(
             cache.Set(key, audio, SpeechCacheTime);
             return InterviewResult<byte[]>.Ok(audio);
         }
+        catch (InterviewerQuotaExceededException e)
+        {
+            return InterviewResult<byte[]>.Fail(InterviewError.VoiceQuotaExceeded, e.RetryAfter);
+        }
         catch (InterviewerUnavailableException)
         {
             return InterviewResult<byte[]>.Fail(InterviewError.InterviewerUnavailable);

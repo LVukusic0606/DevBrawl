@@ -93,6 +93,7 @@ Concept: **terminal session**. The whole screen reads as one big terminal window
 - Outfit: a gray `DEV_BUG` hoodie with a terminal icon over a light blue shirt, khaki pants, a USB keychain and canvas sneakers. A coffee mug with a power icon stands at its feet.
 - The asset is `frontend/src/assets/mascot.webp`, cut out to a transparent background. It sits on the dark grid with a soft drop shadow to ground it.
 - The warm orange mascot is the one deliberate contrast to the cyan palette. Keep it as the only large warm element on a screen.
+- **Interview screen:** Dev_Bug in his suit (`bug-interview.webp`) stands in the middle of the screen with one speech bubble above his head, and the answer box sits below. There is no chat thread: the bubble shows only his current line. That is a greeting with the topic picker under him on the start screen, a muted "Thinking about your answer…" while waiting, then the interviewer's newest message with a listen button. The feedback card appears under him when the interview ends. While his voice plays, the bubble border turns accent and he bobs gently (no motion with reduced motion).
 - Controls that sit on the grid get an opaque fill (`--color-field` or `--color-bg`) so the grid never shows through them.
 - Form order: title, switch link, fields, remember me (log in only), primary button, "Or log in with" divider, Google button.
 

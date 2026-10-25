@@ -15,7 +15,7 @@ import {
   type InterviewSession,
   type InterviewSummary,
 } from '../api/interview'
-import bugInterview from '../assets/bug-interview.webp'
+import bugInterviewer from '../assets/bug-interviewer.webp'
 import { useInterviewerVoice, type VoiceState } from '../hooks/useInterviewerVoice'
 import { canRecord, useWavRecorder } from '../hooks/useWavRecorder'
 import './InterviewPage.css'
@@ -316,7 +316,7 @@ function InterviewPage({ onBack }: InterviewPageProps) {
             Back
           </button>
           <div className="interview-heading">
-            <span className="interview-logo">{session ? session.title : 'Interview'}</span>
+            <span className="interview-logo">{session ? session.title : 'Current interview'}</span>
             {session && (
               <span className="interview-progress">
                 {active ? `Answer ${Math.min(session.answersGiven + 1, session.maxAnswers)} of ${session.maxAnswers}` : 'Finished'}
@@ -516,7 +516,7 @@ function InterviewerSpeech({ line, voice, onPlay, onStop }: InterviewerSpeechPro
         </span>
         <p className={`interview-speech-text${'waiting' in line ? ' is-waiting' : ''}`}>{text}</p>
       </div>
-      <img className="interview-bug" src={bugInterview} alt="" />
+      <img className="interview-bug" src={bugInterviewer} alt="" />
     </div>
   )
 }

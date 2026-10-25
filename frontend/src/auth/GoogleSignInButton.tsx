@@ -67,8 +67,10 @@ export function GoogleSignInButton({ onCredential, before }: GoogleSignInButtonP
           ux_mode: 'popup',
         })
         window.google.accounts.id.renderButton(box, {
-          theme: 'filled_black',
-          size: 'large',
+          // The outline theme is Google's light variant with a 1px frame, which sits calmer on the dark form than the solid black one
+          theme: 'outline',
+          // Medium is the smallest size Google draws at a normal weight; the large G looked too big for the button
+          size: 'medium',
           text: 'continue_with',
           shape: 'rectangular',
           // Google accepts 200 to 400 pixels

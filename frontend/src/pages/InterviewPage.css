@@ -2,7 +2,7 @@
 .interview {
   height: 100vh;
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1fr);
   background-color: var(--color-bg);
   background-image:
     linear-gradient(var(--color-grid) 1px, transparent 1px),
@@ -15,17 +15,29 @@
 .interview-sidebar {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-6) var(--space-4);
+  gap: var(--space-4);
+  padding: var(--space-6);
   border-right: 1px solid var(--color-border);
   background: var(--color-surface);
   overflow-y: auto;
 }
 
+/* Sidebar controls are larger than in the conversation, so the history reads as the main list */
+.interview-sidebar .interview-secondary {
+  min-height: 52px;
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.interview-sidebar .interview-muted {
+  font-size: 17px;
+}
+
 .interview-sidebar-title {
-  margin: var(--space-4) 0 0;
+  margin: var(--space-6) 0 0;
   font-family: var(--font-text);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 400;
   color: var(--color-text-muted);
 }
@@ -66,7 +78,7 @@
 
 .interview-history-title {
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 16px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -74,7 +86,7 @@
 
 .interview-history-meta {
   font-family: var(--font-text);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-text-muted);
 }
 
@@ -124,13 +136,13 @@
   align-items: center;
   gap: var(--space-2);
   align-self: flex-start;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
   color: var(--color-text);
   font-family: var(--font-code);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition: border-color 200ms ease-out;
@@ -253,14 +265,31 @@
   filter: brightness(1.1);
 }
 
-/* Start screen: the topic picker under the bug */
+/* Start screen: the topic picker under the bug, in one panel with the label, the select and the button */
+
+/* On the start screen the stage fills the height: Dev_Bug stays at the top and the category panel sits at the bottom */
+.interview-stage:has(.interview-start) {
+  height: 100%;
+  max-width: none;
+  margin: 0 auto;
+  justify-content: space-between;
+}
+
+/* Dev_Bug sits a little lower than the top edge of the stage */
+.interview-stage:has(.interview-start) .interview-speaker {
+  margin-top: var(--space-12);
+}
 
 .interview-start {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   width: 100%;
-  max-width: 480px;
+  margin-top: auto;
+  padding: var(--space-4) var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 
 .interview-text,
@@ -285,16 +314,24 @@
   color: var(--color-text-muted);
 }
 
+/* The start panel's label is the one bold line, so it reads before the select */
+.interview-start .interview-label {
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
 .interview-select {
   width: 100%;
   height: 52px;
   padding: 0 var(--space-4);
-  border: 1px solid transparent;
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
   background: var(--color-field);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .interview-select:focus {
@@ -325,6 +362,9 @@
   border: 0;
   background: var(--color-accent);
   color: var(--color-bg);
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .interview-primary:hover:not(:disabled) {
@@ -522,10 +562,11 @@
 
 /* Dev_Bug in the middle of the screen with one speech bubble; only this area scrolls when it doesn't fit */
 
+/* The whole screen fits the window: nothing scrolls here, the layout is sized to the viewport instead */
 .interview-stage-scroll {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
 }
 
@@ -536,15 +577,17 @@
   align-items: center;
   gap: var(--space-6);
   width: 100%;
-  max-width: 720px;
-  padding: var(--space-8);
+  max-width: 1000px;
+  padding: var(--space-6);
 }
 
+/* Dev_Bug on the left, his speech on the right of him */
 .interview-speaker {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto minmax(0, 520px);
+  justify-content: center;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-8);
   width: 100%;
 }
 
@@ -554,6 +597,7 @@
   flex-direction: column;
   gap: var(--space-2);
   width: 100%;
+  max-width: 520px;
   padding: var(--space-4) var(--space-6);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
@@ -562,18 +606,18 @@
   animation: interview-speech-in 250ms ease-out;
 }
 
-/* The tail points down at the bug's head */
+/* The tail points left, at Dev_Bug beside the bubble */
 .interview-speech::after {
   content: '';
   position: absolute;
-  left: 50%;
-  bottom: -8px;
+  left: -8px;
+  top: 32px;
   width: 14px;
   height: 14px;
-  border-right: 1px solid var(--color-border-strong);
+  border-left: 1px solid var(--color-border-strong);
   border-bottom: 1px solid var(--color-border-strong);
   background: var(--color-surface-raised);
-  transform: translateX(-50%) rotate(45deg);
+  transform: rotate(45deg);
   transition: border-color 200ms ease-out;
 }
 
@@ -596,8 +640,9 @@
 }
 
 .interview-bug {
+  order: -1;
   height: auto;
-  max-height: min(340px, 36vh);
+  max-height: min(380px, 42vh);
   width: auto;
   pointer-events: none;
   filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5));
@@ -649,7 +694,29 @@
     padding-bottom: var(--space-4);
   }
 
+  .interview-speaker {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: var(--space-4);
+  }
+
+  .interview-speech {
+    max-width: none;
+  }
+
+  /* Stacked again on phones: the tail goes back under the bubble, pointing at the bug */
+  .interview-speech::after {
+    left: 50%;
+    top: auto;
+    bottom: -8px;
+    border-left: 0;
+    border-bottom: 1px solid var(--color-border-strong);
+    border-right: 1px solid var(--color-border-strong);
+    transform: translateX(-50%) rotate(45deg);
+  }
+
   .interview-bug {
+    order: 0;
     max-height: 26vh;
   }
 }

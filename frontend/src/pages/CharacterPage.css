@@ -1,7 +1,9 @@
 /* Character viewer: the 3D bug on a pedestal. Classes start with "character-" because CSS is global. */
 
+/* Exactly one screen tall: the page never scrolls, only the accessory list inside its panel */
 .character {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   background-color: var(--color-bg);
@@ -55,13 +57,155 @@
 .character-content {
   flex: 1;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: var(--space-8) var(--space-8) var(--space-12);
+  min-height: 0;
+  padding: var(--space-4) var(--space-8) var(--space-8);
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
 }
+
+/* Centered over the 3D stage: the right padding matches the panel column and the gap beside it */
+.character-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding-right: calc(380px + var(--space-6));
+  text-align: center;
+}
+
+/* The player's nickname above the title, so the page reads as "this is my bug" */
+.character-owner {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+/* Stage on the left, what the bug wears on the right */
+.character-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+.character-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  min-height: 0;
+}
+
+.character-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.character-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.character-panel-title {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.character-panel-meta {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+/* The only part of the page that scrolls */
+.character-items {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-color: var(--color-border-strong) transparent;
+  margin: 0;
+  padding: 0 var(--space-1) 0 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.character-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.character-item-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  background: var(--color-field);
+  color: var(--color-accent);
+  font-size: 20px;
+}
+
+
+
+.character-item-name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+/* Screen readers still hear what kind of item it is */
+.character-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Rarity badge; starter items are the plain, everyone-has-it kind */
+.character-item-rarity {
+  flex: 0 0 auto;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  font-family: var(--font-text);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
 
 .character-title {
   margin: 0;
@@ -75,8 +219,8 @@
 /* The stage is where the canvas draws; the soft spot behind the character is the lobby's spotlight */
 .character-stage {
   position: relative;
-  height: min(68vh, 680px);
-  min-height: 420px;
+  flex: 1;
+  min-height: 0;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: radial-gradient(ellipse at 50% 60%, var(--color-part-light) 0%, var(--color-bg) 70%);
@@ -95,18 +239,50 @@
   height: 100%;
 }
 
-.character-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
+/* Shown over the pedestal while the model loads, or if it fails to */
+.character-status {
+  position: absolute;
+  inset: auto 0 var(--space-6);
   margin: 0;
+  text-align: center;
+  font-family: var(--font-body);
   font-size: 15px;
   color: var(--color-text-muted);
+  pointer-events: none;
 }
 
-.character-hint .ti {
-  font-size: 18px;
+.character-status.is-error {
+  color: var(--color-danger);
+}
+
+
+
+/* Stage and panel stack on narrow screens, so there the page scrolls again */
+@media (max-width: 1100px) {
+  .character {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .character-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+  }
+
+  .character-heading {
+    padding-right: 0;
+  }
+
+  .character-stage {
+    flex: none;
+    height: min(60vh, 560px);
+    min-height: 380px;
+  }
+
+  .character-items {
+    overflow-y: visible;
+  }
 }
 
 @media (max-width: 640px) {

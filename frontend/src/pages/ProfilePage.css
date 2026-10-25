@@ -998,10 +998,12 @@
   box-shadow: var(--focus-ring);
 }
 
-/* Profile picture picker: the twelve avatars in a grid, the current one marked */
+/* Profile picture picker: every avatar in one wide grid, so the whole set is visible without scrolling.
+   Nine columns fit the 36 avatars in four rows; narrower screens get fewer columns. */
 
 .avatar-dialog {
-  width: min(560px, calc(100vw - 32px));
+  width: min(1180px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
 }
 
 .avatar-grid {
@@ -1009,8 +1011,20 @@
   padding: 0;
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(9, minmax(0, 1fr));
   gap: var(--space-3);
+}
+
+@media (max-width: 1100px) {
+  .avatar-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .avatar-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .avatar-option {
@@ -1324,4 +1338,54 @@
   gap: var(--space-1);
   font-size: 12px;
   color: var(--color-text-muted);
+}
+
+/* Tag picker: all tags in a wide four-column grid, each option as a small card */
+
+.tag-dialog {
+  width: min(1000px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+}
+
+.tag-dialog .account-menu {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.tag-dialog .account-menu > li {
+  display: flex;
+}
+
+/* The name on top, the lock or the check underneath, so long names never squeeze the lock */
+.tag-dialog .tag-option {
+  position: relative;
+  min-height: 72px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+/* Menu items stack their spans in a column; the lock and its label stay on one line */
+.tag-dialog .tag-option > .tag-option-locked {
+  flex-direction: row;
+}
+
+.tag-dialog .tag-option.is-current > .ti {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+}
+
+@media (max-width: 900px) {
+  .tag-dialog .account-menu {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .tag-dialog .account-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

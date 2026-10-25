@@ -67,7 +67,7 @@ function ProfileTag({ tag, editable, onChanged }: ProfileTagProps) {
       {/* Native dialog, like account settings: focus stays inside, Escape closes it */}
       <dialog
         ref={dialog}
-        className="account-dialog"
+        className="account-dialog tag-dialog"
         aria-labelledby="tag-dialog-title"
         // A click on the backdrop lands on the dialog element itself
         onClick={(event) => {

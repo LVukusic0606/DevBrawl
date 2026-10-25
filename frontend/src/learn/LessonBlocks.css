@@ -525,27 +525,6 @@
   color: var(--color-text-muted);
 }
 
-/* Scroll reveal: each block fades and rises the first time it reaches the viewport */
-
-.lesson-reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 600ms ease-out, transform 600ms ease-out;
-}
-
-.lesson-reveal.is-visible {
-  opacity: 1;
-  transform: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lesson-reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-}
-
 /* Section heading */
 
 .lesson-section-title {

@@ -5,6 +5,9 @@ export interface User {
   id: string
   nickname: string
   email: string
+  // One of the preset profile pictures (see profile/avatars); null shows the nickname's first letter.
+  // Optional because sessions stored before avatars existed don't have it.
+  avatarId?: number | null
 }
 
 export interface AuthResponse {

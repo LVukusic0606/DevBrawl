@@ -68,6 +68,14 @@ function App() {
     if (session) logout(session.refreshToken).catch(() => {})
   }
 
+  // The profile page can change the nickname and the avatar, so the header picks up the new ones
+  function leaveProfile() {
+    setScreen(profileReturn)
+    getMe()
+      .then((user) => setAuth({ status: 'signedIn', user }))
+      .catch(() => {})
+  }
+
   function openProfile(userId?: string) {
     setProfileUserId(userId)
     // Moving between profiles keeps the original place to go back to
@@ -113,7 +121,7 @@ function App() {
         // A different player gets a fresh page, so state from the previous profile never shows
         key={profileUserId ?? 'me'}
         userId={profileUserId}
-        onBack={() => setScreen(profileReturn)}
+        onBack={leaveProfile}
         onOpenProfile={openProfile}
         onStartDuel={() => handleSelect('duel')}
       />
@@ -132,6 +140,7 @@ function App() {
 
   return (
     <MainPage
+      user={auth.user}
       onSelect={handleSelect}
       onLogout={handleLogout}
       onOpenProfile={() => openProfile()}

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Security.Claims;
 using DevBrawl.Auth;
+using DevBrawl.Auth.Domain;
 using DevBrawl.Auth.Dtos;
 using DevBrawl.Infrastructure.Services.Contracts;
 using Microsoft.AspNetCore.Authorization;
@@ -92,6 +93,30 @@ public class AuthController(IAuthService authService, IGoogleTokenValidator goog
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public Task<IActionResult> ChangePassword(ChangePasswordRequest request, CancellationToken cancellationToken) =>
         ForCurrentUser(userId => authService.ChangePasswordAsync(userId, request, cancellationToken));
+
+    [Authorize]
+    [HttpPut("avatar")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangeAvatar(ChangeAvatarRequest request, CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out var userId))
+            return Unauthorized();
+        return await authService.ChangeAvatarAsync(userId, request, cancellationToken) ? NoContent() : Unauthorized();
+    }
+
+    [Authorize]
+    [HttpPut("tag")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangeTag(ChangeTagRequest request, CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out var userId))
+            return Unauthorized();
+        if (request.Tag is not null && !UserTags.All.Contains(request.Tag))
+            return Problem("Unknown tag.", statusCode: StatusCodes.Status400BadRequest);
+        return await authService.ChangeTagAsync(userId, request.Tag, cancellationToken) ? NoContent() : Unauthorized();
+    }
 
     private async Task<IActionResult> ForCurrentUser(Func<Guid, Task<AuthResult>> change)
     {

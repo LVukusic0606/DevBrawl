@@ -19,4 +19,8 @@ public interface IAuthService
     Task<AuthResult> ChangeEmailAsync(Guid userId, ChangeEmailRequest request, CancellationToken cancellationToken = default);
     // Also logs the user out on every other device
     Task<AuthResult> ChangePasswordAsync(Guid userId, ChangePasswordRequest request, CancellationToken cancellationToken = default);
+    // The avatar is not in the token, so no new pair is needed; false when the user no longer exists
+    Task<bool> ChangeAvatarAsync(Guid userId, ChangeAvatarRequest request, CancellationToken cancellationToken = default);
+    // Like the avatar, the tag is not in the token; the caller checks the tag is one of UserTags.All
+    Task<bool> ChangeTagAsync(Guid userId, string? tag, CancellationToken cancellationToken = default);
 }

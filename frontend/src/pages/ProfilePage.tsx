@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react'
 import { ApiError } from '../api/client'
 import { getProfile, type Profile, type ProfileDuel, type ProfileRating } from '../api/profiles'
+import { CATEGORIES } from '../learn/content'
+import ScrollReveal from '../components/ScrollReveal'
 import AccountSettings from '../profile/AccountSettings'
+import ProfileAvatar from '../profile/ProfileAvatar'
+import ProfileTag from '../profile/ProfileTag'
 import { AccuracyBars, RatingDotPlot, RecordBar, XpMeter } from '../profile/ProfileCharts'
 import {
   CHALLENGE_TYPE_LABELS,
   TIER_LABELS,
-  formatDateTime,
+  formatDate,
   formatDelta,
   formatMonthYear,
 } from '../profile/format'
@@ -104,16 +108,19 @@ function ProfileView({ profile, onOpenProfile, onStartDuel, onReload }: ProfileV
   return (
     <div className="profile-content">
       <section className="profile-hero" aria-labelledby="profile-title">
-        <span className="profile-avatar" aria-hidden="true">
-          {user.nickname.charAt(0).toUpperCase()}
-        </span>
+        <ProfileAvatar
+          nickname={user.nickname}
+          avatarId={user.avatarId}
+          editable={profile.isYou}
+          onChanged={onReload}
+        />
         <div className="profile-identity">
-          <p className="profile-eyebrow">
-            {profile.isYou ? 'Your profile' : 'Player profile'} · member since {formatMonthYear(user.memberSince)}
-          </p>
-          <h1 id="profile-title" className="profile-title">
-            {user.nickname}
-          </h1>
+          <div className="profile-name-row">
+            <h1 id="profile-title" className="profile-title">
+              {user.nickname}
+            </h1>
+            <ProfileTag tag={user.tag} editable={profile.isYou} onChanged={onReload} />
+          </div>
           {profile.isYou && (
             <div className="profile-identity-actions">
               <AccountSettings onNicknameChanged={onReload} />
@@ -124,9 +131,6 @@ function ProfileView({ profile, onOpenProfile, onStartDuel, onReload }: ProfileV
           <div className="profile-level is-overall">
             <span className="profile-level-label">OVERALL RATING</span>
             <span className="profile-level-value">{profile.overall.rating}</span>
-            <span className="profile-overall-note">
-              {TIER_LABELS[profile.overall.tier]} · average of all {profile.ratings.length} categories
-            </span>
           </div>
           <div className="profile-level">
             <span className="profile-level-label">LEVEL</span>
@@ -136,120 +140,170 @@ function ProfileView({ profile, onOpenProfile, onStartDuel, onReload }: ProfileV
         </div>
       </section>
 
-      <section className="profile-section" aria-labelledby="ratings-title">
-        <div className="profile-section-head">
-          <h2 id="ratings-title" className="profile-section-title">
-            Ratings
-          </h2>
-          <p className="profile-section-note">Each category has its own rating. Only duels change it.</p>
-        </div>
-        <div className="profile-panel">
-          <RatingDotPlot
-            rows={profile.ratings.map((rating) => ({
-              key: rating.categoryId,
-              label: rating.name,
-              rating: rating.rating,
-              detail: <RatingDetail rating={rating} />,
-              badge:
-                rating.categoryId === profile.strongestCategoryId
-                  ? 'strongest'
-                  : rating.categoryId === profile.weakestCategoryId
-                    ? 'weakest'
-                    : null,
-            }))}
-          />
-        </div>
-      </section>
-
-      <div className="profile-columns">
-        <section className="profile-section" aria-labelledby="record-title">
-          <h2 id="record-title" className="profile-section-title">
-            Duel record
-          </h2>
-          {duels.played === 0 ? (
-            <EmptyState
-              icon="ti-swords"
-              text={profile.isYou ? 'No duels yet.' : `${user.nickname} hasn't finished a duel yet.`}
-              action={profile.isYou ? { label: 'Start a duel', onClick: onStartDuel } : undefined}
+      <ScrollReveal>
+        <section className="profile-section" aria-labelledby="ratings-title">
+          <div className="profile-section-head">
+            <h2 id="ratings-title" className="profile-section-title">
+              Ratings
+            </h2>
+          </div>
+          <div className="profile-panel">
+            <RatingDotPlot
+              rows={profile.ratings.map((rating) => ({
+                key: rating.categoryId,
+                label: rating.name,
+                rating: rating.rating,
+                detail: <RatingDetail rating={rating} />,
+                badge:
+                  rating.categoryId === profile.strongestCategoryId
+                    ? 'strongest'
+                    : rating.categoryId === profile.weakestCategoryId
+                      ? 'weakest'
+                      : null,
+              }))}
             />
-          ) : (
-            <div className="profile-panel">
-              <dl className="profile-stats">
-                <div>
-                  <dt>Duels</dt>
-                  <dd>{duels.played}</dd>
-                </div>
-                <div>
-                  <dt>Win rate</dt>
-                  <dd>{winRate}%</dd>
-                </div>
-                <div>
-                  <dt>Accuracy</dt>
-                  <dd>{overallAccuracy === null ? '–' : `${overallAccuracy}%`}</dd>
-                </div>
-              </dl>
-              <RecordBar wins={duels.wins} draws={duels.draws} losses={duels.losses} />
-            </div>
-          )}
+          </div>
         </section>
+      </ScrollReveal>
 
-        <section className="profile-section" aria-labelledby="history-title">
-          <h2 id="history-title" className="profile-section-title">
-            Recent duels
-          </h2>
-          {profile.recentDuels.length === 0 ? (
-            <EmptyState icon="ti-history" text="Finished duels show up here." />
-          ) : (
-            <ol className="profile-duels">
-              {profile.recentDuels.map((duel) => (
-                <DuelRow key={duel.id} duel={duel} onOpenProfile={onOpenProfile} />
-              ))}
-            </ol>
-          )}
-        </section>
-      </div>
+      <ScrollReveal>
+        <LessonProgress completedLessonIds={profile.learning.completedLessonIds} />
+      </ScrollReveal>
+
+      <ScrollReveal>
+        <div className="profile-columns">
+          <section className="profile-section" aria-labelledby="record-title">
+            <h2 id="record-title" className="profile-section-title">
+              Duel record
+            </h2>
+            {duels.played === 0 ? (
+              <EmptyState
+                icon="ti-swords"
+                text={profile.isYou ? 'No duels yet.' : `${user.nickname} hasn't finished a duel yet.`}
+                action={profile.isYou ? { label: 'Start a duel', onClick: onStartDuel } : undefined}
+              />
+            ) : (
+              <div className="profile-panel">
+                <dl className="profile-stats">
+                  <div>
+                    <dt>Duels</dt>
+                    <dd>{duels.played}</dd>
+                  </div>
+                  <div>
+                    <dt>Win rate</dt>
+                    <dd>{winRate}%</dd>
+                  </div>
+                  <div>
+                    <dt>Accuracy</dt>
+                    <dd>{overallAccuracy === null ? '–' : `${overallAccuracy}%`}</dd>
+                  </div>
+                </dl>
+                <RecordBar wins={duels.wins} draws={duels.draws} losses={duels.losses} />
+              </div>
+            )}
+          </section>
+
+          <section className="profile-section" aria-labelledby="history-title">
+            <h2 id="history-title" className="profile-section-title">
+              Recent duels
+            </h2>
+            {profile.recentDuels.length === 0 ? (
+              <EmptyState icon="ti-history" text="Finished duels show up here." />
+            ) : (
+              <ol className="profile-duels">
+                {profile.recentDuels.map((duel) => (
+                  <DuelRow key={duel.id} duel={duel} onOpenProfile={onOpenProfile} />
+                ))}
+              </ol>
+            )}
+          </section>
+        </div>
+      </ScrollReveal>
 
       {accuracy.overall.total > 0 && (
-        <section className="profile-section" aria-labelledby="accuracy-title">
-          <div className="profile-section-head">
-            <h2 id="accuracy-title" className="profile-section-title">
-              Accuracy
-            </h2>
-            <p className="profile-section-note">
-              {accuracy.overall.correct} of {accuracy.overall.total} duel rounds answered correctly. No answer counts as
-              wrong.
-            </p>
-          </div>
-          <div className="profile-columns">
-            <div className="profile-panel">
-              <h3 className="profile-panel-title">By challenge type</h3>
-              <AccuracyBars
-                label="Accuracy by challenge type"
-                rows={accuracy.byType.map((a) => ({
-                  key: a.type,
-                  label: CHALLENGE_TYPE_LABELS[a.type],
-                  correct: a.correct,
-                  total: a.total,
-                }))}
-              />
+        <ScrollReveal>
+          <section className="profile-section" aria-labelledby="accuracy-title">
+            <div className="profile-section-head">
+              <h2 id="accuracy-title" className="profile-section-title">
+                Accuracy
+              </h2>
             </div>
-            <div className="profile-panel">
-              <h3 className="profile-panel-title">By category</h3>
-              <AccuracyBars
-                label="Accuracy by category"
-                rows={accuracy.byCategory.map((a) => ({
-                  key: String(a.categoryId),
-                  label: categoryName.get(a.categoryId) ?? 'Unknown',
-                  correct: a.correct,
-                  total: a.total,
-                }))}
-              />
+            <div className="profile-columns">
+              <div className="profile-panel">
+                <h3 className="profile-panel-title">By challenge type</h3>
+                <AccuracyBars
+                  label="Accuracy by challenge type"
+                  rows={accuracy.byType.map((a) => ({
+                    key: a.type,
+                    label: CHALLENGE_TYPE_LABELS[a.type],
+                    correct: a.correct,
+                    total: a.total,
+                  }))}
+                />
+              </div>
+              <div className="profile-panel">
+                <h3 className="profile-panel-title">By category</h3>
+                <AccuracyBars
+                  label="Accuracy by category"
+                  rows={accuracy.byCategory.map((a) => ({
+                    key: String(a.categoryId),
+                    label: categoryName.get(a.categoryId) ?? 'Unknown',
+                    correct: a.correct,
+                    total: a.total,
+                  }))}
+                />
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </ScrollReveal>
       )}
 
+      <ScrollReveal>
+        <p className="profile-joined">
+          <i className="ti ti-calendar" aria-hidden="true" />
+          Joined DevBrawl in {formatMonthYear(user.memberSince)}
+        </p>
+      </ScrollReveal>
     </div>
+  )
+}
+
+// Share of lessons finished with a perfect quiz. The backend only knows lesson slugs,
+// so the totals come from the lesson catalog here.
+function LessonProgress({ completedLessonIds }: { completedLessonIds: string[] }) {
+  const completed = new Set(completedLessonIds)
+  const rows = CATEGORIES.map((category) => ({
+    key: category.id,
+    label: category.title,
+    correct: category.lessons.filter((lesson) => completed.has(lesson.id)).length,
+    total: category.lessons.length,
+  }))
+  const done = rows.reduce((sum, row) => sum + row.correct, 0)
+  const total = rows.reduce((sum, row) => sum + row.total, 0)
+
+  return (
+    <section className="profile-section" aria-labelledby="lessons-title">
+      <div className="profile-section-head">
+        <h2 id="lessons-title" className="profile-section-title">
+          Lessons
+        </h2>
+      </div>
+      <div className="profile-panel is-learning">
+        <dl className="profile-stats">
+          <div>
+            <dt>Completed</dt>
+            <dd>{Math.round((done / total) * 100)}%</dd>
+          </div>
+          <div>
+            <dt>Lessons done</dt>
+            <dd>
+              {done}/{total}
+            </dd>
+          </div>
+        </dl>
+        <AccuracyBars label="Lessons completed by category" rows={rows} />
+      </div>
+    </section>
   )
 }
 
@@ -261,7 +315,6 @@ function RatingDetail({ rating }: { rating: ProfileRating }) {
       <span>{TIER_LABELS[rating.tier]}</span>
       {typeof delta === 'number' && delta !== 0 && (
         <span className={`rating-delta ${delta > 0 ? 'is-up' : 'is-down'}`}>
-          <i className={`ti ${delta > 0 ? 'ti-arrow-up-right' : 'ti-arrow-down-right'}`} aria-hidden="true" />
           {formatDelta(delta)}
           <span className="profile-sr-only"> in the last rated duel</span>
         </span>
@@ -294,7 +347,7 @@ function DuelRow({ duel, onOpenProfile }: { duel: ProfileDuel; onOpenProfile: (u
         <span className="profile-sr-only"> rating</span>
       </span>
       <time className="profile-duel-time" dateTime={duel.finishedAt}>
-        {formatDateTime(duel.finishedAt)}
+        {formatDate(duel.finishedAt)}
       </time>
     </li>
   )

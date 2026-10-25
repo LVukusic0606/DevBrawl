@@ -19,7 +19,46 @@
 
 .home-header-actions {
   display: flex;
+  align-items: center;
   gap: var(--space-2);
+}
+
+/* Square profile picture at the far right of the header; opens the profile */
+.home-avatar {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin-left: var(--space-2);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 200ms ease-out;
+}
+
+.home-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-avatar:hover {
+  border-color: var(--color-accent);
+}
+
+.home-avatar:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .home-logout {

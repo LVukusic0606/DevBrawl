@@ -14,6 +14,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Email).HasMaxLength(254).IsRequired();
         builder.Property(u => u.PasswordHash).HasMaxLength(100).IsRequired();
         builder.Property(u => u.GoogleSubject).HasMaxLength(255);
+        builder.Property(u => u.Tag).HasMaxLength(UserTags.MaxLength);
 
         builder.HasIndex(u => u.Email).IsUnique();
         builder.HasIndex(u => u.Nickname).IsUnique();

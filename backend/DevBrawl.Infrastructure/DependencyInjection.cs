@@ -34,6 +34,7 @@ public static class DependencyInjection
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<ILeaderboardService, LeaderboardService>();
+        services.AddScoped<ILessonProgressService, LessonProgressService>();
 
         services.AddDuelContent(configuration);
         services.AddDuelEngine(configuration);

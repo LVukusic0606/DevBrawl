@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using DevBrawl.Auth.Domain;
 
 namespace DevBrawl.Auth.Dtos;
 
@@ -17,6 +18,19 @@ public sealed record ChangeEmailRequest
 
     [Required]
     public string CurrentPassword { get; init; } = string.Empty;
+}
+
+public sealed record ChangeAvatarRequest
+{
+    // A missing value stays 0 and fails the range check
+    [Range(1, User.AvatarCount)]
+    public int AvatarId { get; init; }
+}
+
+public sealed record ChangeTagRequest
+{
+    // One of UserTags.All, or null to remove the tag; checked in the controller
+    public string? Tag { get; init; }
 }
 
 public sealed record ChangePasswordRequest

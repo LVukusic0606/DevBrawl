@@ -152,6 +152,29 @@ public class AuthService(
         return AuthResult.Ok(response);
     }
 
+    public async Task<bool> ChangeAvatarAsync(Guid userId, ChangeAvatarRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await users.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+            return false;
+
+        user.AvatarId = request.AvatarId;
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ChangeTagAsync(Guid userId, string? tag, CancellationToken cancellationToken = default)
+    {
+        var user = await users.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+            return false;
+
+        user.Tag = tag;
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     // Stages a new refresh token; the caller saves it
     private (AuthResponse Response, RefreshToken Stored) IssueTokens(User user)
     {

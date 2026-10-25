@@ -64,6 +64,9 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("AvatarId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -81,6 +84,10 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Tag")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
@@ -172,6 +179,23 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                             Slug = "infrastructure",
                             SortOrder = 6
                         });
+                });
+
+            modelBuilder.Entity("DevBrawl.Common.Domain.LessonCompletion", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LessonId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId", "LessonId");
+
+                    b.ToTable("LessonCompletions");
                 });
 
             modelBuilder.Entity("DevBrawl.Common.Domain.PlayerProgress", b =>
@@ -476,6 +500,15 @@ namespace DevBrawl.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("DevBrawl.Common.Domain.LessonCompletion", b =>
+                {
+                    b.HasOne("DevBrawl.Auth.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("DevBrawl.Common.Domain.PlayerProgress", b =>

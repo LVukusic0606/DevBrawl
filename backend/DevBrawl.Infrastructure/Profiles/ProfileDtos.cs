@@ -22,12 +22,15 @@ public sealed record ProfileResponse(
     ProfileAccuracyResponse Accuracy,
     // Finished duels, newest first
     IReadOnlyList<ProfileDuelResponse> RecentDuels,
-    // Lesson and quiz stats; null until the Learn backend provides them
-    object? Learning);
+    ProfileLearningResponse Learning);
+
+// Lessons the player has finished, as slugs. The lesson catalog lives in the frontend, which turns these into totals.
+public sealed record ProfileLearningResponse(IReadOnlyList<string> CompletedLessonIds);
 
 public sealed record ProfileOverallResponse(int Rating, RankTier Tier);
 
-public sealed record ProfileUserResponse(Guid Id, string Nickname, DateTime MemberSince);
+// AvatarId is one of the preset profile pictures and Tag one of UserTags.All; each is null when not picked
+public sealed record ProfileUserResponse(Guid Id, string Nickname, DateTime MemberSince, int? AvatarId, string? Tag);
 
 // LevelStartXp and NextLevelXp are total XP thresholds, for the progress bar
 public sealed record ProfileProgressResponse(int Level, int TotalXp, int LevelStartXp, int NextLevelXp);

@@ -2,6 +2,9 @@ namespace DevBrawl.Auth.Domain;
 
 public class User
 {
+    // Number of preset profile pictures the player can pick from
+    public const int AvatarCount = 12;
+
     public Guid Id { get; set; }
     public string Nickname { get; set; } = string.Empty;
     // Stored lowercased so lookups and the unique index are case-insensitive
@@ -9,6 +12,10 @@ public class User
     // bcrypt hash, never the plain password
     public string PasswordHash { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    // One of the preset profile pictures (1 to AvatarCount); null shows the first letter of the nickname
+    public int? AvatarId { get; set; }
+    // One of UserTags.All, shown next to the nickname; null when the player hasn't picked one
+    public string? Tag { get; set; }
 
     public List<RefreshToken> RefreshTokens { get; set; } = [];
 }

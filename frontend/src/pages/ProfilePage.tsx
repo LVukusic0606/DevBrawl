@@ -22,6 +22,7 @@ interface ProfilePageProps {
   onBack: () => void
   onOpenProfile: (userId: string) => void
   onStartDuel: () => void
+  onOpenCharacter: () => void
 }
 
 type LoadState =
@@ -29,7 +30,7 @@ type LoadState =
   | { status: 'error'; message: string }
   | { status: 'ready'; profile: Profile }
 
-function ProfilePage({ userId, onBack, onOpenProfile, onStartDuel }: ProfilePageProps) {
+function ProfilePage({ userId, onBack, onOpenProfile, onStartDuel, onOpenCharacter }: ProfilePageProps) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
 
@@ -83,6 +84,7 @@ function ProfilePage({ userId, onBack, onOpenProfile, onStartDuel }: ProfilePage
           profile={state.profile}
           onOpenProfile={onOpenProfile}
           onStartDuel={onStartDuel}
+          onOpenCharacter={onOpenCharacter}
           // Reloads in place: the current profile stays on screen until the new one arrives
           onReload={() => setAttempt((n) => n + 1)}
         />
@@ -95,10 +97,11 @@ interface ProfileViewProps {
   profile: Profile
   onOpenProfile: (userId: string) => void
   onStartDuel: () => void
+  onOpenCharacter: () => void
   onReload: () => void
 }
 
-function ProfileView({ profile, onOpenProfile, onStartDuel, onReload }: ProfileViewProps) {
+function ProfileView({ profile, onOpenProfile, onStartDuel, onOpenCharacter, onReload }: ProfileViewProps) {
   const { user, progress, duels, accuracy } = profile
   const categoryName = new Map(profile.ratings.map((r) => [r.categoryId, r.name]))
   const winRate = duels.played > 0 ? Math.round((duels.wins / duels.played) * 100) : null
@@ -139,6 +142,21 @@ function ProfileView({ profile, onOpenProfile, onStartDuel, onReload }: ProfileV
           </div>
         </div>
       </section>
+
+      {/* A wide banner right under the hero, so the 3D character is the first thing to try.
+          Only its button is interactive. */}
+      {profile.isYou && (
+        <div className="profile-character">
+          <div className="profile-character-text">
+            <span className="profile-character-label">YOUR CHARACTER</span>
+            <span className="profile-character-title">Check out your bug in 3D</span>
+          </div>
+          <button type="button" className="profile-character-cta" onClick={onOpenCharacter}>
+            3D view
+            <i className="ti ti-arrow-right" aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
       <ScrollReveal>
         <section className="profile-section" aria-labelledby="ratings-title">

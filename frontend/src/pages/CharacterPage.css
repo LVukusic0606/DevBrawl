@@ -1,0 +1,122 @@
+/* Character viewer: the 3D bug on a pedestal. Classes start with "character-" because CSS is global. */
+
+.character {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 36px 36px;
+  background-attachment: fixed;
+}
+
+.character-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-8);
+}
+
+.character-logo {
+  font-family: var(--font-text);
+  font-size: 24px;
+  color: var(--color-text);
+}
+
+.character-back {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 200ms ease-out;
+}
+
+.character-back:hover {
+  border-color: var(--color-accent);
+}
+
+.character-back:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.character-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-8) var(--space-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.character-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 52px;
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+/* The stage is where the canvas draws; the soft spot behind the character is the lobby's spotlight */
+.character-stage {
+  position: relative;
+  height: min(68vh, 680px);
+  min-height: 420px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: radial-gradient(ellipse at 50% 60%, var(--color-part-light) 0%, var(--color-bg) 70%);
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.character-stage:active {
+  cursor: grabbing;
+}
+
+.character-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.character-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.character-hint .ti {
+  font-size: 18px;
+}
+
+@media (max-width: 640px) {
+  .character-header,
+  .character-content {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .character-title {
+    font-size: 36px;
+  }
+}

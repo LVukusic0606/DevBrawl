@@ -1,15 +1,33 @@
 import bugDuel from '../../assets/bug-duel.webp'
 import { ROUND_TYPES } from '../rounds'
+import type { DuelInvite } from '../types'
+import { FriendPicker, IncomingInvites } from './FriendDuels'
 
 interface LobbyProps {
   error: string | null
+  notice: string | null
+  incoming: DuelInvite[]
   onFindDuel: () => void
+  onInvite: (friendId: string) => void
+  onAcceptInvite: (inviteId: string) => void
+  onDeclineInvite: (inviteId: string) => void
+  onManageFriends: () => void
 }
 
-export function Lobby({ error, onFindDuel }: LobbyProps) {
+export function Lobby({
+  error,
+  notice,
+  incoming,
+  onFindDuel,
+  onInvite,
+  onAcceptInvite,
+  onDeclineInvite,
+  onManageFriends,
+}: LobbyProps) {
   return (
     <div className="duel-lobby">
       <section className="duel-lobby-intro" aria-labelledby="lobby-title">
+        <IncomingInvites invites={incoming} onAccept={onAcceptInvite} onDecline={onDeclineInvite} />
         <h1 id="lobby-title" className="duel-lobby-title">
           Prove your knowledge
         </h1>
@@ -23,10 +41,13 @@ export function Lobby({ error, onFindDuel }: LobbyProps) {
             <i className="ti ti-swords" aria-hidden="true" />
           </button>
           {error && <p className="duel-error">{error}</p>}
+          {!error && notice && <p className="duel-muted">{notice}</p>}
         </div>
       </section>
 
       <img className="duel-lobby-bug" src={bugDuel} alt="" />
+
+      <FriendPicker onInvite={onInvite} onManageFriends={onManageFriends} />
 
       {/* The five rounds always come in this order, so they read as a timeline */}
       <section className="duel-rounds" aria-labelledby="rounds-title">

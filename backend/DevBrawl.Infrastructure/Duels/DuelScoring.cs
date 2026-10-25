@@ -1,4 +1,5 @@
 using DevBrawl.Common.Domain;
+using DevBrawl.Common.Progression;
 using DevBrawl.Duel.Contracts;
 using DevBrawl.Duel.Scoring;
 using DevBrawl.Duel.Scoring.Domain;
@@ -53,6 +54,21 @@ public sealed class DuelScoring(AppDbContext db, IXpService xp) : IDuelScoring
         var player1 = await AwardXpAsync(outcome, outcome.Player1Id, r => r.Player1Correct, player1Changes, cancellationToken);
         var player2 = await AwardXpAsync(outcome, outcome.Player2Id, r => r.Player2Correct, player2Changes, cancellationToken);
         return new DuelRewards(player1, player2);
+    }
+
+    public async Task<DuelRewards> GetUnchangedRewardsAsync(DuelOutcome outcome, CancellationToken cancellationToken = default)
+    {
+        var totalXp = await db.PlayerProgress.AsNoTracking()
+            .Where(p => p.UserId == outcome.Player1Id || p.UserId == outcome.Player2Id)
+            .ToDictionaryAsync(p => p.UserId, p => p.TotalXp, cancellationToken);
+
+        PlayerRewards Unchanged(Guid userId)
+        {
+            var xp = totalXp.GetValueOrDefault(userId);
+            return new PlayerRewards(userId, [], 0, xp, Levels.FromTotalXp(xp));
+        }
+
+        return new DuelRewards(Unchanged(outcome.Player1Id), Unchanged(outcome.Player2Id));
     }
 
     private List<RatingChange> ApplyRatings(List<CategoryRating> rows, Guid userId, Guid duelId,

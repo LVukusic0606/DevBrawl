@@ -89,9 +89,12 @@ public sealed class DuelStore(IServiceScopeFactory scopeFactory) : IDuelStore
         duel.Player2Score = player2Score;
 
         // Scoring uses the same DbContext (same scope) and only stages its changes,
-        // so the duel status, ratings and XP are saved together or not at all
-        var rewards = await scope.ServiceProvider.GetRequiredService<IDuelScoring>()
-            .ApplyDuelResultAsync(outcome, cancellationToken);
+        // so the duel status, ratings and XP are saved together or not at all.
+        // A friendly duel changes neither ratings nor XP.
+        var scoring = scope.ServiceProvider.GetRequiredService<IDuelScoring>();
+        var rewards = duel.IsFriendly
+            ? await scoring.GetUnchangedRewardsAsync(outcome, cancellationToken)
+            : await scoring.ApplyDuelResultAsync(outcome, cancellationToken);
         duel.Player1Rewards = JsonSerializer.Serialize(rewards.Player1, JsonOptions);
         duel.Player2Rewards = JsonSerializer.Serialize(rewards.Player2, JsonOptions);
 

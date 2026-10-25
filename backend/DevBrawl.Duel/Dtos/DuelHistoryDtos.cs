@@ -12,6 +12,8 @@ public sealed record DuelOpponentResponse(Guid Id, string Nickname);
 public sealed record DuelSummaryResponse(
     Guid Id,
     DuelStatus Status,
+    // Against a friend: no ELO or XP
+    bool Friendly,
     DuelOpponentResponse Opponent,
     // null while the duel is running or when it was abandoned
     PlayerDuelResult? Result,

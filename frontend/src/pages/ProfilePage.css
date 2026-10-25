@@ -834,7 +834,24 @@
 .profile-identity-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-3);
+}
+
+/* "Friends" or "Request sent" next to the friend buttons on another player's profile */
+.profile-friend-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.profile-friend-status .ti {
+  font-size: 18px;
+  color: var(--color-duel);
 }
 
 /* Banner that leads to the 3D character page; only its button reacts to the pointer */

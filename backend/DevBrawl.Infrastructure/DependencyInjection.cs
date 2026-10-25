@@ -1,6 +1,7 @@
 using System.Text;
 using DevBrawl.Auth;
 using DevBrawl.Infrastructure.Data;
+using DevBrawl.Infrastructure.Friends;
 using DevBrawl.Infrastructure.Leaderboard;
 using DevBrawl.Infrastructure.Profiles;
 using DevBrawl.Infrastructure.Repositories;
@@ -41,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<ILearningStreakService, LearningStreakService>();
         services.AddScoped<IPremiumService, PremiumService>();
         services.AddScoped<ILessonProgressService, LessonProgressService>();
+        services.AddScoped<IFriendService, FriendService>();
 
         services.AddDuelContent(configuration);
         services.AddDuelEngine(configuration);

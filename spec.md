@@ -29,7 +29,7 @@ Three developers: two backend developers and one frontend developer.
 | Accounts | Real registration and login. |
 | Opponents | Real 1v1 duels between two logged-in players. No bot opponent. |
 | Duel format | Exactly 5 rounds per duel, one of each challenge type (A–E). |
-| Practice duels | Not implemented. Every duel is ranked. |
+| Practice duels | Only friendly duels between friends (section 12a). They change no ELO or XP. Duels from the matchmaking queue are always ranked. |
 | Language | All UI and content in English. |
 | Content | A small, hardcoded set of lessons, quizzes, and challenges, just enough to demonstrate every feature. |
 | AI | Not part of the MVP. Stretch goal: AI-generated questions (see section 16). |
@@ -95,6 +95,7 @@ The main navigation should provide access to:
 - Learn
 - Brawl
 - Leaderboards
+- Friends
 - Profile
 
 The two most important sections are Learn and Brawl.
@@ -689,6 +690,31 @@ For the demo, seeded fictional players are added to the leaderboards so they don
 
 ---
 
+## 12a. Friends and Friendly Duels
+
+Players can add each other as friends and play friendly duels. A friendly duel is for practice and fun with people you know, without risking your rating.
+
+### Friend requests
+
+- A player sends a friend request by entering the other player's nickname (matched ignoring case), or from that player's profile.
+- The other player accepts or declines it. The sender can withdraw a request while it's pending.
+- If both players send each other a request, they become friends right away.
+- Either friend can remove the other at any time.
+- Friend requests and friendships are stored in the database.
+
+### Friendly duels
+
+- A player can invite one friend at a time to a friendly duel from the Brawl page, the Friends page or the friend's profile.
+- The friend sees the invite on the Brawl page and can accept or decline it. **(Default)** An invite expires after 60 seconds.
+- A friendly duel has the same format as a ranked duel: 5 rounds, one of each challenge type, with the same timers and rules.
+- **A friendly duel never changes ELO or XP.** It doesn't count toward profile duel stats, accuracy statistics, recent duels or the leaderboard.
+- Friendly duels are stored and appear in duel history, marked as friendly, so their answers can still be reviewed.
+- The results screen says that the duel was friendly and offers a rematch.
+
+Only friends can be invited. Random opponents always come from the matchmaking queue and play ranked duels.
+
+---
+
 ## 13. Feature Nine: Player Profile
 
 The profile brings together learning progress and competitive performance.
@@ -701,8 +727,9 @@ It should show:
 - Rank tier for each category.
 - Completed lessons.
 - Solo quiz performance.
-- Match history.
+- Match history (ranked duels).
 - Ranked wins and losses.
+- For another player: their friendship status, with actions to add, accept or challenge them.
 - Accuracy statistics.
 - Strongest and weakest categories.
 - Achievements, if implemented.

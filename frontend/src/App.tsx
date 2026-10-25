@@ -4,6 +4,7 @@ import { clearSession, loadSession, startSession } from './api/session'
 import AuthPage, { type GoogleOutcome, type LoginValues, type SignupValues } from './pages/AuthPage'
 import InterviewPage from './pages/InterviewPage'
 import DuelPage from './pages/DuelPage'
+import FriendsPage from './pages/FriendsPage'
 import LeaderboardPage from './pages/LeaderboardPage'
 import PremiumPage from './pages/PremiumPage'
 import SeasonPage from './pages/SeasonPage'
@@ -24,6 +25,7 @@ type Screen =
   | 'learn'
   | 'interview'
   | 'duel'
+  | 'friends'
   | 'profile'
   | 'leaderboard'
   | 'character'
@@ -39,6 +41,8 @@ function App() {
   const [profileUserId, setProfileUserId] = useState<string | undefined>(undefined)
   // Where Back on a profile goes: the screen it was opened from
   const [profileReturn, setProfileReturn] = useState<Screen>('main')
+  // A friend the Brawl page invites to a friendly duel as soon as it opens
+  const [duelInviteFriendId, setDuelInviteFriendId] = useState<string | undefined>(undefined)
 
   // A stored session may have expired or been revoked, so confirm it with the backend
   useEffect(() => {
@@ -108,7 +112,13 @@ function App() {
   }
 
   function handleSelect(section: MainSection) {
+    setDuelInviteFriendId(undefined)
     setScreen(section)
+  }
+
+  function challengeFriend(friendId: string) {
+    setDuelInviteFriendId(friendId)
+    setScreen('duel')
   }
 
   if (auth.status === 'checking') return null
@@ -118,7 +128,17 @@ function App() {
   }
 
   if (screen === 'duel') {
-    return <DuelPage onBack={() => setScreen('main')} />
+    return (
+      <DuelPage
+        onBack={() => setScreen('main')}
+        onManageFriends={() => setScreen('friends')}
+        inviteFriendId={duelInviteFriendId}
+      />
+    )
+  }
+
+  if (screen === 'friends') {
+    return <FriendsPage onBack={() => setScreen('main')} onOpenProfile={openProfile} onChallenge={challengeFriend} />
   }
 
   if (screen === 'learn') {
@@ -139,6 +159,7 @@ function App() {
         onOpenProfile={openProfile}
         onStartDuel={() => handleSelect('duel')}
         onOpenCharacter={() => setScreen('character')}
+        onChallengeFriend={challengeFriend}
       />
     )
   }
@@ -176,6 +197,7 @@ function App() {
       onLogout={handleLogout}
       onOpenProfile={() => openProfile()}
       onOpenLeaderboard={() => setScreen('leaderboard')}
+      onOpenFriends={() => setScreen('friends')}
       onOpenSeason={() => setScreen('season')}
       onOpenPremium={() => setScreen('premium')}
     />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { User } from '../api/auth'
+import { getFriends } from '../api/friends'
 import { getStreak, type Streak } from '../api/streak'
 import bugDuel from '../assets/bug-duel.webp'
 import bugInterview from '../assets/bug-interview.webp'
@@ -17,6 +18,7 @@ interface MainPageProps {
   onLogout: () => void
   onOpenProfile: () => void
   onOpenLeaderboard: () => void
+  onOpenFriends: () => void
   onOpenSeason: () => void
   onOpenPremium: () => void
 }
@@ -52,13 +54,27 @@ const SECTIONS: {
   },
 ]
 
-function MainPage({ user, onSelect, onLogout, onOpenProfile, onOpenLeaderboard, onOpenSeason, onOpenPremium }: MainPageProps) {
+function MainPage({
+  user,
+  onSelect,
+  onLogout,
+  onOpenProfile,
+  onOpenLeaderboard,
+  onOpenFriends,
+  onOpenSeason,
+  onOpenPremium,
+}: MainPageProps) {
   const [streak, setStreak] = useState<Streak | null>(null)
+  // Friend requests waiting for an answer
+  const [requests, setRequests] = useState(0)
 
-  // Loads once per visit to the main page; the header simply hides the flame if it fails
+  // Loads once per visit to the main page; the header simply hides the flame or the count if it fails
   useEffect(() => {
     getStreak()
       .then(setStreak)
+      .catch(() => {})
+    getFriends()
+      .then((friends) => setRequests(friends.incoming.length))
       .catch(() => {})
   }, [])
 
@@ -80,6 +96,15 @@ function MainPage({ user, onSelect, onLogout, onOpenProfile, onOpenLeaderboard, 
           <button type="button" className="home-logout" onClick={onOpenLeaderboard}>
             <i className="ti ti-trophy" aria-hidden="true" />
             Leaderboard
+          </button>
+          <button type="button" className="home-logout" onClick={onOpenFriends}>
+            <i className="ti ti-users" aria-hidden="true" />
+            Friends
+            {requests > 0 && (
+              <span className="home-badge" aria-label={`${requests} new ${requests === 1 ? 'request' : 'requests'}`}>
+                {requests}
+              </span>
+            )}
           </button>
           <button type="button" className="home-logout" onClick={onLogout}>
             <i className="ti ti-logout" aria-hidden="true" />

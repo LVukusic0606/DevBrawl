@@ -1,27 +1,9 @@
 import type { Lesson } from '../content'
 import { code, lesson } from './lesson'
+import { SQL_INJECTION_LESSON } from './sqlInjection'
 
 export const SECURITY_LESSONS: Lesson[] = [
-  lesson({
-    id: 'sql-injection',
-    title: 'SQL injection',
-    intro:
-      'When user input is glued into a SQL string, the input can change the query itself. An attacker can then read or delete data they should never reach.',
-    example: [
-      code('the same search, unsafe and safe', [
-        'unsafe:  "SELECT * FROM users WHERE nickname = \'" + input + "\'"',
-        "         input = x' OR '1'='1   → returns every user",
-        '',
-        'safe:    "SELECT * FROM users WHERE nickname = @nickname"',
-        '         the input is sent as a value, never as SQL',
-      ]),
-    ],
-    mistakes: [
-      'Escaping quotes by hand instead of using parameters.',
-      'Trusting input because it comes from your own frontend.',
-    ],
-    takeaway: 'Always pass user input as query parameters. Never build SQL out of strings.',
-  }),
+  SQL_INJECTION_LESSON,
   lesson({
     id: 'xss',
     title: 'Cross-site scripting (XSS)',

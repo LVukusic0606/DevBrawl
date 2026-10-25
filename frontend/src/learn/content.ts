@@ -79,6 +79,34 @@ export interface SectionBlock {
 export interface WalkthroughBlock {
   type: 'walkthrough'
   steps: { code: string; result: string; note: string }[]
+  // The file the calls are written into; defaults to api-client.ts in TypeScript
+  file?: string
+  language?: string
+  // What one step is called in the file and the progress line; defaults to "call"
+  stepName?: string
+}
+
+// Learner picks what to type into a form field and sees the same input glued into the SQL string
+// next to the same input sent as a parameter, with what the database returns for each
+export interface InjectionExplorerBlock {
+  type: 'injection-explorer'
+  caption: string
+  // The form field the input goes into, such as "Search players"
+  field: string
+  // The query the app builds by gluing the input in where {input} stands
+  unsafe: string
+  // The same query with a placeholder; the input travels next to it as a value
+  safe: string
+  param: string
+  payloads: {
+    label: string
+    input: string
+    unsafeResult: string[]
+    safeResult: string[]
+    // The glued query did something the app never meant to allow
+    breach: boolean
+    note: string
+  }[]
 }
 
 export type LessonBlock =
@@ -92,15 +120,19 @@ export type LessonBlock =
   | RetryDemoBlock
   | SectionBlock
   | WalkthroughBlock
+  | InjectionExplorerBlock
   | MistakesBlock
   | TakeawayBlock
 
-// Asks the learner to pick the HTTP method that fits a scenario
+// Asks the learner to pick one of the choices for a scenario; answer is the text of the right choice
 export interface QuizQuestion {
   scenario: string
-  answer: HttpMethod
+  choices: string[]
+  answer: string
   explanation: string
 }
+
+const HTTP_METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 
 export interface Lesson {
   id: string
@@ -179,26 +211,31 @@ const BASE_CATEGORIES: Category[] = [
         quiz: [
           {
             scenario: 'Show the list of lessons on the screen.',
+            choices: HTTP_METHODS,
             answer: 'GET',
             explanation: 'Reading changes nothing, so it is a GET.',
           },
           {
             scenario: 'Add a new comment under lesson 12.',
+            choices: HTTP_METHODS,
             answer: 'POST',
             explanation: 'The comment does not exist yet. The server creates it and picks its address.',
           },
           {
             scenario: 'Fix one typo in the title of lesson 12.',
+            choices: HTTP_METHODS,
             answer: 'PATCH',
             explanation: 'Only one field changes, so PATCH fits better than sending the whole lesson.',
           },
           {
             scenario: 'Save the full lesson 12 from the editor, replacing the old copy.',
+            choices: HTTP_METHODS,
             answer: 'PUT',
             explanation: 'The complete copy replaces the old one. Sending it twice gives the same result.',
           },
           {
             scenario: 'Remove duel 45 from the history.',
+            choices: HTTP_METHODS,
             answer: 'DELETE',
             explanation: 'The intent is to remove something, and it stays removed.',
           },

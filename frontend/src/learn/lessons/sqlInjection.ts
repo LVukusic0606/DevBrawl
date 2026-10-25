@@ -1,0 +1,383 @@
+import type { Lesson } from '../content'
+
+// The extended SQL injection lesson, built like the HTTP methods lesson: terms, explanation, interactive examples,
+// a walkthrough that fixes a real endpoint, and a quiz
+export const SQL_INJECTION_LESSON: Lesson = {
+  id: 'sql-injection',
+  title: 'SQL injection',
+  quiz: [
+    {
+      scenario: "A player search glues whatever you type between the quotes of WHERE nickname = '…'. Someone types “x' OR '1'='1”. What comes back?",
+      choices: ['No rows', 'Only the player named x', 'Every player', 'A syntax error'],
+      answer: 'Every player',
+      explanation: "The quote closes the string early, and OR '1'='1' is true for every row, so the filter disappears.",
+    },
+    {
+      scenario: 'Which change actually stops SQL injection in that search?',
+      choices: [
+        'Doubling every quote in the input',
+        'Sending the input as a query parameter',
+        'Hiding database errors from users',
+        'Limiting the input to 20 characters',
+      ],
+      answer: 'Sending the input as a query parameter',
+      explanation: 'A parameter travels apart from the query, so the database never reads it as SQL. The other changes only make an attack harder.',
+    },
+    {
+      scenario: "The search now uses WHERE nickname = @nickname. Someone types “x' OR '1'='1” again. What happens?",
+      choices: [
+        'Every player comes back',
+        'The database throws a syntax error',
+        'Only a player with that exact nickname matches',
+        'The database blocks the request as an attack',
+      ],
+      answer: 'Only a player with that exact nickname matches',
+      explanation: 'The value is compared as plain text, quotes and all. No player has that nickname, so the result is empty.',
+    },
+    {
+      scenario: 'A duel page glues the id into WHERE id = … AND player_id = 42, with no quotes around it. Which input shows other players’ duels?',
+      choices: ['7', "7'", '0 OR 1=1 --', 'DROP'],
+      answer: '0 OR 1=1 --',
+      explanation: 'The value is not inside quotes, so there is nothing to close. OR 1=1 matches every row and -- turns the ownership check into a comment.',
+    },
+    {
+      scenario: 'The leaderboard sorts by a column named in the URL, such as ?sort=elo. Parameters cannot hold column names. What do you do?',
+      choices: [
+        'Glue it in, column names are harmless',
+        'Escape the quotes in it',
+        'Map it to a fixed list of allowed columns',
+        'Wrap it in quotes',
+      ],
+      answer: 'Map it to a fixed list of allowed columns',
+      explanation: 'Only names from your own list ever reach the query. Anything else falls back to a default.',
+    },
+    {
+      scenario: 'An injection slips through in one forgotten query. What limits the damage?',
+      choices: [
+        'A longer admin password',
+        'A database user that can only touch the tables the app needs',
+        'Serving the site over HTTPS',
+        'Validating the input in the browser',
+      ],
+      answer: 'A database user that can only touch the tables the app needs',
+      explanation: 'With least privilege, the attacker cannot drop tables or read data the app never uses, even after a successful injection.',
+    },
+  ],
+  blocks: [
+    {
+      type: 'section',
+      title: 'Terms',
+    },
+    {
+      type: 'table',
+      headers: ['Term', 'Meaning'],
+      rows: [
+        ['Query', 'A command for the database, written in SQL'],
+        ['User input', 'Anything the client sends: form fields, the URL, headers, cookies'],
+        ['Injection', 'Input that the database reads as part of the command instead of as data'],
+        ['Payload', 'The text an attacker types to change the query'],
+        ['Parameter', 'A slot in the query, such as @nickname, filled with a value sent separately'],
+        ['Prepared statement', 'A query the database parses before any values arrive'],
+        ['Escaping', 'Marking special characters so they count as text; easy to get wrong'],
+      ],
+    },
+    {
+      type: 'section',
+      title: 'General explanation',
+    },
+    {
+      type: 'text',
+      text: 'The database receives one string and parses it into a command. It cannot tell which parts the developer wrote and which came from the user. When input is glued into the string, the input gets parsed too.',
+    },
+    {
+      type: 'text',
+      text: 'A quote in the input closes the string the developer opened. Everything after it is SQL the attacker wrote.',
+    },
+    {
+      type: 'code',
+      file: 'one query, two inputs',
+      language: 'sql',
+      code: [
+        '-- the developer wrote the query with a gap for the nickname',
+        "SELECT nickname, tag FROM users WHERE nickname = 'mara'",
+        '',
+        "-- the user typed:  x' OR '1'='1",
+        "SELECT nickname, tag FROM users WHERE nickname = 'x' OR '1'='1'",
+        "-- the quote after x closed the string, so OR '1'='1' became part of the filter",
+      ].join('\n'),
+    },
+    {
+      type: 'text',
+      text: 'Parameters fix this at the root. The query goes to the database first, with a placeholder where the value belongs. The value follows on its own, so it can never become code, whatever it contains.',
+    },
+    {
+      type: 'steps',
+      steps: [
+        'The app sends the query with a placeholder: WHERE nickname = @nickname',
+        'The database parses it and fixes its shape',
+        'The app sends the value separately',
+        'The database compares the column with the value as plain text',
+        'Quotes, OR and -- inside the value are just characters',
+      ],
+    },
+    {
+      type: 'section',
+      title: 'Usage examples',
+    },
+    {
+      type: 'text',
+      text: 'Pick an input below. The left panel glues it into the string, the right panel sends it as a parameter. Watch which words turn into SQL keywords.',
+    },
+    {
+      type: 'injection-explorer',
+      caption: 'Pick what to type into the player search.',
+      field: 'Search players',
+      unsafe: "SELECT nickname, tag FROM users WHERE nickname = '{input}'",
+      safe: 'SELECT nickname, tag FROM users WHERE nickname = @nickname',
+      param: '@nickname',
+      payloads: [
+        {
+          label: 'A real name',
+          input: 'mara',
+          unsafeResult: ['mara · Bug Hunter'],
+          safeResult: ['mara · Bug Hunter'],
+          breach: false,
+          note: 'A normal name gives the same result either way. The difference only shows when the input contains SQL.',
+        },
+        {
+          label: 'One quote',
+          input: "'",
+          unsafeResult: ['ERROR: unterminated quoted string'],
+          safeResult: ['No rows'],
+          breach: true,
+          note: 'A single quote breaks the query. If that error reaches the page, the attacker knows the input lands inside SQL.',
+        },
+        {
+          label: 'Always true',
+          input: "x' OR '1'='1",
+          unsafeResult: ['mara · Bug Hunter', 'ivan · Rookie', 'lea · Code Wizard'],
+          safeResult: ['No rows'],
+          breach: true,
+          note: "The quote closes the string early. OR '1'='1' is true for every row, so the filter is gone.",
+        },
+        {
+          label: 'UNION',
+          input: "x' UNION SELECT email, password_hash FROM users --",
+          unsafeResult: ['mara@mail.com · $2b$12$Kq8f…', 'ivan@mail.com · $2b$12$9Tz1…', 'lea@mail.com · $2b$12$Lw0c…'],
+          safeResult: ['No rows'],
+          breach: true,
+          note: 'UNION appends the rows of a second query. Emails and password hashes now show up as nicknames and tags, and -- hides the leftover quote.',
+        },
+        {
+          label: 'Second command',
+          input: "x'; DROP TABLE duels; --",
+          unsafeResult: ['No rows', 'DROP TABLE: the duels table is gone'],
+          safeResult: ['No rows'],
+          breach: true,
+          note: 'Some drivers run several statements in one call. The semicolon ends the search and starts a command the attacker chose.',
+        },
+      ],
+    },
+    {
+      type: 'text',
+      text: 'Numbers are not safe either. When the value is not inside quotes, the attacker does not even need to close a string.',
+    },
+    {
+      type: 'injection-explorer',
+      caption: 'Open a duel by its id. You are player 42.',
+      field: 'Duel id',
+      unsafe: 'SELECT id, opponent, result FROM duels WHERE id = {input} AND player_id = 42',
+      safe: 'SELECT id, opponent, result FROM duels WHERE id = @id AND player_id = 42',
+      param: '@id',
+      payloads: [
+        {
+          label: 'Your duel',
+          input: '7',
+          unsafeResult: ['7 · ivan · won'],
+          safeResult: ['7 · ivan · won'],
+          breach: false,
+          note: 'Duel 7 is yours, so both queries return it.',
+        },
+        {
+          label: 'Someone else’s duel',
+          input: '8',
+          unsafeResult: ['No rows'],
+          safeResult: ['No rows'],
+          breach: false,
+          note: 'Duel 8 belongs to another player. The player_id check filters it out in both queries.',
+        },
+        {
+          label: 'Cut off the check',
+          input: '8 --',
+          unsafeResult: ['8 · mara · lost'],
+          safeResult: ['400 Bad Request: id must be a number'],
+          breach: true,
+          note: 'There is no quote to close: the value already sits outside any string. -- turns the rest of the line, the ownership check, into a comment.',
+        },
+        {
+          label: 'Every duel',
+          input: '0 OR 1=1 --',
+          unsafeResult: ['7 · ivan · won', '8 · mara · lost', '9 · lea · won', '…and every other duel'],
+          safeResult: ['400 Bad Request: id must be a number'],
+          breach: true,
+          note: 'OR 1=1 is true for every row and the comment removes the player check, so the query returns every duel in the database.',
+        },
+      ],
+    },
+    {
+      type: 'text',
+      text: 'Injection can come from any value the server did not write itself, not only from a search box.',
+    },
+    {
+      type: 'table',
+      headers: ['Where the input comes from', 'Example'],
+      rows: [
+        ['Form fields', 'A search box, the login form'],
+        ['The URL', '/duels/7, ?sort=elo'],
+        ['Headers and cookies', 'A User-Agent that is saved into a log table'],
+        ['Data saved earlier', 'A nickname stored safely, then glued into a later query'],
+      ],
+    },
+    {
+      type: 'text',
+      text: 'An ORM writes parameterized SQL for you. Its raw SQL methods are the exception: build the string yourself and the protection is gone.',
+    },
+    {
+      type: 'code',
+      file: 'EF Core, as in the DevBrawl backend',
+      language: 'csharp',
+      code: [
+        '// unsafe: the string is finished before EF Core ever sees it',
+        'db.Users.FromSqlRaw("SELECT * FROM users WHERE nickname = \'" + nickname + "\'");',
+        '',
+        '// safe: each {value} in the interpolated string becomes a parameter',
+        'db.Users.FromSql($"SELECT * FROM users WHERE nickname = {nickname}");',
+        '',
+        '// safe: LINQ writes the parameterized query itself',
+        'db.Users.Where(user => user.Nickname == nickname);',
+      ].join('\n'),
+    },
+    {
+      type: 'text',
+      text: 'Some parts of a query cannot be parameters: table names, column names, ASC and DESC. For those, map the input to a fixed list of allowed values.',
+    },
+    {
+      type: 'code',
+      file: 'sorting the leaderboard',
+      language: 'typescript',
+      code: [
+        "const SORTABLE: Record<string, string> = { elo: 'elo', name: 'nickname', joined: 'created_at' }",
+        '',
+        "// anything not on the list falls back to elo",
+        "const column = SORTABLE[String(req.query.sort)] ?? 'elo'",
+        '',
+        'await db.query(`SELECT nickname, elo FROM users ORDER BY ${column} DESC LIMIT $1`, [limit])',
+      ].join('\n'),
+    },
+    {
+      type: 'timeline',
+      items: [
+        { title: 'Find an input', detail: 'The attacker types a single quote into the player search.' },
+        { title: 'Read the error', detail: 'The page shows a SQL syntax error, so the input lands inside a query.' },
+        { title: 'Widen the filter', detail: "x' OR '1'='1 returns every row instead of one." },
+        { title: 'Read other tables', detail: 'UNION SELECT adds rows from users: emails and password hashes.' },
+        { title: 'Go further', detail: 'If the database user is allowed to, the attacker changes or drops data.' },
+      ],
+    },
+    {
+      type: 'text',
+      text: 'Parameters are the fix. The other defenses are layers that limit what one missed query can do.',
+    },
+    {
+      type: 'table',
+      headers: ['Defense', 'What it stops', 'Enough on its own?'],
+      rows: [
+        ['Parameters', 'Input turning into SQL', 'Yes, for values'],
+        ['ORM or query builder', 'Hand-built SQL strings', 'Until someone builds a string for its raw SQL method'],
+        ['Allowlist', 'Unknown column names and sort directions', 'Yes, for names that cannot be parameters'],
+        ['Least privilege database user', 'Dropping tables, reading data the app never uses', 'No, it limits the damage'],
+        ['Generic error messages', 'Attackers learning how the query looks', 'No, it only hides clues'],
+        ['Input validation', 'Clearly wrong values, such as letters in an id', 'No, valid text can still contain quotes'],
+      ],
+    },
+    {
+      type: 'section',
+      title: 'Walkthrough',
+    },
+    {
+      type: 'text',
+      text: 'Fix a vulnerable player search, one version at a time. Press Next to write each step into the file.',
+    },
+    {
+      type: 'walkthrough',
+      file: 'players.ts',
+      language: 'typescript',
+      stepName: 'step',
+      steps: [
+        {
+          code: [
+            "app.get('/api/players', async (req, res) => {",
+            '  const sql = "SELECT nickname, tag FROM users WHERE nickname = \'" + req.query.q + "\'"',
+            '  const { rows } = await db.query(sql)',
+            '  res.json(rows)',
+            '})',
+          ].join('\n'),
+          result: 'GET /api/players?q=mara   200 OK   [{ "nickname": "mara" }]',
+          note: 'It works for every normal name, which is why this bug is easy to miss.',
+        },
+        {
+          code: ["// GET /api/players?q=x' OR '1'='1", "// runs: ... WHERE nickname = 'x' OR '1'='1'"].join('\n'),
+          result: '200 OK   every player in the table',
+          note: 'The quote closes the string. The database now runs a filter the attacker wrote.',
+        },
+        {
+          code: [
+            '// first idea: double every quote by hand',
+            "const q = String(req.query.q).replaceAll(\"'\", \"''\")",
+          ].join('\n'),
+          result: "x' OR '1'='1   no rows",
+          note: 'This stops that payload, but it is easy to miss a case: a number without quotes, another database’s rules, one forgotten query.',
+        },
+        {
+          code: [
+            "app.get('/api/players', async (req, res) => {",
+            '  const { rows } = await db.query(',
+            "    'SELECT nickname, tag FROM users WHERE nickname = $1',",
+            '    [req.query.q],',
+            '  )',
+            '  res.json(rows)',
+            '})',
+          ].join('\n'),
+          result: "x' OR '1'='1   200 OK   []",
+          note: 'The query and the value travel separately. The value is compared as text, so it can never change the query.',
+        },
+        {
+          code: [
+            '// a second layer: the API connects as a user with only the rights it needs',
+            '// GRANT SELECT, INSERT, UPDATE ON users, duels TO devbrawl_api;',
+          ].join('\n'),
+          result: 'DROP TABLE duels   ERROR: permission denied',
+          note: 'If one query somewhere is still vulnerable, the attacker cannot drop tables or touch data outside the grant.',
+        },
+      ],
+    },
+    {
+      type: 'section',
+      title: 'Summary',
+    },
+    {
+      type: 'mistakes',
+      items: [
+        'Escaping quotes by hand instead of using parameters.',
+        'Trusting input because it comes from your own frontend. Anyone can send the request directly.',
+        'Building a string for an ORM’s raw SQL method.',
+        'Showing database errors to users, which tells attackers how the query looks.',
+        'Letting the app connect to the database as a superuser.',
+      ],
+    },
+    {
+      type: 'takeaway',
+      text: 'Send user input as parameters, never as part of the SQL string. Use an allowlist for names that cannot be parameters, and give the app a database user that can do as little as possible.',
+    },
+  ],
+}

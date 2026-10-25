@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { LessonBlock, MethodExplorerBlock, Trait } from './content'
+import type { InjectionExplorerBlock, LessonBlock, MethodExplorerBlock, Trait, WalkthroughBlock } from './content'
 import { highlightLines } from '../duel/challenges/highlight'
 import './LessonBlocks.css'
 
@@ -129,7 +129,10 @@ export function LessonBlockView({ block }: LessonBlockViewProps) {
       return <h2 className="lesson-section-title">{block.title}</h2>
 
     case 'walkthrough':
-      return <Walkthrough steps={block.steps} />
+      return <Walkthrough block={block} />
+
+    case 'injection-explorer':
+      return <InjectionExplorer block={block} />
 
     case 'mistakes':
       return (
@@ -348,14 +351,93 @@ function RetryDemo() {
   )
 }
 
-interface WalkthroughStep {
-  code: string
-  result: string
-  note: string
+// The same input twice: glued into the SQL string, and sent next to the query as a parameter
+function InjectionExplorer({ block }: { block: InjectionExplorerBlock }) {
+  const [selected, setSelected] = useState(0)
+  const payload = block.payloads[selected]
+
+  // Highlighting the glued query shows the input turning into SQL keywords, exactly as the database parses it
+  const glued = highlightLines(block.unsafe.replace('{input}', payload.input), 'sql').join('\n')
+  // The value is shown as a comment: it travels apart from the query and is never parsed as SQL
+  const parameterized = highlightLines(
+    `${block.safe}\n-- sent separately: ${block.param} = ${JSON.stringify(payload.input)}`,
+    'sql',
+  ).join('\n')
+
+  return (
+    <div className="lesson-visual">
+      <p className="lesson-visual-caption">{block.caption}</p>
+
+      <div className="lesson-visual-controls">
+        {block.payloads.map((entry, index) => (
+          <button
+            key={entry.label}
+            type="button"
+            className={`lesson-visual-button${index === selected ? ' is-active' : ''}`}
+            aria-pressed={index === selected}
+            onClick={() => setSelected(index)}
+          >
+            {entry.label}
+          </button>
+        ))}
+      </div>
+
+      <div key={selected} className="lesson-explorer-panel">
+        <p className="lesson-inject-field">
+          <span className="lesson-inject-field-label">{block.field}</span>
+          <code className="lesson-inject-input">{payload.input}</code>
+        </p>
+
+        <div className="lesson-inject-grid">
+          <InjectionPanel
+            title="Glued into the string"
+            status={payload.breach ? 'Broken' : 'Works'}
+            tone={payload.breach ? 'danger' : 'neutral'}
+            query={glued}
+            rows={payload.unsafeResult}
+          />
+          <InjectionPanel title="Sent as a parameter" status="Safe" tone="safe" query={parameterized} rows={payload.safeResult} />
+        </div>
+
+        <p className="lesson-explorer-note">{payload.note}</p>
+      </div>
+    </div>
+  )
+}
+
+interface InjectionPanelProps {
+  title: string
+  // Shown as text next to the color, so the state never depends on color alone
+  status: string
+  tone: 'danger' | 'safe' | 'neutral'
+  // Highlighted SQL from highlight.js, which escapes the text itself
+  query: string
+  rows: string[]
+}
+
+function InjectionPanel({ title, status, tone, query, rows }: InjectionPanelProps) {
+  return (
+    <section className={`lesson-inject-panel is-${tone}`} aria-label={title}>
+      <header className="lesson-inject-header">
+        <p className="lesson-inject-title">{title}</p>
+        <span className="lesson-inject-status">{status}</span>
+      </header>
+      <pre className="lesson-explorer-wire lesson-inject-query lesson-syntax">
+        <code dangerouslySetInnerHTML={{ __html: query }} />
+      </pre>
+      <p className="lesson-retry-label">The database returns</p>
+      <ul className="lesson-retry-list">
+        {rows.map((row) => (
+          <li key={row}>{row}</li>
+        ))}
+      </ul>
+    </section>
+  )
 }
 
 // Pressing Next writes the next call into one file that keeps growing. The newest call animates in below the others.
-function Walkthrough({ steps }: { steps: WalkthroughStep[] }) {
+function Walkthrough({ block }: { block: WalkthroughBlock }) {
+  const { steps, file = 'api-client.ts', language = 'typescript', stepName = 'call' } = block
   const [shown, setShown] = useState(0)
   const finished = shown === steps.length
   const current = shown > 0 ? steps[shown - 1] : null
@@ -363,23 +445,23 @@ function Walkthrough({ steps }: { steps: WalkthroughStep[] }) {
   // Flatten the written calls into lines, remembering each line's call and its position inside that call
   const lines = steps.slice(0, shown).flatMap((step, stepIndex) => {
     const codeLines = step.code.split('\n').map((text, lineIndex) => ({ text, stepIndex, lineIndex }))
-    return [{ text: `// call ${stepIndex + 1}`, stepIndex, lineIndex: -1 }, ...codeLines, { text: '', stepIndex, lineIndex: codeLines.length }]
+    return [{ text: `// ${stepName} ${stepIndex + 1}`, stepIndex, lineIndex: -1 }, ...codeLines, { text: '', stepIndex, lineIndex: codeLines.length }]
   })
 
   // The file grows call by call, so it is highlighted as one piece to keep multi-line tokens right
-  const highlighted = highlightLines(lines.map((line) => line.text).join('\n'), 'typescript')
+  const highlighted = highlightLines(lines.map((line) => line.text).join('\n'), language)
 
   return (
     <div className="lesson-visual lesson-walk">
       <div className="lesson-walk-bar">
         <p className="lesson-walk-progress">
-          {shown} of {steps.length} calls written
+          {shown} of {steps.length} {stepName}s written
         </p>
-        {finished && <p className="lesson-walk-hint">All calls are written. Reset to run them again.</p>}
+        {finished && <p className="lesson-walk-hint">All {stepName}s are written. Reset to run them again.</p>}
       </div>
 
       <figure className="lesson-code">
-        <figcaption className="lesson-code-file">api-client.ts</figcaption>
+        <figcaption className="lesson-code-file">{file}</figcaption>
         <pre className="lesson-code-body lesson-syntax">
           <code>
             {lines.length > 0 ? (
@@ -392,7 +474,7 @@ function Walkthrough({ steps }: { steps: WalkthroughStep[] }) {
                 />
               ))
             ) : (
-              <span className="lesson-walk-placeholder">// press Next to write the first call</span>
+              <span className="lesson-walk-placeholder">// press Next to write the first {stepName}</span>
             )}
           </code>
         </pre>

@@ -525,6 +525,107 @@
   color: var(--color-text-muted);
 }
 
+/* Injection explorer: the same input glued into the string and sent as a parameter */
+
+.lesson-inject-field {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.lesson-inject-field-label {
+  font-family: var(--font-text);
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+/* Looks like the form field the user typed into */
+.lesson-inject-input {
+  min-height: 48px;
+  padding: var(--space-3) var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-field);
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.lesson-inject-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+.lesson-inject-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  transition: border-color 200ms ease-out;
+}
+
+.lesson-inject-panel.is-danger {
+  border-color: var(--color-danger);
+}
+
+.lesson-inject-panel.is-safe {
+  border-color: var(--color-success);
+}
+
+.lesson-inject-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.lesson-inject-title {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.lesson-inject-status {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.lesson-inject-panel.is-danger .lesson-inject-status {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.lesson-inject-panel.is-safe .lesson-inject-status {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+/* Long payloads wrap inside the panel instead of scrolling sideways */
+.lesson-inject-query code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* Section heading */
 
 .lesson-section-title {

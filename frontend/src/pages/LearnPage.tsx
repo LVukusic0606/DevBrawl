@@ -3,7 +3,6 @@ import { getCompletedLessons, markLessonCompleted } from '../api/lessons'
 import {
   CATEGORIES,
   type Category,
-  type HttpMethod,
   type Lesson,
   type LessonBlock,
   type QuizQuestion,
@@ -293,8 +292,6 @@ function LessonView({ category, lesson, onBack, onStartQuiz }: LessonViewProps) 
   )
 }
 
-const METHODS: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
-
 interface QuizViewProps {
   lesson: Lesson
   quiz: QuizQuestion[]
@@ -307,7 +304,7 @@ interface QuizViewProps {
 
 // One question per step. Each answer is checked right away, with a text label next to the color.
 function QuizView({ lesson, quiz, onBack, onExit, onComplete, saveFailed }: QuizViewProps) {
-  const [answers, setAnswers] = useState<(HttpMethod | null)[]>(() => quiz.map(() => null))
+  const [answers, setAnswers] = useState<(string | null)[]>(() => quiz.map(() => null))
   const [index, setIndex] = useState(0)
 
   const finished = index === quiz.length
@@ -316,8 +313,8 @@ function QuizView({ lesson, quiz, onBack, onExit, onComplete, saveFailed }: Quiz
   const isCorrect = !finished && chosen === question.answer
   const score = answers.filter((answer, position) => answer === quiz[position].answer).length
 
-  function choose(method: HttpMethod) {
-    setAnswers(answers.map((answer, position) => (position === index ? method : answer)))
+  function choose(choice: string) {
+    setAnswers(answers.map((answer, position) => (position === index ? choice : answer)))
   }
 
   function restart() {
@@ -387,18 +384,22 @@ function QuizView({ lesson, quiz, onBack, onExit, onComplete, saveFailed }: Quiz
             </p>
             <p className="learn-quiz-scenario">{question.scenario}</p>
 
-            <div className="learn-quiz-choices">
-              {METHODS.map((method) => {
-                const state = chosen === method ? (isCorrect ? ' is-correct' : ' is-wrong') : ''
+            {/* Short choices such as HTTP methods sit in a row; sentences get one full-width row each */}
+            <div className={`learn-quiz-choices${question.choices.some((choice) => choice.length > 12) ? ' is-stacked' : ''}`}>
+              {question.choices.map((choice) => {
+                // After a wrong pick the right choice lights up too, so the learner sees it next to their own
+                let state = ''
+                if (chosen === choice) state = isCorrect ? ' is-correct' : ' is-wrong'
+                else if (chosen !== null && choice === question.answer) state = ' is-correct'
                 return (
                   <button
-                    key={method}
+                    key={choice}
                     type="button"
                     className={`learn-quiz-choice${state}`}
                     disabled={chosen !== null}
-                    onClick={() => choose(method)}
+                    onClick={() => choose(choice)}
                   >
-                    {method}
+                    {choice}
                   </button>
                 )
               })}
@@ -408,7 +409,7 @@ function QuizView({ lesson, quiz, onBack, onExit, onComplete, saveFailed }: Quiz
               <p className={`learn-quiz-feedback ${isCorrect ? 'is-correct' : 'is-wrong'}`}>
                 <i className={`ti ${isCorrect ? 'ti-check' : 'ti-x'}`} aria-hidden="true" />
                 <span className="learn-quiz-verdict">
-                  {isCorrect ? 'Correct.' : `Not quite. It is ${question.answer}.`}
+                  {isCorrect ? 'Correct.' : `Not quite. The answer is “${question.answer}”.`}
                 </span>
                 {question.explanation}
               </p>

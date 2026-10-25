@@ -542,6 +542,19 @@
   transition: border-color 200ms ease-out, color 200ms ease-out;
 }
 
+.learn-quiz-choices.is-stacked {
+  flex-direction: column;
+}
+
+.learn-quiz-choices.is-stacked .learn-quiz-choice {
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
 .learn-quiz-choice:hover:not(:disabled) {
   border-color: var(--color-accent);
 }

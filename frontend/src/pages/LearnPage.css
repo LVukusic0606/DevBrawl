@@ -98,9 +98,10 @@
   transition: border-color 200ms ease-out, background-color 200ms ease-out;
 }
 
+/* The hover tint is mixed into the surface, not laid on top of it, so the grid never shows through the card */
 .learn-tile:hover {
   border-color: var(--color-accent);
-  background: var(--color-accent-soft);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
 }
 
 .learn-tile:focus-visible {
@@ -270,7 +271,8 @@
   min-width: 0;
   height: 48px;
   padding: 0 var(--space-6);
-  border: 1px solid var(--color-border);
+  /* Visible at rest in a muted tone; the accent border only appears on focus */
+  border: 1px solid var(--color-border-strong);
   border-radius: 24px;
   background: var(--color-field);
   font-family: var(--font-body);
@@ -343,7 +345,7 @@
 
 .learn-lesson-card:hover {
   border-color: var(--color-accent);
-  background: var(--color-accent-soft);
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
 }
 
 .learn-lesson-card:focus-visible {

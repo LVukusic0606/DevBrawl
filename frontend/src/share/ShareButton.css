@@ -57,7 +57,7 @@
 
 .share-dialog {
   width: min(760px, calc(100vw - 32px));
-  padding: var(--space-6);
+  padding: var(--space-8);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   background: var(--color-surface);
@@ -84,7 +84,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .share-title {
@@ -116,7 +116,7 @@
   align-items: center;
   justify-content: center;
   aspect-ratio: 1200 / 630;
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -129,16 +129,25 @@
   height: 100%;
 }
 
+/* Marks the framed image as what gets saved or shared */
+.share-preview-label {
+  margin-left: var(--space-3);
+  font-family: var(--font-code);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
 .share-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .share-muted {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--color-text-muted);
 }
 

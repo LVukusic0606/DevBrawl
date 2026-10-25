@@ -10,7 +10,6 @@ interface PremiumPageProps {
 }
 
 const price = new Intl.NumberFormat('en', { style: 'currency', currency: 'EUR' })
-const date = new Intl.DateTimeFormat('en', { day: 'numeric', month: 'long', year: 'numeric' })
 
 // Plans, the (demo) checkout, and the contact form for schools and universities
 function PremiumPage({ onBack, onOpenSeason }: PremiumPageProps) {
@@ -40,7 +39,6 @@ function PremiumPage({ onBack, onOpenSeason }: PremiumPageProps) {
             <h1 id="premium-title" className="premium-title">
               Premium
             </h1>
-            <p className="premium-lead">Learning, duels and leaderboards are free for everyone. Premium adds more.</p>
           </div>
           {premium && <PlanCard premium={premium} />}
         </section>
@@ -55,45 +53,15 @@ function PremiumPage({ onBack, onOpenSeason }: PremiumPageProps) {
   )
 }
 
-// The current plan, with this month's AI interviews as a meter, the same layout as the profile's level card
+// The current plan: only the label and the plan name
 function PlanCard({ premium }: { premium: Premium }) {
-  const { used, limit } = premium.interviews
-  const share = limit > 0 ? Math.min(used / limit, 1) * 100 : 0
-
   return (
     <div className="premium-plan">
-      <span className="premium-plan-label">Your plan</span>
+      <span className="premium-plan-label">Your current plan</span>
       <span className="premium-plan-value">
         {premium.isPremium && <i className="ti ti-crown" aria-hidden="true" />}
         {premium.isPremium ? 'Premium' : 'Free'}
       </span>
-      <div className="premium-meter">
-        <div className="premium-meter-labels">
-          <span>AI interviews this month</span>
-          <span>
-            <strong>{used}</strong> of {limit} used
-          </span>
-        </div>
-        <div
-          className="premium-bar"
-          role="progressbar"
-          aria-label="AI interviews used this month"
-          aria-valuemin={0}
-          aria-valuemax={limit}
-          aria-valuenow={used}
-        >
-          <span className="premium-bar-fill" style={{ width: `${share}%` }} />
-        </div>
-      </div>
-      <p className="premium-plan-note">
-        {premium.isPremium ? (
-          <>
-            Premium is active until <strong>{date.format(new Date(premium.premiumUntil!))}</strong>.
-          </>
-        ) : (
-          "You're on the free plan."
-        )}
-      </p>
     </div>
   )
 }
@@ -127,7 +95,7 @@ function Plans({
 
   const rows: { label: string; free: string; premium: string }[] = [
     { label: 'Lessons, quizzes and duels', free: 'Unlimited', premium: 'Unlimited' },
-    { label: 'Ratings, leaderboard and duel review', free: 'Included', premium: 'Included' },
+    { label: 'Personalization', free: 'Basic', premium: 'Advanced' },
     {
       label: 'AI interviews',
       free: `${premium.freeInterviewsPerMonth} per month`,
@@ -143,6 +111,7 @@ function Plans({
           <h2 id="plans-title" className="premium-section-title">
             Compare plans
           </h2>
+          <p className="premium-section-note">Premium also gives you more ways to customize your profile.</p>
         </div>
 
         <div className="premium-panel">
@@ -243,18 +212,22 @@ function SchoolsForm() {
     onChange: (e: { target: { value: string } }) => setForm((f) => ({ ...f, [name]: e.target.value })),
   })
 
+  // The heading and the form reveal one after the other as they scroll into view
   return (
-    <ScrollReveal>
-      <section className="premium-section" aria-labelledby="schools-title">
+    <section className="premium-section is-schools" aria-labelledby="schools-title">
+      <ScrollReveal revealOnScroll>
         <div className="premium-section-head">
           <h2 id="schools-title" className="premium-section-title">
+            <i className="ti ti-school" aria-hidden="true" />
             For schools and universities
           </h2>
           <p className="premium-section-note">
             Want DevBrawl for your class? Tell us about it and we'll set something up together.
           </p>
         </div>
+      </ScrollReveal>
 
+      <ScrollReveal revealOnScroll>
         <form className="premium-panel premium-form" onSubmit={submit}>
           <label className="premium-field">
             <span>Your name</span>
@@ -286,8 +259,8 @@ function SchoolsForm() {
             </p>
           </div>
         </form>
-      </section>
-    </ScrollReveal>
+      </ScrollReveal>
+    </section>
   )
 }
 

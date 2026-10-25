@@ -91,6 +91,7 @@ export function ShareButton({ label, fileName, shareText, render, className }: S
         <div className="share-head">
           <h2 id={`${fileName}-share-title`} className="share-title">
             {label}
+            <span className="share-preview-label">Preview:</span>
           </h2>
           <button type="button" className="share-close" aria-label="Close" onClick={() => dialog.current?.close()}>
             <i className="ti ti-x" aria-hidden="true" />
@@ -121,8 +122,9 @@ export function ShareButton({ label, fileName, shareText, render, className }: S
             </button>
           )}
         </div>
+        {/* Empty until something is copied or fails, so no line of text sits under the buttons */}
         <p className="share-muted" role="status">
-          {notice ?? 'Post it on LinkedIn, Facebook or anywhere else.'}
+          {notice}
         </p>
       </dialog>
     </>

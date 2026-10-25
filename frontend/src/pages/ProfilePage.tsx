@@ -133,18 +133,6 @@ function ProfileView({ profile, onOpenProfile, onStartDuel, onOpenCharacter, onR
               activeToday={profile.isYou ? profile.streak.activeToday : true}
             />
           </div>
-          {profile.isYou && (
-            <div className="profile-identity-actions">
-              <AccountSettings onNicknameChanged={onReload} />
-              <ShareButton
-                label="Share profile"
-                fileName={`devbrawl-${user.nickname}`}
-                shareText={`My DevBrawl stats: overall rating ${profile.overall.rating}.`}
-                render={() => drawProfileCard(profile)}
-                className="profile-button"
-              />
-            </div>
-          )}
         </div>
         <div className="profile-hero-stats">
           <div className="profile-level is-overall">
@@ -157,6 +145,19 @@ function ProfileView({ profile, onOpenProfile, onStartDuel, onOpenCharacter, onR
             <XpMeter {...progress} />
           </div>
         </div>
+        {/* The account buttons sit on their own row under the stats, away from the name */}
+        {profile.isYou && (
+          <div className="profile-identity-actions">
+            <AccountSettings onNicknameChanged={onReload} />
+            <ShareButton
+              label="Share profile"
+              fileName={`devbrawl-${user.nickname}`}
+              shareText={`My DevBrawl stats: overall rating ${profile.overall.rating}.`}
+              render={() => drawProfileCard(profile)}
+              className="profile-button"
+            />
+          </div>
+        )}
       </section>
 
       {/* A wide banner right under the hero, so the 3D character is the first thing to try.

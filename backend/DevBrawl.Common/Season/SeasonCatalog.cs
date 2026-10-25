@@ -25,30 +25,32 @@ public static class SeasonCatalog
     public const int Stages = 20;
     public const int XpPerStage = 100;
 
-    // PLACEHOLDERS: the ids exist so the system works end to end. The frontend draws them
-    // (frontend/src/profile/avatars.ts and tags.ts); Buco replaces the stand-in pictures and labels.
-    // For the hackathon every month uses this one set.
+    // The avatars in User.StarterAvatarIds are free for everyone. The pass gives character bugs (26 to 35) and,
+    // near the end of the premium track, three ultra rare finishes (23 to 25). The frontend draws them
+    // (frontend/src/profile/avatars.ts and tags.ts). For the hackathon every month uses this one set.
     public static readonly IReadOnlyList<SeasonReward> Rewards =
     [
         new(1, RewardTrack.Free, RewardKind.Tag, "rookie"),
-        new(1, RewardTrack.Premium, RewardKind.Avatar, "13"),
+        new(1, RewardTrack.Premium, RewardKind.Avatar, "26"),
         new(2, RewardTrack.Premium, RewardKind.Tag, "root-cause-hunter"),
-        new(3, RewardTrack.Free, RewardKind.Avatar, "14"),
-        new(4, RewardTrack.Premium, RewardKind.Avatar, "15"),
+        new(3, RewardTrack.Free, RewardKind.Avatar, "27"),
+        new(4, RewardTrack.Premium, RewardKind.Avatar, "28"),
         new(5, RewardTrack.Free, RewardKind.Tag, "debugger"),
         new(6, RewardTrack.Premium, RewardKind.Tag, "404-survivor"),
-        new(7, RewardTrack.Premium, RewardKind.Avatar, "16"),
-        new(8, RewardTrack.Free, RewardKind.Avatar, "17"),
+        new(7, RewardTrack.Premium, RewardKind.Avatar, "29"),
+        new(8, RewardTrack.Free, RewardKind.Avatar, "30"),
         new(9, RewardTrack.Premium, RewardKind.Tag, "race-condition"),
         new(10, RewardTrack.Free, RewardKind.Tag, "query-whisperer"),
-        new(11, RewardTrack.Premium, RewardKind.Avatar, "18"),
+        new(11, RewardTrack.Premium, RewardKind.Avatar, "31"),
         new(12, RewardTrack.Premium, RewardKind.Tag, "zero-downtime"),
-        new(13, RewardTrack.Free, RewardKind.Avatar, "19"),
-        new(14, RewardTrack.Premium, RewardKind.Avatar, "20"),
+        new(13, RewardTrack.Free, RewardKind.Avatar, "32"),
+        new(14, RewardTrack.Premium, RewardKind.Avatar, "33"),
         new(15, RewardTrack.Free, RewardKind.Tag, "stack-tracer"),
+        new(15, RewardTrack.Premium, RewardKind.Avatar, "24"),
         new(16, RewardTrack.Premium, RewardKind.Tag, "cache-invalidator"),
-        new(17, RewardTrack.Premium, RewardKind.Avatar, "21"),
-        new(18, RewardTrack.Free, RewardKind.Avatar, "22"),
+        new(17, RewardTrack.Premium, RewardKind.Avatar, "34"),
+        new(18, RewardTrack.Free, RewardKind.Avatar, "35"),
+        new(18, RewardTrack.Premium, RewardKind.Avatar, "25"),
         new(19, RewardTrack.Premium, RewardKind.Tag, "kernel-panic"),
         new(20, RewardTrack.Free, RewardKind.Tag, "season-finisher"),
         new(20, RewardTrack.Premium, RewardKind.Avatar, "23"),

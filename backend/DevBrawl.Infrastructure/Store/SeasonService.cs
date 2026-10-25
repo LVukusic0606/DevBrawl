@@ -67,7 +67,7 @@ public class SeasonService(AppDbContext db) : ISeasonService
     public async Task<OwnedCosmeticsResponse> GetOwnedAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var owned = await OwnedKeysAsync(userId, cancellationToken);
-        var avatarIds = Enumerable.Range(1, User.AvatarCount)
+        var avatarIds = User.StarterAvatarIds
             .Concat(owned.Where(o => o.Kind == RewardKind.Avatar).Select(o => int.Parse(o.Key, CultureInfo.InvariantCulture)))
             .Order()
             .ToList();
@@ -76,7 +76,7 @@ public class SeasonService(AppDbContext db) : ISeasonService
     }
 
     public async Task<bool> CanUseAvatarAsync(Guid userId, int avatarId, CancellationToken cancellationToken = default) =>
-        avatarId is >= 1 and <= User.AvatarCount
+        User.StarterAvatarIds.Contains(avatarId)
         || await db.UserRewards.AnyAsync(r => r.UserId == userId && r.Kind == RewardKind.Avatar
             && r.Key == avatarId.ToString(CultureInfo.InvariantCulture), cancellationToken);
 

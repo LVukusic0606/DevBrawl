@@ -29,15 +29,17 @@ export function useWavRecorder({ maxSeconds, onRecorded, onError }: WavRecorderO
     callbacks.current = { onRecorded, onError }
   })
 
-  // Leaving the page mid-recording releases the microphone and drops the recording
-  useEffect(
-    () => () => {
+  // Leaving the page mid-recording releases the microphone and drops the recording.
+  // The flag is reset on mount too: StrictMode mounts, unmounts and mounts again in development,
+  // and a flag left at true would silently throw away every recording.
+  useEffect(() => {
+    discard.current = false
+    return () => {
       discard.current = true
       if (timer.current !== null) window.clearInterval(timer.current)
       if (recorder.current?.state === 'recording') recorder.current.stop()
-    },
-    [],
-  )
+    }
+  }, [])
 
   function stop() {
     if (recorder.current?.state === 'recording') recorder.current.stop()

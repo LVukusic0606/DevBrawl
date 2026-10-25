@@ -34,6 +34,10 @@ public enum PlayerRoundResult { Won, Lost, Draw, NoWinner }
 
 public enum PlayerDuelResult { Won, Lost, Draw }
 
+// Events with a deadline also carry ServerTime, the server's clock when the event was sent.
+// Device clocks can be minutes off, so clients count down on the server's clock: deadline - (now + offset),
+// where offset = ServerTime - device time on arrival.
+
 // Ratings: category id → rating
 public sealed record PlayerInfo(Guid Id, string Nickname, IReadOnlyDictionary<int, int> Ratings);
 
@@ -41,7 +45,7 @@ public sealed record QueueEvent;
 
 public sealed record DuelEvent(Guid DuelId);
 
-public sealed record MatchFoundEvent(Guid DuelId, PlayerInfo You, PlayerInfo Opponent, DateTime StartsAt);
+public sealed record MatchFoundEvent(Guid DuelId, PlayerInfo You, PlayerInfo Opponent, DateTime StartsAt, DateTime ServerTime);
 
 public sealed record RoundStartedEvent(
     Guid DuelId,
@@ -51,7 +55,9 @@ public sealed record RoundStartedEvent(
     // PreparedChallenge.ClientView: no answers
     JsonObject Challenge,
     int TimeLimitSeconds,
-    DateTime EndsAt);
+    DateTime EndsAt,
+    // When the round started; inside a DuelState use DuelState.ServerTime instead
+    DateTime ServerTime);
 
 public sealed record RoundAnswerEvent(Guid DuelId, int RoundNumber);
 
@@ -93,6 +99,7 @@ public sealed record DuelStateEvent(
     int YourScore,
     int OpponentScore,
     // Set during the reveal phase
-    RoundEndedEvent? LastRoundEnded);
+    RoundEndedEvent? LastRoundEnded,
+    DateTime ServerTime);
 
 public sealed record DuelAbortedEvent(Guid DuelId, string Reason);

@@ -4,7 +4,6 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using DevBrawl.Interview.Domain;
 using DevBrawl.Interview.Gemini;
-using DevBrawl.Interview.Knowledge;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
@@ -14,31 +13,48 @@ namespace DevBrawl.Interview.Tests;
 public class GeminiInterviewerTests
 {
     private const string DummyKey = "test-key-not-real";
-    private static readonly LessonKnowledge Lesson = new("databases", "Databases", "keys", "Linking tables with keys", "# Linking tables with keys\nLesson text.\n");
+    private static readonly InterviewTopic Topic = new("Databases", "# Primary and foreign keys\nLesson text.\n");
+    private static readonly ChatTurn[] History = [new(MessageRole.Interviewer, "Why ids?"), new(MessageRole.Candidate, "They are stored once.")];
 
     [Fact]
     public async Task Sends_the_prompt_schema_and_key_header_to_generateContent()
     {
-        var handler = new FakeHandler(HttpStatusCode.OK, Reply("""{"question":"Why ids?","keyPoints":["ids are stored once"],"modelAnswer":"Because."}"""));
+        var handler = new FakeHandler(HttpStatusCode.OK, Reply("""{"message":" Good. What happens on rename? ","done":false}"""));
 
-        var question = await Interviewer(handler).GenerateQuestionAsync(Lesson, ["Earlier?"]);
+        var reply = await Interviewer(handler).ReplyAsync(Topic, History, 1, 6, closing: false);
 
-        Assert.Equal("Why ids?", question.Question);
-        Assert.Equal("https://gemini.test/v1beta/models/gemini-3.8-flash:generateContent", handler.Request!.RequestUri!.ToString());
+        Assert.Equal("Good. What happens on rename?", reply.Message);
+        Assert.False(reply.Done);
+        Assert.Equal("https://gemini.test/v1beta/models/gemini-3.5-flash-lite:generateContent", handler.Request!.RequestUri!.ToString());
         Assert.Equal(DummyKey, handler.Request.Headers.GetValues("x-goog-api-key").Single());
         // The key never goes into the URL, where request logs would show it
         Assert.DoesNotContain(DummyKey, handler.Request.RequestUri.ToString());
 
         var body = JsonNode.Parse(handler.Body!)!;
-        Assert.Contains("You interview learners on DevBrawl", (string)body["systemInstruction"]!["parts"]![0]!["text"]!);
-        Assert.Contains("- Earlier?", (string)body["contents"]![0]!["parts"]![0]!["text"]!);
+        Assert.Contains("technical interviewer on DevBrawl", (string)body["systemInstruction"]!["parts"]![0]!["text"]!);
+        Assert.Contains("Candidate: They are stored once.", (string)body["contents"]![0]!["parts"]![0]!["text"]!);
         Assert.Equal("application/json", (string)body["generationConfig"]!["responseMimeType"]!);
         Assert.Equal("OBJECT", (string)body["generationConfig"]!["responseSchema"]!["type"]!);
         Assert.Equal("low", (string)body["generationConfig"]!["thinkingConfig"]!["thinkingLevel"]!);
     }
 
     [Fact]
-    public async Task Parses_a_review_and_skips_thought_parts()
+    public async Task Sends_the_recording_inline_and_returns_the_transcript()
+    {
+        var handler = new FakeHandler(HttpStatusCode.OK, Reply("""{"transcript":"  It stores the user id.  "}"""));
+        byte[] audio = [1, 2, 3, 4];
+
+        var text = await Interviewer(handler).TranscribeAsync("Why ids?", audio, "audio/wav");
+
+        Assert.Equal("It stores the user id.", text);
+        var parts = JsonNode.Parse(handler.Body!)!["contents"]![0]!["parts"]!.AsArray();
+        Assert.Contains("<question>Why ids?</question>", (string)parts[0]!["text"]!);
+        Assert.Equal("audio/wav", (string)parts[1]!["inlineData"]!["mimeType"]!);
+        Assert.Equal(Convert.ToBase64String(audio), (string)parts[1]!["inlineData"]!["data"]!);
+    }
+
+    [Fact]
+    public async Task Parses_an_evaluation_and_skips_thought_parts()
     {
         var reply = JsonSerializer.Serialize(new
         {
@@ -52,18 +68,17 @@ public class GeminiInterviewerTests
                         parts = new object[]
                         {
                             new { text = "thinking about it", thought = true },
-                            new { text = """{"verdict":"partiallyCorrect","score":120,"feedback":" Close. ","strengths":["a"],"improvements":["b"]}""" }
+                            new { text = """{"score":120,"summary":" Close. ","strengths":["a"],"improvements":["b"]}""" }
                         }
                     }
                 }
             }
         });
 
-        var review = await Interviewer(new FakeHandler(HttpStatusCode.OK, reply)).ReviewAnswerAsync(Lesson, "Why?", ["k"], "answer");
+        var evaluation = await Interviewer(new FakeHandler(HttpStatusCode.OK, reply)).EvaluateAsync(Topic, History);
 
-        Assert.Equal(AnswerVerdict.PartiallyCorrect, review.Verdict);
-        Assert.Equal(100, review.Score);
-        Assert.Equal("Close.", review.Feedback);
+        Assert.Equal(100, evaluation.Score);
+        Assert.Equal("Close.", evaluation.Summary);
     }
 
     [Theory]
@@ -76,10 +91,11 @@ public class GeminiInterviewerTests
     [InlineData(HttpStatusCode.OK, """{"candidates":[{"finishReason":"SAFETY","content":{"parts":[]}}]}""", "Gemini declined the request")]
     [InlineData(HttpStatusCode.OK, """{"candidates":[{"finishReason":"MAX_TOKENS","content":{"parts":[{"text":"{"}]}}]}""", "Gemini's reply was cut off")]
     [InlineData(HttpStatusCode.OK, """{"candidates":[{"finishReason":"STOP","content":{"parts":[{"text":"not json"}]}}]}""", "Gemini returned invalid JSON")]
+    [InlineData(HttpStatusCode.OK, """{"candidates":[{"finishReason":"STOP","content":{"parts":[{"text":"{\"message\":\"\",\"done\":false}"}]}}]}""", "Gemini returned an empty message")]
     public async Task Failures_make_the_interviewer_unavailable(HttpStatusCode status, string body, string message)
     {
         var error = await Assert.ThrowsAsync<InterviewerUnavailableException>(() =>
-            Interviewer(new FakeHandler(status, body)).GenerateQuestionAsync(Lesson, []));
+            Interviewer(new FakeHandler(status, body)).ReplyAsync(Topic, [], 0, 6, closing: false));
 
         Assert.Equal(message, error.Message);
     }
@@ -95,7 +111,7 @@ public class GeminiInterviewerTests
         var interviewer = new GeminiInterviewer(new HttpClient(handler) { BaseAddress = new Uri("https://gemini.test/") },
             Options.Create(options), NullLogger<GeminiInterviewer>.Instance);
 
-        var error = await Assert.ThrowsAsync<InterviewerUnavailableException>(() => interviewer.GenerateQuestionAsync(Lesson, []));
+        var error = await Assert.ThrowsAsync<InterviewerUnavailableException>(() => interviewer.ReplyAsync(Topic, [], 0, 6, closing: false));
         Assert.Equal("Gemini API key is missing", error.Message);
         Assert.Null(handler.Request);
     }

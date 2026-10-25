@@ -121,6 +121,8 @@ export interface MatchFoundEvent {
   you: Player
   opponent: Player
   startsAt: string
+  // Server clock when sent; see serverClock.ts
+  serverTime: string
 }
 
 export interface RoundStartedEvent {
@@ -131,6 +133,7 @@ export interface RoundStartedEvent {
   challenge: Challenge
   timeLimitSeconds: number
   endsAt: string
+  serverTime: string
 }
 
 export interface RoundAnswerEvent {
@@ -182,6 +185,7 @@ export interface DuelStateEvent {
   yourScore: number
   opponentScore: number
   lastRoundEnded: RoundEndedEvent | null
+  serverTime: string
 }
 
 export interface DuelAbortedEvent {
@@ -214,6 +218,7 @@ export interface DuelRoundReview {
   challenge: Challenge
   yourAnswer: Answer | null
   youCorrect: boolean
+  opponentAnswered: boolean
   opponentCorrect: boolean
   result: RoundResult
   reveal: Reveal

@@ -29,6 +29,7 @@ public sealed record DuelRoundReviewResponse(
     // Your answer as you sent it; null if you didn't answer in time
     JsonNode? YourAnswer,
     bool YouCorrect,
+    bool OpponentAnswered,
     bool OpponentCorrect,
     PlayerRoundResult Result,
     // Correct answer and explanation

@@ -33,14 +33,13 @@ public sealed class LearnKnowledgeBase
 
     public LessonKnowledge? FindLesson(string lessonId) => _lessons.GetValueOrDefault(lessonId);
 
-    public bool HasCategory(string categoryId) => _categories.Any(c => c.Id == categoryId);
+    public LearnCategory? FindCategory(string categoryId) => _categories.Find(c => c.Id == categoryId);
 
-    // A random lesson, optionally limited to one category
-    public LessonKnowledge PickLesson(string? categoryId, Random random)
-    {
-        var candidates = _lessons.Values.Where(l => categoryId is null || l.CategoryId == categoryId).ToList();
-        return candidates[random.Next(candidates.Count)];
-    }
+    public LearnCategory PickCategory(Random random) => _categories[random.Next(_categories.Count)];
+
+    // Every lesson of a category, one after another, for an interview about the whole category
+    public string CategoryMaterial(LearnCategory category) =>
+        string.Join("\n", category.Lessons.Select(l => _lessons[l.Id].Text));
 
     internal static string Render(LearnLesson lesson)
     {
@@ -67,8 +66,16 @@ public sealed class LearnKnowledgeBase
                         text.Append($"| {string.Join(" | ", row)} |\n");
                     break;
                 case "timeline":
-                    foreach (var item in block.Items!)
-                        text.Append($"- {item.Title}: {item.Detail}\n");
+                    foreach (var item in block.Items!.Value.EnumerateArray())
+                        text.Append($"- {item.GetProperty("title").GetString()}: {item.GetProperty("detail").GetString()}\n");
+                    break;
+                case "mistakes":
+                    text.Append("Common mistakes:\n");
+                    foreach (var item in block.Items!.Value.EnumerateArray())
+                        text.Append($"- {item.GetString()}\n");
+                    break;
+                case "takeaway":
+                    text.Append($"Key takeaway: {block.Text}\n");
                     break;
                 case "visual":
                     // Interactive diagram in the app; the surrounding text explains it
@@ -93,7 +100,6 @@ public sealed record LearnBlock(
     List<string>? Steps,
     List<string>? Headers,
     List<List<string>>? Rows,
-    List<LearnTimelineItem>? Items,
+    // Timeline: [{ title, detail }]; mistakes: [string]
+    JsonElement? Items,
     string? Visual);
-
-public sealed record LearnTimelineItem(string Title, string Detail);

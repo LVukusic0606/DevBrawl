@@ -1,25 +1,34 @@
 using DevBrawl.Interview.Domain;
-using DevBrawl.Interview.Knowledge;
 
 namespace DevBrawl.Interview;
 
-public sealed record GeneratedQuestion(string Question, IReadOnlyList<string> KeyPoints, string ModelAnswer);
+// What the interview is about: a title and the lesson text the interviewer may ask about
+public sealed record InterviewTopic(string Title, string Material);
 
-public sealed record AnswerReview(
-    AnswerVerdict Verdict,
+public sealed record ChatTurn(MessageRole Role, string Content);
+
+// Done is true when the interviewer has closed the interview
+public sealed record InterviewerReply(string Message, bool Done);
+
+public sealed record InterviewEvaluation(
     int Score,
-    string Feedback,
+    string Summary,
     IReadOnlyList<string> Strengths,
     IReadOnlyList<string> Improvements);
 
-// Asks and grades questions about a lesson. Throws InterviewerUnavailableException when no usable result comes back.
+// Runs an interview conversation. Throws InterviewerUnavailableException when no usable result comes back.
 public interface IInterviewer
 {
-    Task<GeneratedQuestion> GenerateQuestionAsync(LessonKnowledge lesson, IReadOnlyList<string> previousQuestions,
+    // The interviewer's next message. An empty history opens the interview; closing asks it to wrap up.
+    Task<InterviewerReply> ReplyAsync(InterviewTopic topic, IReadOnlyList<ChatTurn> history, int answersGiven, int maxAnswers,
+        bool closing, CancellationToken cancellationToken = default);
+
+    // Overall feedback on a finished interview
+    Task<InterviewEvaluation> EvaluateAsync(InterviewTopic topic, IReadOnlyList<ChatTurn> history,
         CancellationToken cancellationToken = default);
 
-    Task<AnswerReview> ReviewAnswerAsync(LessonKnowledge lesson, string question, IReadOnlyList<string> keyPoints, string answer,
-        CancellationToken cancellationToken = default);
+    // A spoken answer as text, using the interviewer's last message to spell terms right. Empty when there is no speech.
+    Task<string> TranscribeAsync(string lastQuestion, byte[] audio, string mimeType, CancellationToken cancellationToken = default);
 }
 
 public sealed class InterviewerUnavailableException(string message, Exception? innerException = null)

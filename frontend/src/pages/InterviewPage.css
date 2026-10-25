@@ -1,0 +1,535 @@
+/* Chat layout: history on the left, the conversation fills the rest of the screen and only the thread scrolls */
+.interview {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* History */
+
+.interview-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+  overflow-y: auto;
+}
+
+.interview-sidebar-title {
+  margin: var(--space-4) 0 0;
+  font-family: var(--font-text);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.interview-history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.interview-history-item {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease-out, border-color 150ms ease-out;
+}
+
+.interview-history-item:hover:not(:disabled) {
+  background: var(--color-field);
+}
+
+.interview-history-item.is-current {
+  border-color: var(--color-border-strong);
+  background: var(--color-field);
+}
+
+.interview-history-title {
+  font-family: var(--font-body);
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.interview-history-meta {
+  font-family: var(--font-text);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* Conversation */
+
+.interview-main {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.interview-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-8);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.interview-heading {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.interview-logo {
+  font-family: var(--font-text);
+  font-size: 20px;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.interview-progress {
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.interview-back {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 200ms ease-out;
+}
+
+.interview-back:hover {
+  border-color: var(--color-accent);
+}
+
+.interview-back-mobile {
+  display: none;
+}
+
+.interview-thread {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-8);
+}
+
+.interview-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  max-width: 80%;
+}
+
+.interview-message.is-mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.interview-author {
+  font-family: var(--font-text);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.interview-bubble {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.is-mine .interview-bubble {
+  border-color: transparent;
+  background: var(--color-accent-soft);
+}
+
+.interview-typing {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.interview-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-8) var(--space-6);
+}
+
+.interview-input {
+  flex: 1;
+  min-height: 52px;
+  max-height: 200px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-field);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  resize: none;
+  overflow-y: auto;
+}
+
+.interview-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.interview-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.interview-icon-button,
+.interview-send {
+  appearance: none;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 52px;
+  height: 52px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: filter 200ms ease-out, border-color 200ms ease-out;
+}
+
+.interview-icon-button {
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.interview-icon-button:hover:not(:disabled) {
+  border-color: var(--color-text-muted);
+}
+
+.interview-icon-button.is-recording {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.interview-icon-button .ti,
+.interview-send .ti {
+  font-size: 20px;
+}
+
+.interview-timer {
+  font-family: var(--font-code);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.interview-send {
+  border: 0;
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.interview-send:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+/* Start screen */
+
+.interview-start {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--space-8);
+}
+
+.interview-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.interview-lead,
+.interview-text,
+.interview-muted,
+.interview-list {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-text);
+}
+
+.interview-lead,
+.interview-muted {
+  color: var(--color-text-muted);
+}
+
+.interview-label,
+.interview-subtitle {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.interview-select {
+  width: 100%;
+  height: 52px;
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: var(--color-field);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+}
+
+.interview-select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* Buttons */
+
+.interview-primary,
+.interview-secondary {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius);
+  font-family: var(--font-text);
+  font-size: 15px;
+  cursor: pointer;
+  transition: filter 200ms ease-out, border-color 200ms ease-out;
+}
+
+.interview-primary {
+  min-height: 52px;
+  border: 0;
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.interview-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.interview-secondary {
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.interview-secondary:hover:not(:disabled) {
+  border-color: var(--color-text-muted);
+}
+
+.interview-primary:disabled,
+.interview-secondary:disabled,
+.interview-send:disabled,
+.interview-icon-button:disabled,
+.interview-history-item:disabled,
+.interview-input:disabled,
+.interview-select:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.interview-primary:focus-visible,
+.interview-secondary:focus-visible,
+.interview-send:focus-visible,
+.interview-icon-button:focus-visible,
+.interview-history-item:focus-visible,
+.interview-back:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Feedback */
+
+.interview-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.interview-card section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.interview-verdict {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-text);
+  font-size: 18px;
+}
+
+.interview-verdict .ti {
+  font-size: 20px;
+}
+
+.interview-verdict.is-strong {
+  color: var(--color-success);
+}
+
+.interview-verdict.is-good,
+.interview-verdict.is-partial {
+  color: var(--color-warning);
+}
+
+.interview-verdict.is-weak {
+  color: var(--color-danger);
+}
+
+.interview-score {
+  margin-left: auto;
+  font-family: var(--font-code);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.interview-list {
+  padding-left: var(--space-6);
+}
+
+.interview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.interview-error {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-danger);
+}
+
+.interview-error-bar {
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+}
+
+/* Phones: the history shows only on the start screen, and an interview gets the whole screen */
+@media (max-width: 900px) {
+  .interview {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .interview-sidebar {
+    max-height: 40vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .interview.has-session .interview-sidebar {
+    display: none;
+  }
+
+  .interview.has-session {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .interview-back-mobile {
+    display: inline-flex;
+    align-self: center;
+  }
+
+  .interview-header,
+  .interview-thread,
+  .interview-composer,
+  .interview-error-bar,
+  .interview-start {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .interview-message {
+    max-width: 90%;
+  }
+
+  .interview-title {
+    font-size: 40px;
+  }
+}

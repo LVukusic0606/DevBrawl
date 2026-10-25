@@ -992,6 +992,94 @@
   box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-duel);
 }
 
+.duel-review-tile {
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.duel-review-tile-type,
+.duel-review-tile-result {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-text);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.duel-review-tile-result .ti-check {
+  color: var(--color-success);
+}
+
+.duel-review-tile-result .ti-x {
+  color: var(--color-danger);
+}
+
+/* One round in the review */
+
+.duel-review-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.duel-review-nav-steps {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.duel-review-nav .duel-secondary:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.duel-explanation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.duel-explanation-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--color-text);
+}
+
+.duel-explanation-title .ti {
+  color: var(--color-duel);
+}
+
+.duel-explanation p {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+.duel-explanation .duel-explanation-mistake {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.duel-explanation-mistake strong {
+  color: var(--color-text);
+}
+
 @media (max-width: 1100px) {
   .duel-review-tiles {
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));

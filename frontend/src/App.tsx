@@ -2,23 +2,29 @@ import { useEffect, useState } from 'react'
 import { getMe, login, logout, signup, type User } from './api/auth'
 import { clearSession, loadSession, startSession } from './api/session'
 import AuthPage, { type LoginValues, type SignupValues } from './pages/AuthPage'
+import InterviewPage from './pages/InterviewPage'
 import DuelPage from './pages/DuelPage'
+import LeaderboardPage from './pages/LeaderboardPage'
 import LearnPage from './pages/LearnPage'
 import MainPage, { type MainSection } from './pages/MainPage'
+import ProfilePage from './pages/ProfilePage'
 
 type AuthState =
   | { status: 'checking' }
   | { status: 'signedOut' }
   | { status: 'signedIn'; user: User }
 
-type Screen = 'main' | 'learn' | 'duel'
-
+type Screen = 'main' | 'learn' | 'interview' | 'duel' | 'profile' | 'leaderboard'
 
 function App() {
   const [auth, setAuth] = useState<AuthState>(() =>
     loadSession() ? { status: 'checking' } : { status: 'signedOut' },
   )
   const [screen, setScreen] = useState<Screen>('main')
+  // Whose profile is open; undefined is the logged-in player's own
+  const [profileUserId, setProfileUserId] = useState<string | undefined>(undefined)
+  // Where Back on a profile goes: the screen it was opened from
+  const [profileReturn, setProfileReturn] = useState<Screen>('main')
 
   // A stored session may have expired or been revoked, so confirm it with the backend
   useEffect(() => {
@@ -62,16 +68,19 @@ function App() {
     if (session) logout(session.refreshToken).catch(() => {})
   }
 
+  function openProfile(userId?: string) {
+    setProfileUserId(userId)
+    // Moving between profiles keeps the original place to go back to
+    if (screen !== 'profile') setProfileReturn(screen)
+    setScreen('profile')
+  }
+
   function handleGoogle() {
     console.info('Google sign-in (not connected yet)')
   }
 
   function handleSelect(section: MainSection) {
-    if (section === 'learn' || section === 'duel') {
-      setScreen(section)
-      return
-    }
-    console.info('Section selected (not connected yet)', section)
+    setScreen(section)
   }
 
   if (auth.status === 'checking') return null
@@ -88,7 +97,41 @@ function App() {
     return <LearnPage onBack={() => setScreen('main')} />
   }
 
-  return <MainPage onSelect={handleSelect} onLogout={handleLogout} />
+  if (screen === 'interview') {
+    return <InterviewPage onBack={() => setScreen('main')} />
+  }
+
+  if (screen === 'profile') {
+    return (
+      <ProfilePage
+        // A different player gets a fresh page, so state from the previous profile never shows
+        key={profileUserId ?? 'me'}
+        userId={profileUserId}
+        onBack={() => setScreen(profileReturn)}
+        onOpenProfile={openProfile}
+        onStartDuel={() => handleSelect('duel')}
+      />
+    )
+  }
+
+  if (screen === 'leaderboard') {
+    return (
+      <LeaderboardPage
+        onBack={() => setScreen('main')}
+        onOpenProfile={openProfile}
+        onStartDuel={() => handleSelect('duel')}
+      />
+    )
+  }
+
+  return (
+    <MainPage
+      onSelect={handleSelect}
+      onLogout={handleLogout}
+      onOpenProfile={() => openProfile()}
+      onOpenLeaderboard={() => setScreen('leaderboard')}
+    />
+  )
 }
 
 export default App

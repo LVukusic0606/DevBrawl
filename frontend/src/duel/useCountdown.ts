@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
+import { serverNow } from './serverClock'
 
-// Milliseconds left until a server time (UTC ISO string). Both players count down to the same instant.
+// Milliseconds left until a server time (UTC ISO string). Both players count down to the same instant,
+// measured on the server's clock, so a device whose clock is off still shows the right time.
 export function useCountdown(endsAt: string | null) {
-  const [now, setNow] = useState(() => Date.now())
+  const [now, setNow] = useState(() => serverNow())
 
   useEffect(() => {
     if (!endsAt) return
-    const timer = window.setInterval(() => setNow(Date.now()), 250)
+    const timer = window.setInterval(() => setNow(serverNow()), 250)
     return () => window.clearInterval(timer)
   }, [endsAt])
 

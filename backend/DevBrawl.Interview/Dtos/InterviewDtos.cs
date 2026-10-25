@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using DevBrawl.Interview.Domain;
 
 namespace DevBrawl.Interview.Dtos;
 
@@ -8,8 +9,8 @@ public sealed record InterviewCategoryResponse(string Id, string Title, IReadOnl
 
 public sealed record InterviewLessonResponse(string Id, string Title);
 
-// Both optional: no lesson picks a random one, from the category if one is given
-public sealed record CreateQuestionRequest
+// Both optional: a lesson interviews about that lesson, a category about all its lessons, neither picks a random category
+public sealed record StartInterviewRequest
 {
     [StringLength(50)]
     public string? CategoryId { get; init; }
@@ -18,29 +19,38 @@ public sealed record CreateQuestionRequest
     public string? LessonId { get; init; }
 }
 
-public sealed record QuestionResponse(
-    Guid Id,
-    string CategoryId,
-    string CategoryTitle,
-    string LessonId,
-    string LessonTitle,
-    string Question,
-    DateTime CreatedAt);
-
-public sealed record SubmitAnswerRequest
+public sealed record SendMessageRequest
 {
-    // The cap also bounds what each review costs
+    // The cap also bounds what each reply costs
     [Required, StringLength(2000, MinimumLength = 1)]
-    public string Answer { get; init; } = string.Empty;
+    public string Content { get; init; } = string.Empty;
 }
 
-public sealed record AnswerReviewResponse(
-    Guid QuestionId,
-    // "correct", "partiallyCorrect" or "incorrect"
-    string Verdict,
+// Enums are sent as camelCase strings: role "interviewer" / "candidate", status "active" / "finished"
+public sealed record InterviewMessageResponse(Guid Id, MessageRole Role, string Content, DateTime CreatedAt);
+
+public sealed record InterviewEvaluationResponse(
     // 0 to 100
     int Score,
-    string Feedback,
+    string Summary,
     IReadOnlyList<string> Strengths,
-    IReadOnlyList<string> Improvements,
-    string ModelAnswer);
+    IReadOnlyList<string> Improvements);
+
+public sealed record InterviewSessionResponse(
+    Guid Id,
+    string Title,
+    string CategoryId,
+    string? LessonId,
+    InterviewStatus Status,
+    int AnswersGiven,
+    int MaxAnswers,
+    DateTime CreatedAt,
+    DateTime? FinishedAt,
+    IReadOnlyList<InterviewMessageResponse> Messages,
+    // Null while active, and for an interview that ended without answers
+    InterviewEvaluationResponse? Evaluation);
+
+public sealed record InterviewSessionSummaryResponse(Guid Id, string Title, InterviewStatus Status, int? Score, DateTime CreatedAt);
+
+// Empty Text means no speech was heard in the recording
+public sealed record TranscriptResponse(Guid SessionId, string Text);

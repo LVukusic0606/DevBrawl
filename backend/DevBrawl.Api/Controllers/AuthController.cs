@@ -54,6 +54,36 @@ public class AuthController(IAuthService authService) : ControllerBase
         return user is null ? Unauthorized() : user;
     }
 
+    [Authorize]
+    [HttpPut("nickname")]
+    [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public Task<IActionResult> ChangeNickname(ChangeNicknameRequest request, CancellationToken cancellationToken) =>
+        ForCurrentUser(userId => authService.ChangeNicknameAsync(userId, request, cancellationToken));
+
+    [Authorize]
+    [HttpPut("email")]
+    [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+    public Task<IActionResult> ChangeEmail(ChangeEmailRequest request, CancellationToken cancellationToken) =>
+        ForCurrentUser(userId => authService.ChangeEmailAsync(userId, request, cancellationToken));
+
+    [Authorize]
+    [HttpPut("password")]
+    [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public Task<IActionResult> ChangePassword(ChangePasswordRequest request, CancellationToken cancellationToken) =>
+        ForCurrentUser(userId => authService.ChangePasswordAsync(userId, request, cancellationToken));
+
+    private async Task<IActionResult> ForCurrentUser(Func<Guid, Task<AuthResult>> change)
+    {
+        if (!Guid.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out var userId))
+            return Unauthorized();
+        return ToActionResult(await change(userId));
+    }
+
     private IActionResult ToActionResult(AuthResult result, int successStatusCode = StatusCodes.Status200OK) =>
         result.Error switch
         {
@@ -62,6 +92,9 @@ public class AuthController(IAuthService authService) : ControllerBase
             AuthError.NicknameTaken => Problem("This nickname is already taken.", statusCode: StatusCodes.Status409Conflict),
             AuthError.InvalidCredentials => Problem("Invalid email or password.", statusCode: StatusCodes.Status401Unauthorized),
             AuthError.InvalidRefreshToken => Problem("Refresh token is invalid or expired.", statusCode: StatusCodes.Status401Unauthorized),
+            // 400, not 401: the frontend treats a 401 as an expired session and refreshes the tokens
+            AuthError.WrongPassword => Problem("Your current password is incorrect.", statusCode: StatusCodes.Status400BadRequest),
+            AuthError.UserNotFound => Problem("Account not found.", statusCode: StatusCodes.Status401Unauthorized),
             _ => throw new UnreachableException()
         };
 }

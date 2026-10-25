@@ -1,6 +1,8 @@
 using System.Text;
 using DevBrawl.Auth;
 using DevBrawl.Infrastructure.Data;
+using DevBrawl.Infrastructure.Leaderboard;
+using DevBrawl.Infrastructure.Profiles;
 using DevBrawl.Infrastructure.Repositories;
 using DevBrawl.Infrastructure.Repositories.Contracts;
 using DevBrawl.Infrastructure.Services;
@@ -30,6 +32,8 @@ public static class DependencyInjection
         services.AddSingleton<ITokenService, TokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IProfileService, ProfileService>();
+        services.AddScoped<ILeaderboardService, LeaderboardService>();
 
         services.AddDuelContent(configuration);
         services.AddDuelEngine(configuration);

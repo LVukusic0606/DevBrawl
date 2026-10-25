@@ -1,0 +1,967 @@
+/* Player profile. Competitive data uses the duel accent (magenta); XP is shared progress and uses the main accent. */
+
+.profile {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 36px 36px;
+  background-attachment: fixed;
+}
+
+.profile-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-8);
+}
+
+.profile-logo {
+  font-family: var(--font-text);
+  font-size: 24px;
+  color: var(--color-text);
+}
+
+.profile-back,
+.profile-button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 200ms ease-out, background-color 200ms ease-out;
+}
+
+.profile-back:hover,
+.profile-button:hover {
+  border-color: var(--color-accent);
+}
+
+.profile-back:focus-visible,
+.profile-button:focus-visible,
+.profile-duel-opponent-link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.profile-button.is-primary {
+  padding: var(--space-3) var(--space-4);
+  border-color: var(--color-duel);
+  background: var(--color-duel);
+  color: var(--color-bg);
+}
+
+.profile-button.is-primary:hover {
+  background: var(--color-duel-soft);
+  color: var(--color-text);
+}
+
+.profile-button.is-primary:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-duel);
+}
+
+.profile-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-8);
+  color: var(--color-text-muted);
+}
+
+.profile-error {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.profile-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-8) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  animation: profile-enter 250ms ease-out;
+}
+
+@keyframes profile-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Hero: avatar, name, level */
+
+.profile-hero {
+  display: grid;
+  grid-template-columns: auto 1fr minmax(0, 520px);
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 40px;
+  font-weight: 700;
+}
+
+.profile-identity {
+  min-width: 0;
+}
+
+.profile-eyebrow {
+  margin: 0 0 var(--space-1);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.profile-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.profile-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  align-self: stretch;
+}
+
+/* The overall rating is competitive, so its number carries the duel accent */
+.profile-level.is-overall .profile-level-value {
+  color: var(--color-duel);
+}
+
+.profile-overall-note {
+  grid-column: 1 / -1;
+  margin-top: var(--space-3);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.profile-level {
+  display: grid;
+  align-content: start;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  column-gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.profile-level-label {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.profile-level-value {
+  justify-self: end;
+  font-family: var(--font-code);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.profile-level .xp {
+  grid-column: 1 / -1;
+  margin-top: var(--space-3);
+}
+
+.xp-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.xp-labels strong {
+  font-family: var(--font-code);
+  color: var(--color-text);
+}
+
+.xp-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-field);
+  overflow: hidden;
+}
+
+.xp-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--color-accent);
+}
+
+/* Sections */
+
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.profile-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+
+.profile-section-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.profile-section-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.profile-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+.profile-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.profile-panel-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+/* Ratings dot plot: label | track | value, the axis above shares the track column */
+
+.dotplot {
+  --dotplot-columns: minmax(140px, 180px) minmax(0, 1fr) 290px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.dotplot-axis,
+.dotplot-row {
+  display: grid;
+  grid-template-columns: var(--dotplot-columns);
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.dotplot-ticks {
+  position: relative;
+  height: 20px;
+}
+
+.dotplot-tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dotplot-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dotplot-row {
+  min-height: 48px;
+  border-top: 1px solid var(--color-border);
+}
+
+.dotplot-label {
+  font-size: 15px;
+  color: var(--color-text);
+}
+
+.dotplot-track {
+  position: relative;
+  align-self: stretch;
+}
+
+.dotplot-grid,
+.dotplot-start {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.dotplot-start {
+  width: 2px;
+  margin-left: -0.5px;
+  background: var(--color-border-strong);
+}
+
+/* The rating line from the start to the dot would add ink without meaning, so only the dot is drawn */
+.dotplot-dot {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  transform: translate(-50%, -50%);
+}
+
+.dotplot-row.is-strongest .dotplot-dot {
+  width: 16px;
+  height: 16px;
+  background: var(--color-duel);
+}
+
+.dotplot-value {
+  display: flex;
+  align-items: baseline;
+  white-space: nowrap;
+  gap: var(--space-1) var(--space-3);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.dotplot-value strong {
+  font-family: var(--font-code);
+  font-size: 18px;
+  color: var(--color-text);
+}
+
+.dotplot-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--color-field);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dotplot-row.is-strongest .dotplot-badge {
+  background: var(--color-duel-soft);
+  color: var(--color-text);
+}
+
+.dotplot-row.is-strongest .dotplot-badge .ti {
+  color: var(--color-duel);
+}
+
+.dotplot-caption {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.dotplot-start-key {
+  width: 2px;
+  height: 14px;
+  background: var(--color-border-strong);
+}
+
+.rating-delta,
+.profile-duel-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-code);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.rating-delta.is-up,
+.profile-duel-delta.is-up {
+  color: var(--color-success);
+}
+
+.rating-delta.is-down,
+.profile-duel-delta.is-down {
+  color: var(--color-danger);
+}
+
+/* Duel record */
+
+.profile-stats {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.profile-stats dt {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.profile-stats dd {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.record-bar {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+}
+
+.record-seg {
+  min-width: 4px;
+  border-radius: 2px;
+}
+
+.record-seg:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.record-seg:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Scoped to the bar and legend: .is-draw is also used on duel result labels */
+.record-seg.is-win,
+.record-swatch.is-win {
+  background: var(--color-success);
+}
+
+.record-seg.is-draw,
+.record-swatch.is-draw {
+  background: var(--color-text-muted);
+}
+
+.record-seg.is-loss,
+.record-swatch.is-loss {
+  background: var(--color-danger);
+}
+
+.record-legend {
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.record-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.record-legend strong {
+  font-family: var(--font-code);
+  color: var(--color-text);
+}
+
+.record-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+/* Recent duels */
+
+.profile-duels {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.profile-duel-row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto 48px auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: 15px;
+}
+
+.profile-duel-row + .profile-duel-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.profile-duel-result {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text);
+}
+
+.profile-duel-result .ti {
+  font-size: 16px;
+}
+
+.profile-duel-result.is-won .ti {
+  color: var(--color-success);
+}
+
+.profile-duel-result.is-lost .ti {
+  color: var(--color-danger);
+}
+
+.profile-duel-result.is-draw .ti {
+  color: var(--color-text-muted);
+}
+
+.profile-duel-opponent {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+}
+
+.profile-duel-opponent-link {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.profile-duel-opponent-link:hover {
+  color: var(--color-duel);
+}
+
+.profile-duel-score {
+  font-family: var(--font-code);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-duel-delta {
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-duel-time {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Accuracy bars */
+
+.bars {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.bars-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(80px, 1.4fr) 92px;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 13px;
+}
+
+.bars-label {
+  color: var(--color-text);
+}
+
+.bars-track {
+  height: 10px;
+  border-radius: 0 4px 4px 0;
+  background: var(--color-field);
+  overflow: hidden;
+}
+
+.bars-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: var(--color-duel);
+}
+
+.bars-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.bars-value strong {
+  font-family: var(--font-code);
+  color: var(--color-text);
+}
+
+.bars-value.is-empty {
+  font-size: 12px;
+}
+
+/* Account settings: a small button under the name, the forms live in a modal */
+
+.profile-identity-actions {
+  margin-top: var(--space-3);
+}
+
+.profile-button.is-accent {
+  justify-content: center;
+  padding: var(--space-3) var(--space-4);
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+.profile-button.is-accent:hover {
+  background: var(--color-accent-soft);
+  color: var(--color-text);
+}
+
+.profile-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.account-dialog {
+  width: min(440px, calc(100vw - 32px));
+  padding: var(--space-6);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.account-dialog[open] {
+  animation: account-dialog-enter 200ms ease-out;
+}
+
+@keyframes account-dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.account-dialog::backdrop {
+  background: color-mix(in srgb, var(--color-bg) 72%, transparent);
+}
+
+.account-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.account-dialog-title {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.account-dialog-back,
+.account-dialog-close {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-text);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.account-dialog-close {
+  color: var(--color-text-muted);
+}
+
+.account-dialog-back:hover,
+.account-dialog-close:hover {
+  color: var(--color-accent);
+}
+
+.account-dialog-back:focus-visible,
+.account-dialog-close:focus-visible,
+.account-menu-item:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.account-menu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.account-menu-item {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 200ms ease-out;
+}
+
+.account-menu-item:hover {
+  border-color: var(--color-accent);
+}
+
+.account-menu-item > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-menu-label {
+  font-size: 15px;
+}
+
+.account-menu-desc {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.account-menu-item .ti {
+  color: var(--color-text-muted);
+}
+
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.account-input {
+  height: 52px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--color-field);
+  box-shadow: inset 0 0 0 1px transparent;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  outline: none;
+  transition: box-shadow 200ms ease-out;
+}
+
+.account-input:focus {
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+.account-status {
+  min-height: 20px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.account-status .ti {
+  color: var(--color-success);
+}
+
+.account-status.is-error {
+  color: var(--color-danger);
+}
+
+/* Empty state */
+
+.profile-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+}
+
+.profile-empty .ti {
+  font-size: 20px;
+}
+
+.profile-empty p {
+  margin: 0;
+}
+
+@media (max-width: 960px) {
+  .profile-hero {
+    grid-template-columns: auto 1fr;
+  }
+
+  .profile-hero-stats {
+    grid-column: 1 / -1;
+  }
+
+  .profile-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .profile-header,
+  .profile-content,
+  .profile-status {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .profile-hero {
+    grid-template-columns: auto 1fr;
+  }
+
+  .profile-avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 28px;
+  }
+
+  .profile-title {
+    font-size: 32px;
+  }
+
+  .profile-hero-stats {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Each category stacks: name, value, then the track. The axis is hidden, every value is written out. */
+  .dotplot-axis {
+    display: none;
+  }
+
+  .dotplot-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+    padding: var(--space-3) 0;
+  }
+
+  .dotplot-value {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .dotplot-track {
+    height: 20px;
+  }
+
+  .profile-duel-row {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+
+  .profile-duel-time {
+    display: none;
+  }
+
+  .bars-row {
+    grid-template-columns: minmax(0, 1fr) 92px;
+  }
+
+  .bars-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

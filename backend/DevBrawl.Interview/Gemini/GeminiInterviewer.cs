@@ -2,43 +2,55 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using DevBrawl.Interview.Knowledge;
 using DevBrawl.Interview.Prompts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace DevBrawl.Interview.Gemini;
 
-// Generates and grades interview questions with the Gemini API (generateContent), using a response schema so the replies are JSON
+// Runs interviews with the Gemini API (generateContent), using a response schema so the replies are JSON
 public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> options, ILogger<GeminiInterviewer> logger)
     : IInterviewer
 {
     private const string Provider = "Gemini";
     private readonly GeminiOptions _options = options.Value;
 
-    public async Task<GeneratedQuestion> GenerateQuestionAsync(LessonKnowledge lesson, IReadOnlyList<string> previousQuestions,
+    public async Task<InterviewerReply> ReplyAsync(InterviewTopic topic, IReadOnlyList<ChatTurn> history, int answersGiven,
+        int maxAnswers, bool closing, CancellationToken cancellationToken = default)
+    {
+        var output = await AskAsync<ReplyOutput>(
+            InterviewPrompts.InterviewerSystem,
+            InterviewPrompts.InterviewerRequest(topic, history, answersGiven, maxAnswers, closing),
+            ReplySchema,
+            cancellationToken);
+        return InterviewOutputs.ToReply(output, Provider);
+    }
+
+    public async Task<InterviewEvaluation> EvaluateAsync(InterviewTopic topic, IReadOnlyList<ChatTurn> history,
         CancellationToken cancellationToken = default)
     {
-        var output = await AskAsync<QuestionOutput>(
-            InterviewPrompts.QuestionSystem,
-            InterviewPrompts.QuestionRequest(lesson, previousQuestions),
-            QuestionSchema,
+        var output = await AskAsync<EvaluationOutput>(
+            InterviewPrompts.EvaluationSystem,
+            InterviewPrompts.EvaluationRequest(topic, history),
+            EvaluationSchema,
             cancellationToken);
-        return InterviewOutputs.ToQuestion(output, Provider);
+        return InterviewOutputs.ToEvaluation(output, Provider);
     }
 
-    public async Task<AnswerReview> ReviewAnswerAsync(LessonKnowledge lesson, string question, IReadOnlyList<string> keyPoints,
-        string answer, CancellationToken cancellationToken = default)
+    public async Task<string> TranscribeAsync(string lastQuestion, byte[] audio, string mimeType, CancellationToken cancellationToken = default)
     {
-        var output = await AskAsync<ReviewOutput>(
-            InterviewPrompts.ReviewSystem,
-            InterviewPrompts.ReviewRequest(lesson, question, keyPoints, answer),
-            ReviewSchema,
-            cancellationToken);
-        return InterviewOutputs.ToReview(output, Provider);
+        var output = await AskAsync<TranscriptOutput>(
+            InterviewPrompts.TranscribeSystem,
+            InterviewPrompts.TranscribeRequest(lastQuestion),
+            TranscriptSchema,
+            cancellationToken,
+            // The recording goes inline with the request; a 2-minute 16 kHz WAV is about 4 MB, well under Gemini's limit
+            new JsonObject { ["inlineData"] = new JsonObject { ["mimeType"] = mimeType, ["data"] = Convert.ToBase64String(audio) } });
+        return output.Transcript?.Trim() ?? string.Empty;
     }
 
-    private async Task<T> AskAsync<T>(string system, string request, JsonObject schema, CancellationToken cancellationToken)
+    private async Task<T> AskAsync<T>(string system, string request, JsonObject schema, CancellationToken cancellationToken,
+        JsonObject? attachment = null)
     {
         var apiKey = _options.ResolveApiKey();
         if (apiKey is null)
@@ -53,7 +65,9 @@ public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> o
             ["contents"] = new JsonArray(new JsonObject
             {
                 ["role"] = "user",
-                ["parts"] = new JsonArray(new JsonObject { ["text"] = request })
+                ["parts"] = attachment is null
+                    ? new JsonArray(new JsonObject { ["text"] = request })
+                    : new JsonArray(new JsonObject { ["text"] = request }, attachment)
             }),
             ["generationConfig"] = new JsonObject
             {
@@ -160,31 +174,39 @@ public sealed class GeminiInterviewer(HttpClient http, IOptions<GeminiOptions> o
     private static string Truncate(string text) => text.Length <= 1000 ? text : text[..1000] + "...";
 
     // Gemini's response schema is an OpenAPI subset, so no additionalProperties; property order keeps the JSON predictable
-    internal static readonly JsonObject QuestionSchema = Schema("""
+    internal static readonly JsonObject ReplySchema = Schema("""
         {
           "type": "OBJECT",
           "properties": {
-            "question": { "type": "STRING", "description": "The question shown to the learner" },
-            "keyPoints": { "type": "ARRAY", "items": { "type": "STRING" }, "description": "What a complete answer must contain" },
-            "modelAnswer": { "type": "STRING", "description": "A short correct answer, shown after grading" }
+            "message": { "type": "STRING", "description": "The interviewer's next message to the candidate" },
+            "done": { "type": "BOOLEAN", "description": "True only when this message closes the interview" }
           },
-          "required": ["question", "keyPoints", "modelAnswer"],
-          "propertyOrdering": ["question", "keyPoints", "modelAnswer"]
+          "required": ["message", "done"],
+          "propertyOrdering": ["message", "done"]
         }
         """);
 
-    internal static readonly JsonObject ReviewSchema = Schema("""
+    internal static readonly JsonObject EvaluationSchema = Schema("""
         {
           "type": "OBJECT",
           "properties": {
-            "verdict": { "type": "STRING", "enum": ["correct", "partiallyCorrect", "incorrect"] },
             "score": { "type": "INTEGER", "description": "0 to 100" },
-            "feedback": { "type": "STRING" },
+            "summary": { "type": "STRING" },
             "strengths": { "type": "ARRAY", "items": { "type": "STRING" } },
             "improvements": { "type": "ARRAY", "items": { "type": "STRING" } }
           },
-          "required": ["verdict", "score", "feedback", "strengths", "improvements"],
-          "propertyOrdering": ["verdict", "score", "feedback", "strengths", "improvements"]
+          "required": ["score", "summary", "strengths", "improvements"],
+          "propertyOrdering": ["score", "summary", "strengths", "improvements"]
+        }
+        """);
+
+    internal static readonly JsonObject TranscriptSchema = Schema("""
+        {
+          "type": "OBJECT",
+          "properties": {
+            "transcript": { "type": "STRING", "description": "What the candidate said; empty if there is no speech" }
+          },
+          "required": ["transcript"]
         }
         """);
 

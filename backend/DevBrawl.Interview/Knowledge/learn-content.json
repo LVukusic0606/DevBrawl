@@ -1,129 +1,13 @@
 [
   {
-    "id": "frontend-web",
-    "title": "Frontend web development",
-    "description": "How pages are built and shown in the browser.",
-    "icon": "ti-brand-html5",
+    "id": "apis-networking",
+    "title": "APIs & Networking",
+    "description": "How clients and servers talk to each other over the network.",
+    "icon": "ti-api",
     "lessons": [
       {
-        "id": "browser-page",
-        "title": "How a browser shows a page",
-        "blocks": [
-          {
-            "type": "text",
-            "text": "Every website goes through the same pipeline in the browser. The browser takes the files it downloaded and turns them into the pixels you see."
-          },
-          {
-            "type": "steps",
-            "steps": [
-              "Download the HTML document",
-              "Build the structure of the page",
-              "Apply the styles",
-              "Run the scripts",
-              "Paint the pixels on screen"
-            ]
-          },
-          {
-            "type": "text",
-            "text": "A project keeps these jobs in separate files. The structure, the look and the behavior can change independently."
-          },
-          {
-            "type": "code",
-            "file": "my-site/",
-            "code": "my-site/\n├── index.html        structure\n├── styles/\n│   └── main.css      look\n└── scripts/\n    └── app.js        behavior"
-          },
-          {
-            "type": "text",
-            "text": "When a script changes the page, the browser runs the steps again for the part that changed. Keeping the work small is why pages feel fast."
-          }
-        ]
-      },
-      {
-        "id": "html-structure",
-        "title": "Structuring content with HTML",
-        "blocks": [
-          {
-            "type": "text",
-            "text": "A page is a tree. One root holds children, and each child can hold its own children. The nesting shows which parts belong together."
-          },
-          {
-            "type": "code",
-            "file": "page tree",
-            "code": "page\n├── header\n│   ├── logo\n│   └── navigation\n│       ├── learn\n│       └── duel\n├── main\n│   └── lesson\n└── footer"
-          },
-          {
-            "type": "text",
-            "text": "Each element has a role. A navigation area holds links, and a heading names the section below it. Screen readers and search engines rely on these roles to understand the page."
-          },
-          {
-            "type": "table",
-            "headers": [
-              "Role",
-              "Meaning",
-              "Examples"
-            ],
-            "rows": [
-              [
-                "Structure",
-                "Groups related content",
-                "header, main, footer"
-              ],
-              [
-                "Text",
-                "Carries the words",
-                "heading, paragraph"
-              ],
-              [
-                "Interaction",
-                "The user can act on it",
-                "button, link"
-              ]
-            ]
-          },
-          {
-            "type": "text",
-            "text": "Choose an element for its meaning first. How it looks comes later, in the styles."
-          }
-        ]
-      },
-      {
-        "id": "layout-flexbox",
-        "title": "Arranging elements with flexbox",
-        "blocks": [
-          {
-            "type": "text",
-            "text": "Layout answers one question: where does each box go? Flexbox places children in a line and decides how the free space is shared between them."
-          },
-          {
-            "type": "visual",
-            "visual": "flexbox"
-          },
-          {
-            "type": "text",
-            "text": "Two ideas drive it. The direction says which way the children flow. The justify setting says what happens with the free space along that direction."
-          },
-          {
-            "type": "code",
-            "file": "one navbar, two layouts",
-            "code": "row:     logo ........ links ........ button\ncolumn:  logo\n         links\n         button"
-          },
-          {
-            "type": "text",
-            "text": "Most layouts are a row inside a column, or a column inside a row. Nesting these two is enough for almost every screen."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "backend",
-    "title": "Backend development",
-    "description": "How servers receive requests and send back data.",
-    "icon": "ti-server",
-    "lessons": [
-      {
-        "id": "server-role",
-        "title": "What a server does",
+        "id": "api-request",
+        "title": "What happens during an API request?",
         "blocks": [
           {
             "type": "text",
@@ -149,14 +33,22 @@
             "code": "api/\n├── controllers/    receive requests, return responses\n├── services/       the rules of the app\n├── repositories/   talk to the database\n└── models/         the shape of the data"
           },
           {
-            "type": "text",
-            "text": "Splitting the server into layers keeps each job in one place. A request passes through the layers in order, and each layer does only its own part."
+            "type": "mistakes",
+            "items": [
+              "Expecting the server to remember the previous request without a token or session.",
+              "Putting business rules in controllers, so the same rule ends up copied in many places.",
+              "Treating a request as instant and forgetting that the network can be slow or fail."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "A request travels through layers in order, and each layer does one job. Every request has to carry everything the server needs to answer it."
           }
         ]
       },
       {
         "id": "http-methods",
-        "title": "Reading and writing with HTTP methods",
+        "title": "HTTP methods: GET, POST, PUT, PATCH and DELETE",
         "blocks": [
           {
             "type": "text",
@@ -203,8 +95,285 @@
             "code": "GET     /lessons/12    read lesson 12\nDELETE  /lessons/12    remove lesson 12\nPOST    /lessons       create a new lesson"
           },
           {
+            "type": "mistakes",
+            "items": [
+              "Changing data in a GET request, so a page refresh or a link preview changes things.",
+              "Retrying a failed POST automatically and creating the same item twice.",
+              "Using POST for everything, which hides what each request actually does."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Repeating a GET is safe because it changes nothing. Repeating a POST may create a second item, so pick the method that matches the intent."
+          }
+        ]
+      },
+      {
+        "id": "status-codes",
+        "title": "Understanding HTTP status codes",
+        "blocks": [
+          {
             "type": "text",
-            "text": "Repeating a GET changes nothing, so it is safe. Repeating a POST may create a second item. Knowing this helps when a request fails and has to be sent again."
+            "text": "Every response starts with a three-digit status code. The first digit tells the client what kind of answer it got before it reads anything else."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Range",
+              "Meaning",
+              "Examples"
+            ],
+            "rows": [
+              [
+                "2xx",
+                "It worked",
+                "200 OK, 201 Created, 204 No Content"
+              ],
+              [
+                "3xx",
+                "Look somewhere else",
+                "301 Moved Permanently, 304 Not Modified"
+              ],
+              [
+                "4xx",
+                "The client made a mistake",
+                "400 Bad Request, 404 Not Found, 409 Conflict"
+              ],
+              [
+                "5xx",
+                "The server failed",
+                "500 Internal Server Error, 503 Service Unavailable"
+              ]
+            ]
+          },
+          {
+            "type": "text",
+            "text": "The range decides what the client should do next. A 4xx means fix the request; a 5xx means the same request may work later."
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Returning 200 with an error message in the body, so clients and monitoring think everything worked.",
+              "Using 500 for invalid input, which blames the server for the client’s mistake.",
+              "Retrying 4xx responses that will fail the same way every time."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "The status code is the first and most important part of the answer. Pick the one that tells the client what to do next."
+          }
+        ]
+      },
+      {
+        "id": "headers",
+        "title": "HTTP headers",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Headers are key-value pairs that travel with a request or a response. They carry information about the message rather than the message itself."
+          },
+          {
+            "type": "code",
+            "file": "a request and its response",
+            "code": "GET /api/lessons/12\nAuthorization: Bearer eyJhbGciOi...   who is asking\nAccept: application/json             what format the client wants\n\n200 OK\nContent-Type: application/json       what format the body is in\nCache-Control: max-age=60            how long it may be reused"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Sending JSON without a Content-Type header, so the server cannot parse it.",
+              "Putting secrets in custom headers that end up in logs."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "The body is the content; headers are the instructions for handling it."
+          }
+        ]
+      },
+      {
+        "id": "rest",
+        "title": "REST API fundamentals",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "REST organizes an API around resources: things with an address, such as a lesson or a user. The method says what to do with the resource."
+          },
+          {
+            "type": "code",
+            "file": "one resource, many actions",
+            "code": "GET     /lessons          list lessons\nPOST    /lessons          create a lesson\nGET     /lessons/12       read lesson 12\nPATCH   /lessons/12       change part of lesson 12\nDELETE  /lessons/12       remove lesson 12\nGET     /lessons/12/quiz  a resource that belongs to lesson 12"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Putting verbs in the address, such as /getLesson or /deleteLesson, instead of using the method.",
+              "Returning a different shape for the same resource from different endpoints."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Addresses name things, methods name actions. Keep both predictable and clients can guess the rest."
+          }
+        ]
+      },
+      {
+        "id": "timeouts",
+        "title": "Timeouts and network failures",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "The network is slow or broken more often than it seems. A request without a timeout can wait forever and hold resources the whole time."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "Send the request with a timeout",
+              "No answer in time: stop waiting",
+              "Wait a little, then retry",
+              "Wait longer before each next retry",
+              "Give up after a few tries and show an error"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Calling other services without a timeout.",
+              "Retrying immediately and in a tight loop, which overloads a server that is already struggling.",
+              "Retrying requests that are not safe to repeat, such as a payment."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Every network call needs a timeout. Retry with growing pauses, and only when repeating is safe."
+          }
+        ]
+      },
+      {
+        "id": "rate-limiting",
+        "title": "Rate limiting",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A rate limit caps how many requests a client may send in a time window. It protects the server from overload and from abuse such as password guessing."
+          },
+          {
+            "type": "code",
+            "file": "the 101st request in one minute",
+            "code": "POST /api/auth/login\n\n429 Too Many Requests\nRetry-After: 30\n{ \"title\": \"Too many login attempts. Try again in 30 seconds.\" }"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Limiting only by IP address, so many users behind one network block each other.",
+              "Not telling the client when it may try again."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Answer with 429 and Retry-After, and let clients slow down instead of failing blindly."
+          }
+        ]
+      },
+      {
+        "id": "http-caching",
+        "title": "Caching and HTTP cache headers",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "HTTP can tell browsers and proxies how long a response stays fresh. A fresh response is reused without asking the server again."
+          },
+          {
+            "type": "code",
+            "file": "first request, then a revalidation",
+            "code": "200 OK\nCache-Control: max-age=300\nETag: \"v42\"\n\nGET /api/categories\nIf-None-Match: \"v42\"\n304 Not Modified          nothing changed, reuse the copy"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Caching responses that contain one user’s private data in a shared cache.",
+              "Setting a long max-age on data that changes often, so users see stale results."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Cache-Control decides how long a copy is fresh; ETag lets the client ask cheaply whether it changed."
+          }
+        ]
+      },
+      {
+        "id": "cors",
+        "title": "CORS: why the browser blocks a request",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Browsers block a page from reading responses from another origin unless that server allows it. CORS is how the server says which origins are allowed."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "app.devbrawl.io calls api.devbrawl.io",
+              "The browser sends a preflight OPTIONS request",
+              "The API answers with Access-Control-Allow-Origin",
+              "The browser checks the origin is allowed",
+              "Only then the real request goes out"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Allowing every origin with * on an API that uses cookies.",
+              "Trying to fix CORS in the frontend; only the server can allow an origin."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "CORS is enforced by the browser and configured on the server. Allow exactly the origins you trust."
+          }
+        ]
+      },
+      {
+        "id": "polling-websockets",
+        "title": "Polling vs. WebSockets",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Some data changes while the user watches, such as a duel score. The client can ask again and again, or keep one connection open and let the server push."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Approach",
+              "How it works",
+              "Good for"
+            ],
+            "rows": [
+              [
+                "Polling",
+                "The client asks every few seconds",
+                "Data that changes rarely"
+              ],
+              [
+                "Long polling",
+                "The server holds the request until there is news",
+                "Simple near-live updates"
+              ],
+              [
+                "WebSockets",
+                "One open connection, messages both ways",
+                "Live games, chat, duels"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Polling every second for data that changes once an hour.",
+              "Forgetting to reconnect when a WebSocket drops."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Poll when updates are rare; keep a connection open when both sides need to talk in real time."
           }
         ]
       }
@@ -213,12 +382,12 @@
   {
     "id": "databases",
     "title": "Databases",
-    "description": "How data is stored, found and kept consistent.",
+    "description": "How data is stored, linked and kept consistent.",
     "icon": "ti-database",
     "lessons": [
       {
-        "id": "tables",
-        "title": "Why we store data in tables",
+        "id": "relational-databases",
+        "title": "Relational databases",
         "blocks": [
           {
             "type": "text",
@@ -228,24 +397,24 @@
             "type": "table",
             "headers": [
               "id",
-              "username",
-              "level"
+              "nickname",
+              "elo"
             ],
             "rows": [
               [
                 "1",
                 "mara",
-                "12"
+                "1350"
               ],
               [
                 "2",
                 "ivan",
-                "7"
+                "1080"
               ],
               [
                 "3",
                 "lea",
-                "21"
+                "1510"
               ]
             ]
           },
@@ -263,14 +432,21 @@
             ]
           },
           {
-            "type": "text",
-            "text": "These four operations cover most of the work a database does. Learning to think in them makes every data feature easier to design."
+            "type": "mistakes",
+            "items": [
+              "Storing several values in one column, such as a comma-separated list of tags.",
+              "Using a text column for numbers or dates, so sorting and comparing break."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Tables give every record the same shape. Create, read, update and delete cover most of the work a database does."
           }
         ]
       },
       {
-        "id": "keys",
-        "title": "Linking tables with keys",
+        "id": "primary-foreign-keys",
+        "title": "Primary and foreign keys",
         "blocks": [
           {
             "type": "text",
@@ -280,7 +456,7 @@
             "type": "table",
             "headers": [
               "users.id",
-              "username"
+              "nickname"
             ],
             "rows": [
               [
@@ -318,66 +494,1394 @@
             "text": "The primary key identifies one row. A foreign key stores the primary key of a row in another table, such as winner_id pointing at users.id."
           },
           {
+            "type": "mistakes",
+            "items": [
+              "Copying the nickname into every duel, so a rename leaves old duels out of date.",
+              "Skipping the foreign key constraint, so a duel can point at a user that was deleted.",
+              "Using a value that can change, such as an email, as the primary key."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Store each fact once and link to it by key. The database can then guarantee that every link points at a real row."
+          }
+        ]
+      },
+      {
+        "id": "joins",
+        "title": "SQL joins",
+        "blocks": [
+          {
             "type": "text",
-            "text": "If mara changes her name, every duel still points at the same row, so nothing has to be updated in two places. Database rules also stop a link from pointing at a row that does not exist."
+            "text": "Data that belongs together often lives in different tables. A join combines rows from two tables where a key matches, so one query can answer one question."
+          },
+          {
+            "type": "code",
+            "file": "duels with the winner’s nickname",
+            "code": "SELECT duels.id, users.nickname AS winner\nFROM duels\nJOIN users ON users.id = duels.winner_id"
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Join",
+              "Keeps"
+            ],
+            "rows": [
+              [
+                "INNER JOIN",
+                "Only rows that match in both tables"
+              ],
+              [
+                "LEFT JOIN",
+                "Every row from the left table, matched or not"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Forgetting the ON condition, which pairs every row with every other row.",
+              "Using an inner join when rows without a match must still show up."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Joins rebuild the full picture from tables that each store one kind of thing."
+          }
+        ]
+      },
+      {
+        "id": "indexes",
+        "title": "Database indexes",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Without an index, the database reads every row to find a match. An index is a sorted lookup structure that jumps straight to the right rows."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Query on 1 000 000 users",
+              "Without an index",
+              "With an index on email"
+            ],
+            "rows": [
+              [
+                "WHERE email = ...",
+                "Reads every row",
+                "Reads a handful of entries"
+              ]
+            ]
+          },
+          {
+            "type": "code",
+            "file": "adding one",
+            "code": "CREATE INDEX ix_users_email ON users (email);"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Indexing every column, which slows down every insert and update.",
+              "Adding an index but filtering with a function on the column, so the index is not used."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Index the columns you search and join on. Each index speeds up reads and costs a little on writes."
+          }
+        ]
+      },
+      {
+        "id": "transactions",
+        "title": "Transactions and ACID",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A transaction groups several changes so they happen together or not at all. ACID names the guarantees a transaction gives."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Letter",
+              "Guarantee"
+            ],
+            "rows": [
+              [
+                "Atomic",
+                "All changes apply, or none do"
+              ],
+              [
+                "Consistent",
+                "Rules such as keys and constraints still hold afterwards"
+              ],
+              [
+                "Isolated",
+                "Running transactions do not see each other’s half-done work"
+              ],
+              [
+                "Durable",
+                "Once committed, the change survives a crash"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Running related updates as separate statements, so a crash in between leaves half a change.",
+              "Keeping a transaction open while waiting for a user or a network call."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Wrap changes that must stay together in one short transaction."
+          }
+        ]
+      },
+      {
+        "id": "normalization",
+        "title": "Database normalization",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Normalization removes repeated data by splitting it into tables that each describe one thing. Each fact then lives in exactly one place."
+          },
+          {
+            "type": "code",
+            "file": "before and after",
+            "code": "before:  duels(id, winner_nickname, winner_email, loser_nickname, ...)\n\nafter:   users(id, nickname, email)\n         duels(id, winner_id → users.id, loser_id → users.id)"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Copying user details into every row that mentions the user.",
+              "Splitting tables so far that every simple read needs many joins."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Store each fact once and link to it. Denormalize later only where a measured read needs it."
+          }
+        ]
+      },
+      {
+        "id": "n-plus-one",
+        "title": "The N+1 query problem",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Loading a list and then one extra query per item turns one request into hundreds of database round trips. It is easy to write and slow to run."
+          },
+          {
+            "type": "code",
+            "file": "one query for the list, N for the details",
+            "code": "duels = db.query(\"SELECT * FROM duels LIMIT 50\")      1 query\nfor duel in duels:\n    duel.winner = db.query(\"SELECT * FROM users\",       50 queries\n                           where id = duel.winner_id)"
+          },
+          {
+            "type": "text",
+            "text": "The fix loads the related rows in one go: a join, or one query with WHERE id IN (...) for all the ids."
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Not noticing because it is fast with ten rows in development.",
+              "Lazy-loading relations inside a loop in an ORM."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Count queries per request. Load related data in bulk, not one row at a time."
+          }
+        ]
+      },
+      {
+        "id": "connection-pools",
+        "title": "Database connection pools",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Opening a database connection is slow. A pool keeps a few connections open and lends them to requests, which give them back when done."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "A request needs the database",
+              "It borrows a free connection from the pool",
+              "It runs its queries",
+              "It returns the connection",
+              "If none are free, the request waits for one"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Forgetting to return a connection, so the pool slowly runs dry.",
+              "Making the pool bigger than the database can handle."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Borrow late, return early. A leaking pool looks like the database suddenly hanging."
+          }
+        ]
+      },
+      {
+        "id": "migrations",
+        "title": "Schema migrations",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "The database structure changes as the app grows. Migrations are small, ordered scripts that move every database from one version to the next in the same way."
+          },
+          {
+            "type": "code",
+            "file": "Data/Migrations/",
+            "code": "Data/Migrations/\n├── 20261024143436_AddAuth.cs\n├── 20261024154840_AddCategories.cs\n└── 20261024163755_AddDuels.cs"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Changing the production schema by hand, so it no longer matches the migrations.",
+              "Editing a migration that already ran somewhere instead of adding a new one."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Every schema change is a new migration, applied in order, the same way everywhere."
+          }
+        ]
+      },
+      {
+        "id": "relational-vs-document",
+        "title": "Relational vs. document databases",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Relational databases store rows in tables with a fixed shape. Document databases store whole objects, such as JSON, that can differ from each other."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "",
+              "Relational",
+              "Document"
+            ],
+            "rows": [
+              [
+                "Shape",
+                "Fixed columns",
+                "Flexible per document"
+              ],
+              [
+                "Links between data",
+                "Joins and foreign keys",
+                "Embedded or looked up by id"
+              ],
+              [
+                "Good fit",
+                "Connected data that must stay consistent",
+                "Self-contained records read as a whole"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Choosing a document store for highly connected data, then rebuilding joins in code.",
+              "Assuming “schemaless” means the data has no shape to maintain."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Pick the model that matches how the data is connected and read."
           }
         ]
       }
     ]
   },
   {
-    "id": "version-control",
-    "title": "Version control",
-    "description": "How teams track and combine changes to code.",
-    "icon": "ti-git-branch",
+    "id": "security",
+    "title": "Security",
+    "description": "How apps protect users, data and access.",
+    "icon": "ti-shield-lock",
     "lessons": [
       {
-        "id": "commits",
-        "title": "Saving history with commits",
+        "id": "authn-vs-authz",
+        "title": "Authentication vs. authorization",
         "blocks": [
           {
             "type": "text",
-            "text": "Version control records a project as a series of saved states. Each saved state is a commit, and the list of commits is the history of the project."
+            "text": "Authentication answers who you are. Authorization answers what you are allowed to do. They are separate checks, and each one fails in its own way."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Question",
+              "Concept",
+              "When it fails"
+            ],
+            "rows": [
+              [
+                "Who are you?",
+                "Authentication",
+                "401 Unauthorized"
+              ],
+              [
+                "Are you allowed to do this?",
+                "Authorization",
+                "403 Forbidden"
+              ]
+            ]
+          },
+          {
+            "type": "code",
+            "file": "two requests to the same address",
+            "code": "GET /admin/users     no token\n→ 401 Unauthorized   log in first\n\nGET /admin/users     token of a regular user\n→ 403 Forbidden      logged in, but not allowed"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Returning 403 when the user is simply not logged in.",
+              "Checking permissions only in the frontend, where anyone can skip the check.",
+              "Trusting a user id sent in the request body instead of the one in the token."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Authentication proves identity, and authorization decides access. Check both on the server, on every request."
+          }
+        ]
+      },
+      {
+        "id": "password-hashing",
+        "title": "Storing passwords safely",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A server should never be able to read a password. Instead it stores a hash: the result of a one-way function that cannot be turned back into the password."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "The user picks a password",
+              "The server adds a random salt",
+              "The server runs a slow hash function",
+              "Only the salt and the hash are stored",
+              "At login, the same steps run and the results are compared"
+            ]
+          },
+          {
+            "type": "code",
+            "file": "users table",
+            "code": "id  email            password_hash\n1   mara@mail.com    $2b$12$Kq8f...   salt + hash, never the password"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Using a fast hash such as MD5 or SHA-1, which attackers can try billions of times per second.",
+              "Encrypting passwords instead of hashing them, so anyone with the key can read them.",
+              "Using the same salt for every user."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Store a slow, salted hash. If the database leaks, the passwords stay hard to recover."
+          }
+        ]
+      },
+      {
+        "id": "sql-injection",
+        "title": "SQL injection",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "When user input is glued into a SQL string, the input can change the query itself. An attacker can then read or delete data they should never reach."
+          },
+          {
+            "type": "code",
+            "file": "the same search, unsafe and safe",
+            "code": "unsafe:  \"SELECT * FROM users WHERE nickname = '\" + input + \"'\"\n         input = x' OR '1'='1   → returns every user\n\nsafe:    \"SELECT * FROM users WHERE nickname = @nickname\"\n         the input is sent as a value, never as SQL"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Escaping quotes by hand instead of using parameters.",
+              "Trusting input because it comes from your own frontend."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Always pass user input as query parameters. Never build SQL out of strings."
+          }
+        ]
+      },
+      {
+        "id": "xss",
+        "title": "Cross-site scripting (XSS)",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "XSS happens when a page shows user content as HTML, so a script hidden in it runs in other users’ browsers with their session."
+          },
+          {
+            "type": "code",
+            "file": "a comment that runs code",
+            "code": "comment = <img src=x onerror=\"steal(document.cookie)\">\n\nunsafe:  element.innerHTML = comment     the script runs\nsafe:    element.textContent = comment   shown as plain text"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Rendering user content with innerHTML or dangerouslySetInnerHTML.",
+              "Sanitizing on input only, then reusing the data somewhere it is not escaped."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Treat user content as text. Escape it where it is shown, every time."
+          }
+        ]
+      },
+      {
+        "id": "csrf",
+        "title": "Cross-site request forgery (CSRF)",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Browsers send cookies automatically. A malicious site can make your browser send a request to an app you are logged in to, and the cookie makes it look like you."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "You are logged in to bank.example",
+              "You open a malicious page",
+              "It submits a hidden form to bank.example/transfer",
+              "The browser adds your session cookie",
+              "Without protection, the bank accepts it"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Changing data on GET requests, which any image tag can trigger.",
+              "Relying on cookies without SameSite or a CSRF token."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Use SameSite cookies, CSRF tokens or bearer tokens in headers, which other sites cannot add."
+          }
+        ]
+      },
+      {
+        "id": "jwt",
+        "title": "How JWT access tokens work",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A JWT is a signed note from the server: “this is user 42 until 14:30”. The server can check the signature without looking anything up."
+          },
+          {
+            "type": "code",
+            "file": "the three parts of a token",
+            "code": "header.payload.signature\n\nheader:     { \"alg\": \"HS256\" }\npayload:    { \"sub\": \"42\", \"exp\": 1792860000 }   readable by anyone\nsignature:  proves the server issued it unchanged"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Putting secrets in the payload, which is only encoded, not encrypted.",
+              "Issuing tokens that never expire."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "A JWT proves who issued it and that it was not changed. Keep it short-lived and keep secrets out of it."
+          }
+        ]
+      },
+      {
+        "id": "https",
+        "title": "HTTPS and TLS",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Plain HTTP travels as readable text, so anyone on the network can read or change it. HTTPS wraps it in TLS, which encrypts it and proves the server is who it claims to be."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "The browser connects to devbrawl.io",
+              "The server shows its certificate",
+              "The browser checks it was issued for that domain",
+              "Both agree on keys for this session",
+              "Everything after that is encrypted"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Serving the login page over HTTPS but the API over plain HTTP.",
+              "Telling users to click through certificate warnings."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Use HTTPS everywhere. It protects both the content and the identity of the server."
+          }
+        ]
+      },
+      {
+        "id": "least-privilege",
+        "title": "Least privilege",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Every user, service and key should have only the access it needs. When one of them is compromised, the damage stays small."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Who",
+              "Needs",
+              "Should not have"
+            ],
+            "rows": [
+              [
+                "Duel service",
+                "Read and write duels",
+                "Access to password hashes"
+              ],
+              [
+                "CI pipeline",
+                "Deploy to staging",
+                "Admin access to production"
+              ],
+              [
+                "Support staff",
+                "View accounts",
+                "Delete accounts"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Letting the app connect to the database as a superuser.",
+              "Sharing one admin key between all services."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Grant the smallest access that works, and give each part its own credentials."
+          }
+        ]
+      },
+      {
+        "id": "secrets",
+        "title": "Keeping secrets out of code",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Repositories get copied, shared and published. A key committed once stays in the history even after the line is deleted."
+          },
+          {
+            "type": "code",
+            "file": "where secrets belong",
+            "code": ".gitignore        .env          never committed\n.env              JWT_SECRET=...\n.env.example      JWT_SECRET=   committed, without values"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Committing a key and “fixing” it by deleting the line.",
+              "Printing configuration, secrets included, into build logs."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Load secrets from the environment. If one was ever committed, rotate it."
+          }
+        ]
+      },
+      {
+        "id": "input-validation",
+        "title": "Validate input on the server",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Frontend checks help users, but anyone can send a request without the frontend. The server must check every value it receives."
+          },
+          {
+            "type": "code",
+            "file": "rules for a signup request",
+            "code": "nickname   3 to 20 letters, numbers or underscores\nemail      a valid address, not already used\npassword   at least 8 characters\n\nanything else → 400 Bad Request with the reason"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Validating only in the browser.",
+              "Accepting extra fields and saving them, such as \"isAdmin\": true."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Check type, size and allowed values on the server, and accept only the fields you expect."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "debugging",
+    "title": "Debugging",
+    "description": "How to find out why code does not do what you expect.",
+    "icon": "ti-bug",
+    "lessons": [
+      {
+        "id": "stack-traces",
+        "title": "Reading a stack trace",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "When a program crashes, it prints the chain of calls that led to the crash. That chain is the stack trace, and it is the fastest map to the problem."
+          },
+          {
+            "type": "code",
+            "file": "console",
+            "code": "TypeError: Cannot read properties of undefined (reading 'name')\n    at formatWinner    (duel/result.ts:14)\n    at showResult      (duel/screen.ts:42)\n    at onDuelFinished  (duel/socket.ts:88)"
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "Read the message: what went wrong",
+              "Read the first line: where it broke",
+              "Read the lines below: who called it",
+              "Find where the bad value came from"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Reading only the error message and skipping the location.",
+              "Assuming the fix always goes on the top line, when the caller passed the bad data.",
+              "Giving up when the top lines point into a library, while your own code is a few lines further down."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "The message says what, the first line says where, and the lines below say how the program got there."
+          }
+        ]
+      },
+      {
+        "id": "reproduce-bugs",
+        "title": "Reproduce before you fix",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A bug you cannot trigger on purpose is a bug you cannot prove you fixed. The first job is to make it happen again, every time."
+          },
+          {
+            "type": "code",
+            "file": "bug report",
+            "code": "Steps:     open a duel, answer the last question in under 1 second\nExpected:  the result screen shows the winner\nActual:    the result screen is empty\nHappens:   3 out of 3 tries"
           },
           {
             "type": "timeline",
             "items": [
               {
-                "title": "Initial project",
-                "detail": "The first files of the app."
+                "title": "Reproduce",
+                "detail": "Follow the steps until the bug appears on your machine."
               },
               {
-                "title": "Add login screen",
-                "detail": "A new page and its styles."
+                "title": "Shrink",
+                "detail": "Remove steps until only the ones that matter are left."
               },
               {
-                "title": "Fix button color",
-                "detail": "One small change, with a clear reason."
+                "title": "Find the cause",
+                "detail": "Change one thing at a time and watch what changes."
               },
               {
-                "title": "Add main page",
-                "detail": "Navigation to the sections of the app."
+                "title": "Fix and confirm",
+                "detail": "Run the same steps again and check the bug is gone."
               }
             ]
           },
           {
-            "type": "code",
-            "file": "what one commit records",
-            "code": "commit 4f2a9c\nauthor:   the person who made the change\ndate:     when it was saved\nmessage:  why the change was made\nchanges:  which files and lines differ from before"
+            "type": "mistakes",
+            "items": [
+              "Changing code before the bug can be reproduced.",
+              "Changing several things at once, so you cannot tell which one helped.",
+              "Testing only the usual path after the fix."
+            ]
           },
           {
-            "type": "text",
-            "text": "Because every commit has a reason, the history explains the project later. A good message says why the change exists, not only what it touches."
+            "type": "takeaway",
+            "text": "Make the bug happen on purpose, change one thing at a time, and confirm the fix with the same steps."
           }
         ]
       },
       {
-        "id": "branches",
-        "title": "Working apart with branches",
+        "id": "reading-logs",
+        "title": "Reading logs",
         "blocks": [
           {
             "type": "text",
-            "text": "A branch is a separate line of work. Commits on a branch do not touch the main line until you join them back."
+            "text": "Logs are the app’s diary. Each line says when something happened, how serious it was, which part of the system wrote it and what happened."
+          },
+          {
+            "type": "code",
+            "file": "api.log",
+            "code": "10:42:11 INFO  auth     POST /api/login 200\n10:42:14 INFO  api      GET /api/profile 401\n10:42:14 WARN  auth     Authorization header missing"
+          },
+          {
+            "type": "text",
+            "text": "The 401 is the symptom. The warning right after it is the cause: the request arrived without a token."
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Searching only for ERROR lines, when the cause is often a WARN just before.",
+              "Logging without timestamps or request ids, so lines can’t be connected."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Read logs in time order around the failure, and separate symptoms from causes."
+          }
+        ]
+      },
+      {
+        "id": "bisect",
+        "title": "Narrowing down with binary search",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "When something worked last week and is broken today, you don’t have to read every change. Test the middle commit and halve the search each time."
+          },
+          {
+            "type": "timeline",
+            "items": [
+              {
+                "title": "64 commits to check",
+                "detail": "The last good version and the first bad one are known."
+              },
+              {
+                "title": "Test commit 32",
+                "detail": "Broken: the bug came in the first half."
+              },
+              {
+                "title": "Test commit 16",
+                "detail": "Works: the bug is between 16 and 32."
+              },
+              {
+                "title": "About 6 steps later",
+                "detail": "One commit is left. That is the one that broke it."
+              }
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Reading the changes one by one from the newest backwards.",
+              "Testing with a flaky check, which sends the search the wrong way."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Halving the search finds one bad commit in 1 000 in about 10 tests. git bisect does it for you."
+          }
+        ]
+      },
+      {
+        "id": "breakpoints",
+        "title": "Breakpoints and stepping",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A debugger pauses the program on a chosen line, so you can see the real values instead of guessing them."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "Set a breakpoint just before the code that misbehaves",
+              "Run until it pauses there",
+              "Inspect the variables",
+              "Step one line at a time",
+              "Stop at the first value that differs from what you expect"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Stepping through everything from the start instead of pausing near the problem.",
+              "Adding print statements and forgetting to remove them."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Pause where the problem starts and compare each value with what you expected."
+          }
+        ]
+      },
+      {
+        "id": "off-by-one",
+        "title": "Off-by-one errors",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Counting from 0 or 1, and stopping at < or <=, are easy to mix up. The result is a loop that skips the first item or reads one past the last."
+          },
+          {
+            "type": "code",
+            "file": "five rounds, numbered 0 to 4",
+            "code": "for (let i = 0; i <= rounds.length; i++)   reads rounds[5], which does not exist\nfor (let i = 0; i < rounds.length; i++)    reads rounds[0] to rounds[4]"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Mixing 1-based line numbers with 0-based array indexes.",
+              "Testing only with lists of one item, where the bug hides."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Check the first and last item of every loop and every range."
+          }
+        ]
+      },
+      {
+        "id": "null-values",
+        "title": "Null and undefined values",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A value that is missing where the code expects one causes some of the most common crashes. The crash happens where the value is used, not where it went missing."
+          },
+          {
+            "type": "code",
+            "file": "the crash and its source",
+            "code": "TypeError: Cannot read properties of undefined (reading 'nickname')\n\nconst winner = players.find((p) => p.id === winnerId)   undefined if not found\nshow(winner.nickname)                                   crashes here"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Fixing the crash line with a ?. without asking why the value was missing.",
+              "Assuming an API always returns every field."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Find where the value should have been set. Handle “not found” where it can happen."
+          }
+        ]
+      },
+      {
+        "id": "race-conditions",
+        "title": "Race conditions",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "When two operations run at the same time, the result can depend on which finishes first. The bug appears only sometimes, which makes it hard to catch."
+          },
+          {
+            "type": "timeline",
+            "items": [
+              {
+                "title": "Request A reads the score: 3",
+                "detail": "Both requests start at the same moment."
+              },
+              {
+                "title": "Request B reads the score: 3",
+                "detail": "B has not seen A’s change yet."
+              },
+              {
+                "title": "A writes 4",
+                "detail": "A adds one point."
+              },
+              {
+                "title": "B writes 4",
+                "detail": "B also adds one point to 3. One point is lost."
+              }
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Reading a value, changing it in code and writing it back as separate steps.",
+              "Assuming a bug is fixed because it did not happen in ten tries."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Make shared updates atomic, for example UPDATE scores SET points = points + 1, or use locks."
+          }
+        ]
+      },
+      {
+        "id": "rubber-duck",
+        "title": "Explaining the problem out loud",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Describing a bug step by step, even to a rubber duck, forces you to check assumptions you skipped in your head."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "Say what you expected to happen",
+              "Say what actually happens",
+              "Walk through the code line by line, out loud",
+              "Notice the step you can’t explain",
+              "Check that step first"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Asking for help with “it doesn’t work” and no steps or error.",
+              "Skipping the parts you are sure about, which is where the bug often is."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "If you can’t explain a step, that step is where to look."
+          }
+        ]
+      },
+      {
+        "id": "regression-tests",
+        "title": "Writing a test for the bug",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A fixed bug can come back with the next change. A test that fails while the bug exists and passes after the fix keeps it from returning unnoticed."
+          },
+          {
+            "type": "code",
+            "file": "duel.test.ts",
+            "code": "test('a draw gives no round point to either player', () => {\n  const result = scoreRound({ you: correct(1000), opponent: correct(1000) })\n  expect(result).toBe('draw')\n})"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Writing the test after the fix without checking that it fails without it.",
+              "Testing the implementation details instead of the behavior the user saw."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Reproduce the bug in a test first. Then fix it and keep the test."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "system-design",
+    "title": "System Design",
+    "description": "How to build systems that stay fast and reliable as they grow.",
+    "icon": "ti-sitemap",
+    "lessons": [
+      {
+        "id": "caching",
+        "title": "Caching",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Some answers are expensive to compute but rarely change. A cache keeps a copy of the answer close by, so the next request does not have to do the work again."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "A request arrives",
+              "Look in the cache",
+              "Hit: return the stored answer",
+              "Miss: ask the database",
+              "Save the answer in the cache for next time"
+            ]
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Request",
+              "Without a cache",
+              "With a cache"
+            ],
+            "rows": [
+              [
+                "Leaderboard",
+                "A database query every time",
+                "One query per minute"
+              ],
+              [
+                "Lesson text",
+                "A database query every time",
+                "One query until the lesson changes"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Caching data that must always be current, such as a live duel score.",
+              "Forgetting to clear the cache when the data changes.",
+              "Giving every entry the same expiry, so they all expire at once and hit the database together."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "A cache trades freshness for speed. Decide how out of date each piece of data is allowed to be."
+          }
+        ]
+      },
+      {
+        "id": "scaling",
+        "title": "Vertical and horizontal scaling",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "When one server is not enough, there are two ways to grow: make the server bigger, or add more servers."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Approach",
+              "How",
+              "Limit"
+            ],
+            "rows": [
+              [
+                "Vertical",
+                "A bigger machine",
+                "One machine can only get so big"
+              ],
+              [
+                "Horizontal",
+                "More machines behind a load balancer",
+                "Any server must be able to handle any request"
+              ]
+            ]
+          },
+          {
+            "type": "code",
+            "file": "horizontal scaling",
+            "code": "                      ┌─→ server 1\nclient → load balancer ├─→ server 2\n                      └─→ server 3"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Keeping sessions in server memory, so a user is logged out when the next request lands on another server.",
+              "Adding app servers while the database stays the bottleneck."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Horizontal scaling works when servers keep no state of their own. Put shared state in a database or cache instead."
+          }
+        ]
+      },
+      {
+        "id": "load-balancing",
+        "title": "Load balancing",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A load balancer sits in front of several servers and decides which one handles each request. It spreads the work and stops sending traffic to servers that are down."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Strategy",
+              "Picks",
+              "Works well when"
+            ],
+            "rows": [
+              [
+                "Round robin",
+                "The next server in turn",
+                "Requests cost about the same"
+              ],
+              [
+                "Least connections",
+                "The server with the fewest open requests",
+                "Some requests are much slower"
+              ],
+              [
+                "Hash of the user",
+                "The same server for the same user",
+                "A server keeps a local cache per user"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Skipping health checks, so traffic keeps going to a crashed server.",
+              "Depending on sticky sessions so much that one busy user overloads one server."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Spread requests with health checks on, and keep servers interchangeable."
+          }
+        ]
+      },
+      {
+        "id": "queues",
+        "title": "Message queues",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Some work does not need to finish before the user gets an answer, such as sending an email. A queue stores the task so a worker can do it later."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "The API puts “send welcome email” on the queue",
+              "The API answers the user right away",
+              "A worker takes the task from the queue",
+              "The worker sends the email",
+              "If it fails, the task goes back on the queue for a retry"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Doing slow work inside the request, so the user waits for it.",
+              "Workers that can’t handle the same task twice after a retry."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Queue work that can wait. Make workers safe to run the same task more than once."
+          }
+        ]
+      },
+      {
+        "id": "replication",
+        "title": "Database replication",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Replication keeps copies of the database on other servers. Writes go to the primary, and replicas follow it and can serve reads."
+          },
+          {
+            "type": "code",
+            "file": "one primary, two replicas",
+            "code": "writes → primary ──┬──→ replica 1 ← reads\n                   └──→ replica 2 ← reads"
+          },
+          {
+            "type": "text",
+            "text": "Replicas lag a little behind. A user who just saved something may not see it yet if the next read hits a replica."
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Reading from a replica right after a write and showing stale data.",
+              "Calling replicas a backup; a bad delete is copied to them too."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Replicas add read capacity and failover, not backups. Read your own writes from the primary."
+          }
+        ]
+      },
+      {
+        "id": "sharding",
+        "title": "Sharding",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "When one database is too big for one server, sharding splits the rows across several databases. A shard key decides where each row lives."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Shard key",
+              "Shard 1",
+              "Shard 2",
+              "Shard 3"
+            ],
+            "rows": [
+              [
+                "user id % 3",
+                "users 3, 6, 9 …",
+                "users 1, 4, 7 …",
+                "users 2, 5, 8 …"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Picking a key that sends most traffic to one shard, such as the country.",
+              "Sharding before simpler steps like indexes, caching or replicas."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Shard last, and choose a key that spreads both data and traffic evenly."
+          }
+        ]
+      },
+      {
+        "id": "consistency-availability",
+        "title": "Consistency vs. availability",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "When servers lose contact with each other, a system must choose: refuse some requests to stay correct, or keep answering and risk being out of date."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Choice",
+              "During a network split",
+              "Fits"
+            ],
+            "rows": [
+              [
+                "Consistency first",
+                "Some requests fail until servers agree again",
+                "Balances, ratings, stock"
+              ],
+              [
+                "Availability first",
+                "Every request is answered, maybe with old data",
+                "Feeds, view counts, profiles"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Assuming the network between servers never fails.",
+              "Using the same choice for every kind of data in the app."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Decide per piece of data whether being right or being up matters more."
+          }
+        ]
+      },
+      {
+        "id": "idempotency",
+        "title": "Idempotent operations",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "An operation is idempotent when doing it twice has the same effect as doing it once. It makes retries safe after a timeout."
+          },
+          {
+            "type": "code",
+            "file": "a retried payment",
+            "code": "POST /api/payments\nIdempotency-Key: 6f1c-8a20\n\nfirst try:   payment created\nretry:       same key → the server returns the first result"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Retrying a POST without a key and charging the user twice.",
+              "Generating a new key on every retry."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Give risky operations a key, and let the server recognize a repeat."
+          }
+        ]
+      },
+      {
+        "id": "designing-for-failure",
+        "title": "Designing for failure",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "In a system with many parts, something is always failing somewhere. Good design keeps one broken part from taking down the rest."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "Calls to the recommendation service start timing out",
+              "A circuit breaker counts the failures",
+              "After a few, it stops calling the service for a while",
+              "The page shows lessons without recommendations",
+              "Later it tries again and closes when calls succeed"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Letting every page wait on an optional service.",
+              "Retrying a failing service so hard that it can never recover."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Use timeouts, fail fast and degrade gracefully when an optional part is down."
+          }
+        ]
+      },
+      {
+        "id": "monolith-microservices",
+        "title": "Monolith vs. microservices",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A monolith is one app deployed as a whole. Microservices split it into small services that are deployed and scaled separately."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "",
+              "Monolith",
+              "Microservices"
+            ],
+            "rows": [
+              [
+                "Deploy",
+                "Everything at once",
+                "Each service on its own"
+              ],
+              [
+                "Calls between parts",
+                "Function calls",
+                "Network calls that can fail"
+              ],
+              [
+                "Good fit",
+                "Small teams and young products",
+                "Many teams that need to move independently"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Starting with microservices for a small team and paying the network cost everywhere.",
+              "Splitting services that still share one database and must deploy together."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Start with a well-structured monolith. Split out a service when a real need appears."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "infrastructure",
+    "title": "Infrastructure",
+    "description": "Where code runs and how it gets there.",
+    "icon": "ti-cloud",
+    "lessons": [
+      {
+        "id": "ci-cd",
+        "title": "From commit to production",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Work happens on a branch, apart from the main line. When it is ready, it is merged back, and an automated pipeline takes it the rest of the way."
           },
           {
             "type": "visual",
@@ -386,15 +1890,325 @@
           {
             "type": "steps",
             "steps": [
-              "Create a branch from main",
-              "Commit the work on that branch",
-              "Review the changes",
-              "Merge the branch back into main"
+              "Push a commit to the branch",
+              "CI builds the project",
+              "CI runs the tests",
+              "The change is reviewed and merged",
+              "CD deploys main to production"
             ]
           },
           {
+            "type": "mistakes",
+            "items": [
+              "Deploying by hand, so every release is a little different.",
+              "Skipping tests to ship faster, then spending longer on the bugs.",
+              "Letting a branch live for weeks, so the merge turns into a big conflict."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Automate the path from commit to production, so every release goes through the same checks."
+          }
+        ]
+      },
+      {
+        "id": "environments",
+        "title": "Environments and configuration",
+        "blocks": [
+          {
             "type": "text",
-            "text": "When two branches change the same lines, the merge cannot decide alone. That situation is a conflict, and a person decides which version to keep."
+            "text": "The same code runs on your machine, on a test server and in production. What changes between them is configuration, not code."
+          },
+          {
+            "type": "code",
+            "file": "config/",
+            "code": "config/\n├── development    local database, detailed logs\n├── staging        test server, data close to the real thing\n└── production     real users, secrets loaded from a vault"
+          },
+          {
+            "type": "text",
+            "text": "Secrets such as database passwords and API keys come from the environment when the app starts. They never live in the repository."
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Committing passwords or API keys to the repository.",
+              "Building a different version of the app for each environment.",
+              "Testing only on your own machine, where the setup differs from production."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Build once, configure per environment, and keep secrets out of the code."
+          }
+        ]
+      },
+      {
+        "id": "containers",
+        "title": "Containers",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A container packs an app together with everything it needs to run: the runtime, libraries and settings. It runs the same on a laptop and on a server."
+          },
+          {
+            "type": "code",
+            "file": "Dockerfile",
+            "code": "FROM node:22-alpine      start from a small image with Node\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci               install exact dependencies\nCOPY . .\nCMD [\"node\", \"server.js\"]"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Saving data inside the container, where it is lost when the container is replaced.",
+              "Baking secrets into the image."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "A container is a repeatable package for running an app. Keep data and secrets outside it."
+          }
+        ]
+      },
+      {
+        "id": "images-registries",
+        "title": "Images and registries",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "An image is the built, unchangeable package. A registry stores images, so every environment can pull exactly the same one."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "CI builds the image once",
+              "It is tagged with the commit, e.g. devbrawl-api:4f2a9c",
+              "CI pushes it to the registry",
+              "Staging pulls and runs that tag",
+              "Production later pulls the very same tag"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Deploying the tag latest, so nobody knows which version is running.",
+              "Rebuilding the image for production instead of reusing the tested one."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Build once, tag by commit, and promote the same image from staging to production."
+          }
+        ]
+      },
+      {
+        "id": "orchestration",
+        "title": "Orchestration",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "With many containers on many machines, someone has to start them, restart them and spread them out. An orchestrator such as Kubernetes does that job."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "You declare",
+              "The orchestrator does"
+            ],
+            "rows": [
+              [
+                "Run 3 copies of the API",
+                "Starts 3 and replaces any that crash"
+              ],
+              [
+                "Each needs 512 MB of memory",
+                "Places them on machines with room"
+              ],
+              [
+                "Ship version 4f2a9c",
+                "Replaces copies one by one with no downtime"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Reaching for an orchestrator for one small app on one server.",
+              "Not setting health checks, so it can’t tell a stuck container from a healthy one."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "You describe the state you want; the orchestrator keeps the system in that state."
+          }
+        ]
+      },
+      {
+        "id": "infrastructure-as-code",
+        "title": "Infrastructure as code",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Servers, databases and networks can be described in files instead of clicked together by hand. The files are reviewed and versioned like any other code."
+          },
+          {
+            "type": "code",
+            "file": "database.tf",
+            "code": "resource \"postgres_database\" \"devbrawl\" {\n  name     = \"devbrawl\"\n  size     = \"small\"\n  backups  = \"daily\"\n}"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Fixing production by hand, so it drifts from what the files describe.",
+              "Applying changes without reviewing the plan of what will change."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Describe infrastructure in code, review it, and change it only through the code."
+          }
+        ]
+      },
+      {
+        "id": "monitoring",
+        "title": "Monitoring and alerts",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Monitoring answers “is it working right now?” before users have to tell you. A few well-chosen numbers say a lot about a service’s health."
+          },
+          {
+            "type": "table",
+            "headers": [
+              "Signal",
+              "Question it answers"
+            ],
+            "rows": [
+              [
+                "Request rate",
+                "How busy is it?"
+              ],
+              [
+                "Error rate",
+                "How many requests fail?"
+              ],
+              [
+                "Latency",
+                "How long do users wait?"
+              ],
+              [
+                "Saturation",
+                "How close is it to its limits?"
+              ]
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Alerting on everything, so real alerts get ignored.",
+              "Measuring averages only, which hide the slow requests users feel."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Watch rate, errors, latency and saturation, and alert only on what needs a person."
+          }
+        ]
+      },
+      {
+        "id": "dns",
+        "title": "How DNS finds a server",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "People type names like devbrawl.io; computers connect to addresses like 203.0.113.7. DNS translates one into the other."
+          },
+          {
+            "type": "steps",
+            "steps": [
+              "The browser asks a resolver for devbrawl.io",
+              "The resolver asks who handles .io",
+              "Then it asks who handles devbrawl.io",
+              "That server answers with the address",
+              "The answer is cached for its TTL"
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Changing a DNS record and expecting everyone to see it instantly despite a long TTL.",
+              "Forgetting to renew the domain."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "DNS maps names to addresses, and caches mean changes spread slowly. Lower the TTL before a planned move."
+          }
+        ]
+      },
+      {
+        "id": "reverse-proxy",
+        "title": "Reverse proxies",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "A reverse proxy such as nginx receives every request first and passes it on to the right app. It handles shared jobs so the apps don’t have to."
+          },
+          {
+            "type": "code",
+            "file": "one entry point, several apps",
+            "code": "devbrawl.io/          → frontend\ndevbrawl.io/api/      → API\ndevbrawl.io/hubs/     → API (WebSockets)\n\nthe proxy also: terminates HTTPS, compresses, limits body size"
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Forgetting the proxy has its own limits, such as the maximum upload size.",
+              "Not forwarding WebSocket upgrades, so live features fail behind the proxy."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "The proxy is part of the request path. When something fails between client and app, check it too."
+          }
+        ]
+      },
+      {
+        "id": "rollbacks",
+        "title": "Rolling back a deploy",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "Sometimes a release breaks something despite the tests. The fastest fix is often to go back to the last version that worked, then investigate calmly."
+          },
+          {
+            "type": "timeline",
+            "items": [
+              {
+                "title": "14:00 Deploy 4f2a9c",
+                "detail": "The new version goes live."
+              },
+              {
+                "title": "14:06 Error rate jumps",
+                "detail": "Monitoring alerts the team."
+              },
+              {
+                "title": "14:08 Roll back to 9e1b07",
+                "detail": "The previous image is deployed again."
+              },
+              {
+                "title": "14:10 Errors back to normal",
+                "detail": "Now the team finds the cause without pressure."
+              }
+            ]
+          },
+          {
+            "type": "mistakes",
+            "items": [
+              "Database migrations that can’t run against the old version, which blocks the rollback.",
+              "Debugging in production while users keep hitting the bug."
+            ]
+          },
+          {
+            "type": "takeaway",
+            "text": "Keep every release easy to undo. Roll back first, then find the cause."
           }
         ]
       }

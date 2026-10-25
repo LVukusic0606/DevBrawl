@@ -1,6 +1,7 @@
 import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { getFreshAccessToken } from '../api/auth'
+import { syncServerClock } from './serverClock'
 import type {
   Answer,
   DuelAbortedEvent,
@@ -270,13 +271,23 @@ export function useDuel() {
     // Every handler is registered before start(), so no event is missed
     connection.on('QueueJoined', () => dispatch({ type: 'queueJoined' }))
     connection.on('QueueLeft', () => dispatch({ type: 'queueLeft' }))
-    connection.on('MatchFound', (event: MatchFoundEvent) => dispatch({ type: 'matchFound', event }))
-    connection.on('RoundStarted', (event: RoundStartedEvent) => dispatch({ type: 'roundStarted', event }))
+    // Events with a deadline also resync the server clock that the countdowns use
+    connection.on('MatchFound', (event: MatchFoundEvent) => {
+      syncServerClock(event.serverTime)
+      dispatch({ type: 'matchFound', event })
+    })
+    connection.on('RoundStarted', (event: RoundStartedEvent) => {
+      syncServerClock(event.serverTime)
+      dispatch({ type: 'roundStarted', event })
+    })
     connection.on('AnswerAccepted', (event: RoundAnswerEvent) => dispatch({ type: 'answerAccepted', event }))
     connection.on('OpponentAnswered', (event: RoundAnswerEvent) => dispatch({ type: 'opponentAnswered', event }))
     connection.on('RoundEnded', (event: RoundEndedEvent) => dispatch({ type: 'roundEnded', event }))
     connection.on('DuelEnded', (event: DuelEndedEvent) => dispatch({ type: 'duelEnded', event }))
-    connection.on('DuelState', (event: DuelStateEvent) => dispatch({ type: 'duelState', event }))
+    connection.on('DuelState', (event: DuelStateEvent) => {
+      syncServerClock(event.serverTime)
+      dispatch({ type: 'duelState', event })
+    })
     connection.on('OpponentDisconnected', (event: { duelId: string }) =>
       dispatch({ type: 'opponentConnection', duelId: event.duelId, connected: false }),
     )

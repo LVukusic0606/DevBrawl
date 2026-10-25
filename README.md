@@ -67,6 +67,34 @@ Check the connection at http://localhost:5287/api/health/db.
 
 To browse the database in pgAdmin 4, import `backend/pgadmin-servers.json` via **Tools → Import/Export Servers** (password: `postgres`).
 
+## Interview (AI)
+
+`backend/DevBrawl.Interview` uses an AI model to ask open questions about the Learn lessons and grade the user's written answers. It uses the Gemini API. Without an API key the interview endpoints answer 503 and everything else works.
+
+Set your own key in user secrets (stored in your home folder, never in the repo):
+
+```bash
+cd backend/DevBrawl.Api
+dotnet user-secrets set "Gemini:ApiKey" "<your Gemini key>"   # or export GEMINI_API_KEY
+```
+
+Never put a key in `appsettings.json` (it's committed). A `.env` file isn't read by .NET.
+
+All endpoints need the `Authorization: Bearer` header:
+
+- `GET /api/interview/topics`: categories and lessons that can be asked about.
+- `POST /api/interview/questions` with `{ "lessonId": "primary-foreign-keys" }`, `{ "categoryId": "databases" }` or `{}` for a random lesson (ids are the Learn ones from `topics`, not the numeric duel category ids): returns `{ id, categoryId, categoryTitle, lessonId, lessonTitle, question, createdAt }`.
+- `POST /api/interview/questions/{id}/transcribe` with a multipart `audio` file (WAV, MP3, OGG, FLAC or AAC, up to 5 MB, about 2 minutes of 16 kHz WAV): returns `{ questionId, text }`, the spoken answer as text (empty if no speech was heard). Only for your own unanswered questions.
+- `POST /api/interview/questions/{id}/answer` with `{ "answer": "..." }` (up to 2000 characters, once per question): returns `{ questionId, verdict, score, feedback, strengths, improvements, modelAnswer }`. `verdict` is `correct`, `partiallyCorrect` or `incorrect`; `score` is 0 to 100.
+
+The lessons come from `frontend/src/learn/content.ts`, exported to `backend/DevBrawl.Interview/Knowledge/learn-content.json`. The backend build re-exports it when `content.ts` changes (needs Node 22.18+); a test fails if the JSON is out of date.
+
+Settings in the `Gemini` section of `appsettings.json`: `Model` (default `gemini-3.5-flash-lite`), `ThinkingLevel` (default `low`, which keeps replies to a few seconds; empty uses the model's slower default) and `TimeoutSeconds` (default 120).
+
+In the app, open **Interview** on the main page: pick a topic, then type your answer or press **Record answer**. The browser records the microphone, converts it to WAV and sends it to `transcribe`; the text appears in the answer box to check and edit before submitting.
+
+Each question, transcription and answer is one AI call, so they share a per-user rate limit: 30 per hour by default (`Interview:RateLimit:RequestsPerHour`). Past the limit they return 429 with a `Retry-After` header; a user gets one request back every 60 / limit minutes.
+
 ## Other commands
 
 ```bash

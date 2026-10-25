@@ -48,6 +48,7 @@ public class DuelHistoryService(AppDbContext db) : IDuelHistoryService
                 JsonNode.Parse(r.ClientView)!,
                 ParseOrNull(isPlayer1 ? r.Player1Answer : r.Player2Answer),
                 isPlayer1 ? r.Player1Correct : r.Player2Correct,
+                (isPlayer1 ? r.Player2AnsweredAt : r.Player1AnsweredAt) is not null,
                 isPlayer1 ? r.Player2Correct : r.Player1Correct,
                 RoundRules.ForPlayer(r.Result ?? RoundResult.NoWinner, isPlayer1),
                 JsonNode.Parse(r.Reveal!)!))

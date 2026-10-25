@@ -6,7 +6,7 @@ interface GoogleIdentityServices {
   initialize(config: { client_id: string; callback: (response: { credential: string }) => void; ux_mode?: 'popup' }): void
   renderButton(
     parent: HTMLElement,
-    options: { theme: string; size: string; text: string; shape: string; width: number; logo_alignment: string },
+    options: { theme: string; size: string; text: string; shape: string; width: number; logo_alignment: string; locale: string },
   ): void
 }
 
@@ -74,6 +74,8 @@ export function GoogleSignInButton({ onCredential, before }: GoogleSignInButtonP
           // Google accepts 200 to 400 pixels
           width: Math.max(200, Math.min(400, box.offsetWidth)),
           logo_alignment: 'center',
+          // Otherwise Google uses the browser's language; the rest of the UI is English
+          locale: 'en',
         })
       })
       .catch(() => {
